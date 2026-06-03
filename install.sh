@@ -6,7 +6,80 @@
 # Flags: --help, --no-zsh, --no-bashrc, --no-starship, --no-motd, --dir PATH
 # Uso: ./install.sh [opciones]
 
-# ── Configuración inicial ─────────────────────────
+# ── Detectar modo remoto (curl | bash) ────────────
+# BASH_SOURCE[0] se comporta distinto segun como se invoca:
+#   curl ... | bash -s           → BASH_SOURCE[0] esta UNSET
+#   bash <(curl ...)             → BASH_SOURCE[0]=/dev/fd/63
+#   source /dev/stdin            → BASH_SOURCE[0]=/dev/stdin
+# En todos los casos hay que clonar el repo localmente.
+# NOTA: este check va ANTES de set -u porque BASH_SOURCE
+# puede estar unset en modo pipe.
+_NEXUS_REMOTE=false
+if [ -z "${BASH_SOURCE[0]:-}" ]; then
+    _NEXUS_REMOTE=true
+elif [[ "${BASH_SOURCE[0]}" == /dev/fd/* ]] || [ "${BASH_SOURCE[0]}" = "/dev/stdin" ]; then
+    _NEXUS_REMOTE=true
+fi
+
+if [ "$_NEXUS_REMOTE" = true ]; then
+    # ── Parsear flags esenciales (--help, --dir) ──
+    for arg in "$@"; do
+        case "$arg" in
+            --help|-h)
+                cat <<'EOFH'
+NEXUS AI v0.2.0 — Instalador remoto
+
+Uso: curl -fsSL https://raw.githubusercontent.com/guigerdts/nexus-ai/main/install.sh | bash -s -- [opciones]
+
+Opciones:
+  --help          Muestra esta ayuda y sale
+  --no-zsh        Omite la configuracion de Zsh
+  --no-bashrc     Omite la configuracion de Bash (.bashrc)
+  --no-starship   Omite Starship (usa vcs_info como fallback)
+  --no-motd       Omite el mensaje de bienvenida (MOTD)
+  --dir PATH      Directorio de instalacion (defecto: ~/nexus-ai)
+
+Ejemplos:
+  curl -fsSL https://raw.githubusercontent.com/guigerdts/nexus-ai/main/install.sh | bash
+  curl -fsSL https://raw.githubusercontent.com/guigerdts/nexus-ai/main/install.sh | bash -s -- --no-zsh
+  curl -fsSL https://raw.githubusercontent.com/guigerdts/nexus-ai/main/install.sh | bash -s -- --dir ~/nexus
+EOFH
+                exit 0
+                ;;
+        esac
+    done
+
+    # Determinar directorio destino
+    REMOTE_DIR="$HOME/nexus-ai"
+    ARGS=("$@")
+    for i in "${!ARGS[@]}"; do
+        if [ "${ARGS[$i]}" = "--dir" ] && [ $((i+1)) -lt ${#ARGS[@]} ]; then
+            REMOTE_DIR="${ARGS[$((i+1))]}"
+            break
+        fi
+    done
+
+    echo "=== NEXUS AI v0.2.0 ==="
+    echo "Descargando en $REMOTE_DIR..."
+
+    # Idempotencia: actualizar si ya existe, clonar si no
+    set -e  # activar errexit manual (set -u no aplica por el check previo)
+    if [ -d "$REMOTE_DIR/.git" ]; then
+        echo "Actualizando repositorio existente..."
+        (cd "$REMOTE_DIR" && git pull --ff-only 2>/dev/null) || echo "  (usando copia local)"
+    elif ! git clone --depth 1 https://github.com/guigerdts/nexus-ai.git "$REMOTE_DIR" 2>/dev/null; then
+        echo "[ERROR] No se pudo descargar el repositorio."
+        echo "        Verifica que git esta instalado y la conexion a internet."
+        exit 1
+    fi
+
+    cd "$REMOTE_DIR"
+    echo "Instalando desde $REMOTE_DIR..."
+    exec bash install.sh "$@"
+fi
+unset _NEXUS_REMOTE
+
+# ── Modo local ─────────────────────────────────────
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
@@ -391,13 +464,9 @@ fi
 # ==================================================
 step 8 8 "Configurando CLI NEXUS AI"
 
-# Crear symlink bin/nxai si no existe
-if [ ! -f "$NEXUS_ROOT/bin/nxai" ]; then
-    ln -sf "../core/nexus.sh" "$NEXUS_ROOT/bin/nxai"
-    ok "Symlink bin/nxai creado"
-else
-    ok "Symlink bin/nxai ya existe"
-fi
+# Crear/actualizar symlink bin/nxai (ruta relativa siempre)
+ln -sf "../core/nexus.sh" "$NEXUS_ROOT/bin/nxai"
+ok "Symlink bin/nxai -> ../core/nexus.sh"
 
 # ── PATH absoluto hardcodeado ─────────────────────
 # El template shell/.bashrc usa deteccion dinamica de NEXUS_ROOT,

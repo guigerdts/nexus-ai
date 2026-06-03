@@ -1,0 +1,29 @@
+# ── Logs ─────────────────────────────────────────
+logs/*.log
+logs/*.log.*
+!logs/.gitkeep
+
+# ── Shell plugins (instalados por install.sh) ────
+shell/plugins/*
+!shell/plugins/.gitkeep
+
+# ── Testing / temporal ───────────────────────────
+.antigravitycli/
+TESTING-*.md
+*.bak
+*.tmp
+*.swp
+*.swo
+*~
+
+# ── Entorno y credenciales ───────────────────────
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.cert
+
+# ── Sistema ─────────────────────────────────────
+.DS_Store
+Thumbs.db

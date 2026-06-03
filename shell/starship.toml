@@ -1,0 +1,68 @@
+# NEXUS AI — shell/starship.toml
+# Configuración de Starship con paleta cyan
+# Version: 0.1.0
+#
+# No sobrescribe ~/.config/starship.toml del usuario.
+# Se carga desde $NEXUS_ROOT/shell/starship.toml via STARSHIP_CONFIG.
+
+format = """\
+$username\
+$hostname\
+$directory\
+$git_branch\
+$git_status\
+$cmd_duration\
+$line_break\
+$character\
+"""
+
+# ── Paleta cyan ──────────────────────────────────
+palettes.nexus = {
+    primary = "#00BCD4"
+    white   = "#FFFFFF"
+    green   = "#4CAF50"
+    red     = "#F44336"
+}
+
+# ── Módulos ──────────────────────────────────────
+
+[username]
+style        = "cyan bold"
+show_always  = true
+format       = "via [$user]($style) "
+
+[hostname]
+ssh_only  = false
+format    = "at [$hostname](cyan bold) "
+disabled  = false
+
+[directory]
+style            = "cyan bold"
+truncation_length = 3
+truncate_to_repo  = true
+format           = "in [$path]($style) "
+
+[git_branch]
+style  = "cyan"
+format = "on [$branch]($style) "
+
+[git_status]
+conflicted = "🏳"
+ahead      = "⇡\${count}"
+behind     = "⇣\${count}"
+diverged   = "⇕⇡\${ahead_count}⇣\${behind_count}"
+staged     = "[++\$count](green)"
+modified   = "[!\$count](red)"
+untracked  = "[?\$count](red)"
+deleted    = "[--\$count](red)"
+renamed    = "[>\$count](cyan)"
+format     = "[\$all]($style)"
+
+[cmd_duration]
+min_time        = 2000
+format          = "took [$duration](white italic) "
+show_milliseconds = true
+
+[character]
+success_symbol = "[➜](cyan bold)"
+error_symbol   = "[✗](red bold)"

@@ -1,0 +1,70 @@
+# agent-install Specification
+
+## Purpose
+
+Generic install library at `lib/nexus-install.sh` providing shared functions for agent lifecycle management. All agent `install.sh` scripts source this library instead of reimplementing dependency checks and install logic.
+
+## Requirements
+
+### Requirement: Shared install functions
+
+The library MUST provide the following functions for any agent script to call:
+
+| Function | Behavior |
+|----------|----------|
+| `check_dependency(name, cmd)` | Verifies `cmd` exists, prints warning if missing |
+| `install_via_pip(package)` | Installs with `pip3 install --user` |
+| `install_via_npm(package)` | Installs with `npm install -g` |
+| `install_via_curl(url)` | Pipes `curl <url> \| bash` |
+| `install_via_apt(package)` | Installs with `apt install -y` |
+| `install_via_cargo(package)` | Installs with `cargo install` |
+| `mark_installed(agent)` | Logs agent as installed in `agents.log` |
+| `mark_removed(agent)` | Logs agent as removed in `agents.log` |
+
+#### Scenario: Pip install works end-to-end
+
+- GIVEN `python3` and `pip3` are available
+- WHEN an agent's install.sh calls `install_via_pip "aider-chat"`
+- THEN `pip3 install --user aider-chat` MUST be executed
+- AND `mark_installed "aider"` MUST be called on success
+
+#### Scenario: Missing dependency warns but does not crash
+
+- GIVEN `node` is not installed
+- WHEN `check_dependency "nodejs" "node --version"` is called
+- THEN the system MUST print "Dependencia faltante: nodejs"
+- AND return non-zero without aborting the parent script
+
+#### Scenario: Curl install accepts URL
+
+- GIVEN a valid URL to an install script
+- WHEN `install_via_curl "https://example.com/install.sh"` is called
+- THEN the script MUST download and pipe it to bash
+
+### Requirement: Agent install state
+
+The system MUST record install state in `$NEXUS_ROOT/logs/agents.log` with timestamp, agent name, action (install/remove), and exit status.
+
+#### Scenario: Install creates log entry
+
+- GIVEN an agent is successfully installed
+- WHEN `mark_installed` is called
+- THEN `agents.log` MUST contain a line with timestamp, agent name, "INSTALADO", and "OK"
+
+#### Scenario: Re-install is idempotent
+
+- GIVEN an agent is already marked as installed
+- WHEN `mark_installed` is called again for the same agent
+- THEN `agents.log` MUST NOT duplicate the entry
+- AND the existing entry MUST be updated with the new timestamp
+
+### Requirement: Environment-aware installation
+
+The system MUST detect the runtime environment before installing and select the appropriate package manager (`pkg` on Termux, `apt` on proot-Ubuntu).
+
+#### Scenario: Termux uses pkg
+
+- GIVEN `NEXUS_ENV` is `"termux"`
+- WHEN `install_via_apt` is called
+- THEN the function MUST silently map to `pkg install`
+- AND NOT call `apt` directly

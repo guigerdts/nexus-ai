@@ -1,0 +1,6 @@
+PROVIDER="opencode"
+FILE_PATTERNS="*.sh,*.py,*.yaml,*.zsh"
+EXCLUDE_PATTERNS="*.log,*.bak"
+RULES_FILE="AGENTS.md"
+STRICT_MODE="true"
+TIMEOUT="300"

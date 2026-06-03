@@ -2,9 +2,62 @@
 
 ## Purpose
 
-Single-entry installer for NEXUS AI — detects the runtime environment, installs dependencies, configures the shell, and presents the welcome screen. Designed to work in Termux native, proot-distro Ubuntu, or standard Linux.
+Single-entry installer for NEXUS AI — detects the runtime environment, supports remote execution (via `curl | bash`, `bash <(curl ...)`, or `source /dev/stdin`), installs dependencies, configures the shell, and presents the welcome screen. Designed to work in Termux native, proot-distro Ubuntu, or standard Linux.
 
 ## Requirements
+
+### Requirement: Remote install detection
+
+The installer MUST detect when it is being run remotely (via `curl ... | bash`, `bash <(curl ...)`, or `source /dev/stdin`) and auto-clone the repository to a local directory before proceeding with normal local installation. Detection MUST happen BEFORE `set -u` is enabled to avoid unbound-variable errors from `${BASH_SOURCE[0]}`.
+
+#### Scenario: Pipe mode — curl | bash -s
+
+- GIVEN the user runs `curl -fsSL https://raw.githubusercontent.com/guigerdts/nexus-ai/main/install.sh | bash -s -- [opts]`
+- WHEN the script starts
+- THEN `${BASH_SOURCE[0]:-}` MUST be empty/unset
+- AND the script MUST detect this as remote mode
+- AND it MUST clone the repository to the target directory
+- AND it MUST re-execute via `exec bash install.sh "$@"` from the cloned directory
+
+#### Scenario: Process substitution — bash <(curl ...)
+
+- GIVEN the user runs `bash <(curl -fsSL https://raw.githubusercontent.com/guigerdts/nexus-ai/main/install.sh)`
+- WHEN the script starts
+- THEN `${BASH_SOURCE[0]}` MUST match `/dev/fd/*`
+- AND the script MUST detect this as remote mode
+- AND it MUST clone the repository to the target directory
+- AND it MUST re-execute via `exec bash install.sh "$@"` from the cloned directory
+
+#### Scenario: Source from stdin
+
+- GIVEN the user runs `source /dev/stdin` after piping the script
+- WHEN the script starts
+- THEN `${BASH_SOURCE[0]}` MUST equal `/dev/stdin`
+- AND the script MUST detect this as remote mode
+- AND it MUST clone the repository to the target directory
+- AND it MUST re-execute via `exec bash install.sh "$@"` from the cloned directory
+
+#### Scenario: Remote install with custom directory
+
+- GIVEN the user runs `curl ... | bash -s -- --dir ~/custom-dir`
+- WHEN remote mode is detected
+- THEN the `--dir` flag MUST be parsed before cloning
+- AND the repository MUST be cloned to the specified custom directory
+- AND re-execution MUST use the custom directory
+
+#### Scenario: Remote install with --help
+
+- GIVEN the user runs `curl ... | bash -s -- --help`
+- WHEN remote mode is detected
+- THEN the script MUST print a remote-specific help message
+- AND exit WITHOUT cloning the repository
+
+#### Scenario: Remote clone is idempotent
+
+- GIVEN the target directory already has a `.git` directory (from a previous remote install)
+- WHEN remote mode is detected
+- THEN the script MUST run `git pull --ff-only` instead of cloning fresh
+- AND re-execute from the existing directory
 
 ### Requirement: Environment detection before action
 
@@ -63,14 +116,14 @@ The installer MUST support `--help` (show usage), `--no-zsh` (skip ZSH configura
 
 ### Requirement: Post-install actions
 
-After successful completion, the installer MUST install the CLI skeleton (`core/nexus.sh` + `bin/nexus` symlink), create the registry foundation (`config/agents.registry.sh` + empty `modules/` directory), display the MOTD with real command tips (e.g., `nexus help`, `nexus status`, `nexus install --all`), show a welcome message in Spanish, and print instructions to apply changes.
+After successful completion, the installer MUST install the CLI skeleton (`core/nexus.sh` + `bin/nxai` relative symlink pointing to `../core/nexus.sh`), create the registry foundation (`config/agents.registry.sh` + empty `modules/` directory), display the MOTD with real command tips (e.g., `nxai help`, `nxai status`, `nxai install --all`), show a welcome message in Spanish, and print instructions to apply changes.
 
 #### Scenario: Step 8 creates CLI skeleton
 
 - GIVEN the installer completes steps 1-7 successfully
 - WHEN Step 8 runs
-- THEN `core/nexus.sh` MUST be created
-- AND `bin/nexus` symlink MUST point to `../core/nexus.sh`
+- THEN `core/nexus.sh` MUST be present (created via git clone or project copy)
+- AND `bin/nxai` symlink MUST point to `../core/nexus.sh` (relative path, created with `ln -sf`)
 - AND `config/agents.registry.sh` MUST be created with empty agent array
 - AND `modules/` directory MUST exist
 
@@ -85,5 +138,5 @@ After successful completion, the installer MUST install the CLI skeleton (`core/
 
 - GIVEN the MOTD displays after a fresh install
 - WHEN checking the tips section
-- THEN at least one tip MUST mention `nexus list` or `nexus install --all`
+- THEN at least one tip MUST mention `nxai list` or `nxai install --all`
 - AND tips MUST be in Spanish

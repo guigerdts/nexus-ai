@@ -4,6 +4,7 @@ NEXUS AI — Guide interactivo con Rich
 Uso: python3 tui/guide.py [categoria|--interactive]
 """
 
+import shutil
 import sys
 import subprocess
 from rich.console import Console

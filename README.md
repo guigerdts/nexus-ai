@@ -3,7 +3,7 @@
 Framework de entorno para Termux/proot-Ubuntu.
 Convierte Android en una workstation profesional para agentes de IA.
 
-**Estado:** v0.2.0 — estable. Dual-environment (Termux nativo + proot-Ubuntu).
+**Estado:** v0.5.0 — estable. Dual-environment (Termux nativo + proot-Ubuntu).
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
@@ -27,7 +27,8 @@ nexus-ai/
 │   └── nxai -> ../core/nexus.sh  # Symlink de entrada
 ├── lib/
 │   ├── nexus-install.sh    # Funciones de instalación (pip, apt, npm, pkg)
-│   └── nexus-log.sh        # Logging con colores [OK]/[WARN]/[ERROR]
+│   ├── nexus-log.sh        # Logging con colores [OK]/[WARN]/[ERROR]
+│   └── nexus-update.sh     # Actualizaciones: check silencioso + apply
 ├── modules/                # 12 agentes registrados
 │   ├── aider/              # Tier 1 — asistente de código
 │   ├── opencode/           # Tier 1 — CLI multi-modelo
@@ -138,6 +139,8 @@ nxai install <agente>    # Instala un agente específico
 nxai remove <agente>     # Desinstala un agente
 nxai agent add <nombre> <url>  # Agrega un agente personalizado
 nxai agent test <nombre> # Prueba si un agente funciona
+nxai update              # Actualiza NEXUS AI a la última versión
+nxai update --check      # Verifica si hay una nueva versión disponible
 ```
 
 ## Desinstalación

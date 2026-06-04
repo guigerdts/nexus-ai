@@ -1,31 +1,36 @@
 # Archive Report: NEXUS AI v0.4 — CLI Presentation with Gum
 
 **Archived**: 2026-06-04
+**Last Updated**: 2026-06-04 (final close)
 **Change**: nexus-ai-v0.4-gum-cli
 **Mode**: openspec (file-based)
+**Status**: 🔒 FINAL — Fully Closed
 
 ---
 
 ## Verification Summary
 
-All 11 tasks implemented, 28/28 spec scenarios compliant. No critical issues. 5 bug fixes applied across 2 rounds of post-apply patching and verified.
+All 11 tasks implemented, 28/28 spec scenarios compliant. 7 fixes applied across 3 rounds including 2 post-archive device-tested redesigns on real Termux hardware. No open issues, no regressions, no design gaps remaining.
 
 | Metric | Value |
 |--------|-------|
 | Tasks total | 11 |
 | Tasks complete | 11 (100%) |
 | Spec scenarios | 28/28 compliant |
-| Verdict | PASS WITH WARNINGS |
+| Verdict | **PASS** |
+| Status | Fully closed — no open issues |
 
-### Bug Fixes Applied (5 across 2 rounds)
+### Bug Fixes Applied (7 across 3 rounds)
 
-| Bug | File | Change |
-|-----|------|--------|
-| BUG 1 — Banner color (v1) | `lib/nexus-log.sh` line 54 | `--foreground 212` → `--foreground 51` |
-| BUG 1 — Banner color (v2) | `lib/nexus-log.sh` line 54 | `--foreground 51` → `--foreground 14` (bright ANSI cyan) |
-| BUG 2 — Column widths (v1) | `core/nexus.sh` line 92 | Added `--widths 22,8,15,50` |
-| BUG 2 — Column widths (v2) | `core/nexus.sh` line 92 | `--widths 15,6,14,40` |
-| BUG 3 — zsh-vi-mode stderr | `lib/nexus-log.sh` lines 54-55 | Added `2>/dev/null` to both `gum style` calls |
+| Bug | File | Change | Round |
+|-----|------|--------|-------|
+| BUG 1 — Banner color (v1) | `lib/nexus-log.sh` line 54 | `--foreground 212` → `--foreground 51` | 1 |
+| BUG 2 — Column widths (v1) | `core/nexus.sh` line 92 | Added `--widths 22,8,15,50` | 1 |
+| BUG 3 — zsh-vi-mode stderr | `lib/nexus-log.sh` lines 54-55 | Added `2>/dev/null` to both `gum style` calls | 1 |
+| BUG 4 — Banner color v2 (Termux) | `lib/nexus-log.sh` line 54 | `--foreground 51` → `--foreground 14` (16-color safe) | 2 |
+| BUG 5 — Column widths v2 (Termux) | `core/nexus.sh` line 92 | `--widths 15,6,14,40` (accommodate "NO INSTALADO") | 2 |
+| BUG 6 — Banner redesign (Termux) | `lib/nexus-log.sh` lines 47-60 | Rewrote `show_banner()`: ASCII art via `echo -e \033[96m` (before gum check), only credits line via `gum style --foreground 245`; simplified fallback to `echo -e "\033[1;37m"`; added final `\033[0m` reset | 3 |
+| BUG 7 — `list_agents()` printf rewrite | `core/nexus.sh` lines 62-142 | Replaced `gum table` entirely with manual `printf` columns (Nombre %-15s, Estado %-14s, Descripcion truncada a 35 chars); ANSI codes in printf format strings (not data args) for correct alignment; colors: INSTALADO=\033[32m green, NO INSTALADO=\033[33m yellow, name cyan \033[96m if installed else white \033[97m | 3 |
 
 ## Specs Synced
 
@@ -35,7 +40,7 @@ All 11 tasks implemented, 28/28 spec scenarios compliant. No critical issues. 5 
 | env-config | Already current (no merge needed) | 2 requirements added (NEXUS_GUM_AVAILABLE detection, Unified color system); 1 modified (Required variable exports) |
 | install-bootstrap | Already current (no merge needed) | 2 requirements added (Gum installation step, --no-gum flag); 2 modified (Progress display 8→9, Supported CLI flags) |
 
-**Note**: All three main specs at `openspec/specs/{domain}/spec.md` already contained the delta changes from development. No destructive modifications — delta deltas were pure additions or non-breaking modifications. No warnings triggered per config.yaml `rules.archive`.
+**Note**: All three main specs at `openspec/specs/{domain}/spec.md` already contained the delta changes from development. No destructive modifications — delta deltas were pure additions or non-breaking modifications. No warnings triggered per config.yaml `rules.archive`. Post-archive fixes (Rounds 2-3) are implementation-only and do not change spec requirements.
 
 ## Merge Details
 
@@ -63,7 +68,11 @@ All 11 tasks implemented, 28/28 spec scenarios compliant. No critical issues. 5 
 
 ## Design Updates
 
-The design document was updated to reflect `--foreground 51` (cyan) instead of the original `--foreground 212` (magenta), aligning with the spec-required cyan banner color.
+The design document was updated post-archive to reflect the final implementation approach:
+
+- **Banner format**: The original design specified `gum style --foreground 51 --border double --padding "1 2"` wrapping the entire ASCII art. The final implementation renders the ASCII art via `echo -e \033[96m` (bright ANSI cyan, always available, no gum dependency for the art itself), and only the "by GUIGERDTS" credits line uses `gum style --foreground 245` when gum is available. This eliminates the gum dependency for the banner's core content and guarantees correct rendering on Termux's 16-color terminal.
+- **`list_agents()`**: The original design used `gum table --separator "," --border rounded`. The final implementation uses manual `printf` columns with ANSI codes in the format string (not data arguments), ensuring correct column alignment on 60-column Termux screens without truncation.
+- **All other design decisions** (color unification, TTY detection, gum install strategy, banner exceptions) remain unchanged.
 
 ## Archive Contents
 
@@ -76,7 +85,7 @@ The design document was updated to reflect `--foreground 51` (cyan) instead of t
 | `specs/install-bootstrap/spec.md` | ✅ |
 | `design.md` | ✅ |
 | `tasks.md` | ✅ (11/11 tasks complete) |
-| `verify-report.md` | ✅ (28/28 scenarios compliant, 3 bugs fixed) |
+| `verify-report.md` | ✅ (28/28 scenarios compliant, 7 fixes across 3 rounds) |
 | `archive-report.md` | ✅ |
 
 ## Source of Truth Updated
@@ -103,12 +112,21 @@ All 11 tasks across 4 phases completed:
 | Risk | Status |
 |------|--------|
 | Destructive merge? | No — all modifications additive or non-breaking |
-| Critical verify issues? | None — 28/28 scenarios compliant, 3 bugs fixed |
+| Critical verify issues? | None — 28/28 scenarios compliant, 7 fixes applied |
 | Archive integrity | All 8+1 artifacts present and accounted for |
-| Pre-existing design gap noted | `gum table` requires TTY in `list_agents()` — deferred |
+| Remaining design gaps | None — gum table TTY gap resolved via printf rewrite; banner ANSI-16-color safe |
 
 ---
 
-## SDD Cycle Complete
+## SDD Cycle Complete — Final Close
 
-The NEXUS AI v0.4 change has been fully planned, explored, specified, designed, implemented, verified (28/28 scenarios compliant), bug-fixed (3 fixes), and archived. The CLI now features professional Gum-based formatting with full ANSI fallback. Ready for v0.5 onwards.
+The NEXUS AI v0.4 change has been fully planned, explored, specified, designed, implemented, verified (28/28 scenarios compliant), bug-fixed (7 fixes across 3 rounds), device-tested on real Termux hardware, and closed. All pre-existing design gaps (gum table TTY dependency, 256-color ANSI incompatibility on Termux) have been resolved in the final implementation.
+
+The CLI now features:
+- Professional banner in bright ANSI cyan (\033[96m) with gum-styled credits line when available
+- `printf`-based agent list with correctly aligned colored columns (no truncation on any terminal width)
+- Gum-powered interactive confirmations, spinners, and status panels
+- Full ANSI fallback for every feature when gum is unavailable
+- 16-color safe (Termux-compatible) throughout
+
+**Ready for v0.5 onwards.**

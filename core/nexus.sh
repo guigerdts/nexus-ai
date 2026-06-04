@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # NEXUS AI — core/nexus.sh
 # CLI principal: ruteo de subcomandos via case/esac
-# Version: 0.2.0
+# Version: 0.5.0
 #
 # Symlink: bin/nxai -> ../core/nexus.sh
 # Uso: nxai <comando> [opciones]
@@ -28,6 +28,9 @@ source "$NEXUS_ROOT/lib/nexus-log.sh"
 # shellcheck source=lib/nexus-install.sh
 source "$NEXUS_ROOT/lib/nexus-install.sh"
 
+# shellcheck source=lib/nexus-update.sh
+source "$NEXUS_ROOT/lib/nexus-update.sh"
+
 # ── show_help: muestra uso del CLI ─────────────────
 show_help() {
     cat <<EOF
@@ -44,7 +47,8 @@ Comandos:
   agent test <nombre>       Prueba un agente instalado
   dashboard, ui            Inicia el Dashboard TUI
   memory                    Gestion de memoria engram (proximamente)
-  update                    Actualiza componentes (proximamente)
+  update                    Actualiza NEXUS AI a la ultima version
+  update --check, -c        Verifica si hay una nueva version disponible
   help, --help              Muestra esta ayuda
 
 Ejemplos:
@@ -383,7 +387,8 @@ Modulos cargados:
   env.sh    -> ${NEXUS_ROOT}/config/env.sh
   registry  -> ${NEXUS_REGISTRY}
   log       -> ${NEXUS_ROOT}/lib/nexus-log.sh
-  install   -> ${NEXUS_ROOT}/lib/nexus-install.sh"
+  install   -> ${NEXUS_ROOT}/lib/nexus-install.sh
+  update    -> ${NEXUS_ROOT}/lib/nexus-update.sh"
 
     if [ "$NEXUS_GUM_AVAILABLE" = "true" ]; then
         echo "$_info" | gum style --border rounded --padding "1 2"
@@ -437,22 +442,27 @@ case "${COMMAND}" in
         ;;
     install)
         show_banner
+        check_update_silent
         install_agent "$@"
         ;;
     remove)
         show_banner
+        check_update_silent
         remove_agent "$@"
         ;;
     list)
         show_banner
+        check_update_silent
         list_agents
         ;;
     status)
         show_banner
+        check_update_silent
         system_status
         ;;
     agent)
         show_banner
+        check_update_silent
         SUBCOMMAND="${1:-}"
         shift 2>/dev/null || true
         case "${SUBCOMMAND}" in
@@ -470,17 +480,27 @@ case "${COMMAND}" in
         ;;
     memory)
         show_banner
+        check_update_silent
         log_error "No implementado aun. Fase 5."
         ;;
     update)
         show_banner
-        log_error "No implementado aun."
+        check_update_silent
+        case "${2:-}" in
+            --check|-c)
+                check_update_verbose
+                ;;
+            *)
+                apply_update
+                ;;
+        esac
         ;;
     help|--help|"")
         show_help
         ;;
     *)
         show_banner
+        check_update_silent
         log_error "Comando desconocido: ${COMMAND}"
         echo ""
         show_help

@@ -27,6 +27,7 @@ if [ -d "$NEXUS_MODULES_DIR" ]; then
         _agent_desc=""
         _agent_url=""
         _agent_tier=""
+        _agent_category=""
         _agent_method=""
         _agent_binary=""
 
@@ -39,6 +40,7 @@ if [ -d "$NEXUS_MODULES_DIR" ]; then
             _agent_desc="${AGENT_DESC:-}"
             _agent_url="${AGENT_URL:-}"
             _agent_tier="${AGENT_TIER:-3}"
+            _agent_category="${AGENT_CATEGORY:-}"
             _agent_method="${AGENT_METHOD:-unknown}"
             _agent_binary="${AGENT_BINARY:-}"
         else
@@ -54,13 +56,14 @@ if [ -d "$NEXUS_MODULES_DIR" ]; then
         export AGENT_DESC="$_agent_desc"
         export AGENT_URL="$_agent_url"
         export AGENT_TIER="$_agent_tier"
+        export AGENT_CATEGORY="$_agent_category"
         export AGENT_METHOD="$_agent_method"
         export AGENT_BINARY="$_agent_binary"
     done
 fi
 
 # Limpiar variables temporales
-unset _agent_dir _agent_name _agent_version _agent_desc _agent_url _agent_tier _agent_method _agent_binary
+unset _agent_dir _agent_name _agent_version _agent_desc _agent_url _agent_tier _agent_category _agent_method _agent_binary
 
 # ── Funcion helper: listar agentes registrados ────
 registry_list() {
@@ -75,7 +78,7 @@ registry_list() {
         if [ -f "$_meta" ]; then
             # shellcheck source=/dev/null
             source "$_meta"
-            echo "${AGENT_NAME:-$_name} | ${AGENT_TIER:-3} | ${AGENT_METHOD:-unknown} | ${AGENT_DESC:-}"
+            echo "${AGENT_NAME:-$_name} | ${AGENT_TIER:-3} | ${AGENT_CATEGORY:-} | ${AGENT_METHOD:-unknown} | ${AGENT_DESC:-}"
         else
             echo "$_name | ? | ? | (INCOMPLETO - sin metadata.sh)"
         fi
@@ -95,7 +98,7 @@ registry_get() {
     if [ -f "$dir/metadata.sh" ]; then
         # shellcheck source=/dev/null
         source "$dir/metadata.sh"
-        echo "$AGENT_NAME|$AGENT_VERSION|$AGENT_DESC|$AGENT_URL|$AGENT_TIER|$AGENT_METHOD|$AGENT_BINARY"
+        echo "$AGENT_NAME|$AGENT_VERSION|$AGENT_DESC|$AGENT_URL|$AGENT_TIER|$AGENT_CATEGORY|$AGENT_METHOD|$AGENT_BINARY"
     else
         echo "[WARN] Agente '$name' no tiene metadata.sh" >&2
         return 1

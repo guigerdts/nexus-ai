@@ -31,35 +31,41 @@ source "$NEXUS_ROOT/lib/nexus-install.sh"
 # shellcheck source=lib/nexus-update.sh
 source "$NEXUS_ROOT/lib/nexus-update.sh"
 
+# shellcheck source=lib/nexus-guide.sh
+source "$NEXUS_ROOT/lib/nexus-guide.sh"
+
 # ── show_help: muestra uso del CLI ─────────────────
 show_help() {
-    cat <<EOF
-NEXUS AI v${NEXUS_VERSION} — CLI de gestion de agentes
-
-Uso: nxai <comando> [opciones]
-
-Comandos:
-  install [--all|<agente>]  Instala uno o todos los agentes
-  remove <agente>           Desinstala un agente
-  list                      Lista agentes registrados
-  status                    Muestra estado del sistema
-  agent add <nombre> <url>  Anade un nuevo agente (esqueleto)
-  agent test <nombre>       Prueba un agente instalado
-  dashboard, ui            Inicia el Dashboard TUI
-  memory                    Gestion de memoria engram (proximamente)
-  update                    Actualiza NEXUS AI a la ultima version
-  update --check, -c        Verifica si hay una nueva version disponible
-  help, --help              Muestra esta ayuda
-
-Ejemplos:
-  nxai install --all       Instala todos los agentes
-  nxai install aider       Instala solo aider
-  nxai remove aider        Desinstala aider
-  nxai list                Lista agentes y su estado
-  nxai status              Info del sistema
-  nxai agent test aider    Prueba si aider funciona
-  nxai help                Muestra esta ayuda
-EOF
+    printf "\n"
+    printf "\033[1mUso:\033[0m \033[1;36mnxai\033[0m \033[1m<comando>\033[0m [opciones]\n"
+    printf "\n"
+    printf "\033[1mComandos disponibles:\033[0m\n"
+    printf "  \033[1m%-12s\033[0m %s\n" "install"   "Instalar agentes y herramientas"
+    printf "  \033[1m%-12s\033[0m %s\n" "remove"    "Desinstalar agentes"
+    printf "  \033[1m%-12s\033[0m %s\n" "list"      "Listar agentes disponibles"
+    printf "  \033[1m%-12s\033[0m %s\n" "status"    "Estado del sistema"
+    printf "  \033[1m%-12s\033[0m %s\n" "update"    "Actualizar NEXUS AI"
+    printf "  \033[1m%-12s\033[0m %s\n" "guide"     "Guia de uso por categorias"
+    printf "  \033[1m%-12s\033[0m %s\n" "dashboard" "Abrir panel TUI"
+    printf "  \033[1m%-12s\033[0m %s\n" "agent"     "Gestionar agentes custom"
+    printf "  \033[1m%-12s\033[0m %s\n" "help"      "Mostrar esta ayuda"
+    printf "\n"
+    printf "\033[1mInicio rapido:\033[0m\n"
+    printf "  \033[1;36mnxai guide\033[0m              Ver guia completa\n"
+    printf "  \033[1;36mnxai install --all\033[0m      Instalar todos los agentes\n"
+    printf "  \033[1;36mnxai list\033[0m               Ver agentes disponibles\n"
+    printf "  \033[1;36mnxai dashboard\033[0m          Abrir panel visual\n"
+    printf "\n"
+    printf "\033[1mModulos por categoria (\033[1;36mnxai install\033[0m \033[1m<modulo>\033[0m\033[1m):\033[0m\n"
+    printf "  \033[1m%-12s\033[0m opencode, codex, claude-code, openclou, antigravity,\n" "ai"
+    printf "  %-12s  pi, gentle-ai, engram\n" ""
+    printf "  \033[1m%-12s\033[0m aider, neovim (stub)\n" "editor"
+    printf "  \033[1m%-12s\033[0m sgpt, zsh, starship\n" "shell"
+    printf "  \033[1m%-12s\033[0m fabric, goose, gh, fzf, gum, curl\n" "tools"
+    printf "  \033[1m%-12s\033[0m node, python, rust, go (stubs)\n" "language"
+    printf "  \033[1m%-12s\033[0m sqlite, postgresql (stubs)\n" "db"
+    printf "  \033[1m%-12s\033[0m termux-ui, banner (stubs)\n" "ui"
+    printf "  \033[1m%-12s\033[0m n8n (stub)\n" "automation"
 }
 
 # ── list_agents: lista agentes y su estado ─────────
@@ -495,7 +501,29 @@ case "${COMMAND}" in
                 ;;
         esac
         ;;
+    guide)
+        show_banner
+        check_update_silent
+        case "${1:-}" in
+            --interactive|-i)
+                show_guide_rich --interactive
+                ;;
+            ai|editor|shell|tools|language|db|ui|automation)
+                show_guide_category "$1"
+                ;;
+            "")
+                show_guide
+                ;;
+            *)
+                echo "Categoria desconocida: $1"
+                echo "Uso: nxai guide [categoria|--interactive]"
+                echo "Categorias: ai, editor, shell, tools, language, db, ui, automation"
+                exit 1
+                ;;
+        esac
+        ;;
     help|--help|"")
+        show_banner
         show_help
         ;;
     *)

@@ -40,6 +40,22 @@ export NEXUS_VERSION="0.5.0"
 export NEXUS_LANG="es"
 
 # ============================================
+# Detección de Rich (Python TUI)
+# ============================================
+export PYTHONPATH="/usr/local/lib/python3.13/dist-packages:${PYTHONPATH:-}"
+if python3 -c "import rich" 2>/dev/null; then
+    export NEXUS_RICH_AVAILABLE="true"
+else
+    # Attempt fix with break-system-packages
+    pip3 install --break-system-packages --user rich 2>/dev/null || true
+    if python3 -c "import rich" 2>/dev/null; then
+        export NEXUS_RICH_AVAILABLE="true"
+    else
+        export NEXUS_RICH_AVAILABLE="false"
+    fi
+fi
+
+# ============================================
 # Detección de Gum (Charm.sh)
 # ============================================
 export NEXUS_GUM_AVAILABLE=$(command -v gum &>/dev/null && echo true || echo false)

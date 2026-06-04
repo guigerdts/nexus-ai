@@ -19,10 +19,10 @@
 
 | Option | Tradeoff | Decision |
 |--------|----------|----------|
-| `gum style` wrapping the whole block | All banner text same color (--foreground 212 pink) — loses cyan/gray distinction in gum mode | ✅ |
+| `gum style` wrapping the whole block | All banner text same color (--foreground 51 cyan) — loses gray distinction in gum mode | ✅ |
 | Multiple `gum style` calls per line | Over-engineering for a banner | ❌ |
 
-**Rationale:** When gum is available, wrap entire ASCII art in `gum style --foreground 212 --border double --padding "1 2"`. The "by GUIGERDTS" line gets a separate `gum style --foreground 245` for the gray distinction. When gum is unavailable, use `echo -e` with ANSI (existing motd.sh pattern).
+**Rationale:** When gum is available, wrap entire ASCII art in `gum style --foreground 51 --border double --padding "1 2"`. The "by GUIGERDTS" line gets a separate `gum style --foreground 245` for the gray distinction. When gum is unavailable, use `echo -e` with ANSI (existing motd.sh pattern).
 
 ### Decision: TTY detection for interactive prompts
 
@@ -55,8 +55,8 @@ motd.sh ──→ ASCII art block (figlet -f big)
         ┌─────┴─────┐
         │ gum avail  │ not avail
         ▼            ▼
-   gum style --    echo -e with
-   foreground 212  ANSI codes
+    gum style --    echo -e with
+    foreground 51   ANSI codes
 ```
 
 ### nxai list with gum table

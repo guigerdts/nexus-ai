@@ -89,7 +89,7 @@ list_agents() {
             _rows="${_rows}${AGENT_NAME:-$_name},Tier ${AGENT_TIER:-?},${_status_cell},${AGENT_DESC:-}
 "
         done
-        printf '%s' "$_rows" | gum table --separator "," --border rounded --columns "Nombre,Tier,Estado,Descripcion"
+        printf '%s' "$_rows" | gum table --separator "," --border rounded --columns "Nombre,Tier,Estado,Descripcion" --widths 22,8,15,50
     else
         echo "Agentes registrados:"
         echo "---"

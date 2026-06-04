@@ -486,7 +486,7 @@ case "${COMMAND}" in
     update)
         show_banner
         check_update_silent
-        case "${2:-}" in
+        case "${1:-}" in
             --check|-c)
                 check_update_verbose
                 ;;

@@ -40,6 +40,11 @@ export NEXUS_VERSION="0.2.0"
 export NEXUS_LANG="es"
 
 # ============================================
+# Detección de Gum (Charm.sh)
+# ============================================
+export NEXUS_GUM_AVAILABLE=$(command -v gum &>/dev/null && echo true || echo false)
+
+# ============================================
 # Detección de entorno
 # ============================================
 if [ -n "${PREFIX:-}" ]; then
@@ -77,9 +82,15 @@ export NEXUS_REGISTRY="$NEXUS_ROOT/config/agents.registry.sh"
 export NEXUS_LOG_FILE="$NEXUS_ROOT/logs/nexus.log"
 
 # ============================================
-# Colores ANSI
+# Colores ANSI unificados
 # ============================================
-export NEXUS_COLOR_PRIMARY='\033[0;36m'   # Cyan
+export NEXUS_COLOR_CYAN='\033[0;36m'
+export NEXUS_COLOR_YELLOW='\033[0;33m'
+export NEXUS_COLOR_RED='\033[0;31m'
+export NEXUS_COLOR_GREEN='\033[0;32m'
+export NEXUS_COLOR_GRAY='\033[0;37m'
 export NEXUS_COLOR_RESET='\033[0m'
+# Backward compat alias
+export NEXUS_COLOR_PRIMARY="${NEXUS_COLOR_CYAN}"
 
 

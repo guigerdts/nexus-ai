@@ -65,33 +65,59 @@ list_agents() {
         return 0
     fi
 
-    echo "Agentes registrados:"
-    echo "---"
-    for _name in "${AGENT_ORDER[@]}"; do
-        local _dir="${AGENTS[$_name]}"
-        local _meta="$_dir/metadata.sh"
-        local _status=""
+    if [ "$NEXUS_GUM_AVAILABLE" = "true" ]; then
+        # Build CSV rows for gum table
+        local _rows=""
+        for _name in "${AGENT_ORDER[@]}"; do
+            local _dir="${AGENTS[$_name]}"
+            local _meta="$_dir/metadata.sh"
 
-        if [ -f "$_meta" ]; then
-            # shellcheck source=/dev/null
-            source "$_meta"
-        fi
+            if [ -f "$_meta" ]; then
+                # shellcheck source=/dev/null
+                source "$_meta"
+            fi
 
-        # Verificar si el binario existe
-        if [ -n "${AGENT_BINARY:-}" ] && command -v "$AGENT_BINARY" &>/dev/null; then
-            _status="${_NEXUS_CYAN}[INSTALADO]${_NEXUS_RESET}"
-        elif [ -f "$_dir/test.sh" ] && bash "$_dir/test.sh" &>/dev/null; then
-            _status="${_NEXUS_CYAN}[INSTALADO]${_NEXUS_RESET}"
-        else
-            _status="${_NEXUS_YELLOW}[NO INSTALADO]${_NEXUS_RESET}"
-        fi
+            local _status_cell
+            if [ -n "${AGENT_BINARY:-}" ] && command -v "$AGENT_BINARY" &>/dev/null; then
+                _status_cell="$(gum style --foreground 42 "INSTALADO")"
+            elif [ -f "$_dir/test.sh" ] && bash "$_dir/test.sh" &>/dev/null; then
+                _status_cell="$(gum style --foreground 42 "INSTALADO")"
+            else
+                _status_cell="$(gum style --foreground 220 "NO INSTALADO")"
+            fi
 
-        echo -e "  ${AGENT_NAME:-$_name} (Tier ${AGENT_TIER:-?}) $_status"
-        if [ -n "${AGENT_DESC:-}" ]; then
-            echo -e "    -> ${AGENT_DESC}"
-        fi
-    done
-    unset _name _dir _meta _status
+            _rows="${_rows}${AGENT_NAME:-$_name},Tier ${AGENT_TIER:-?},${_status_cell},${AGENT_DESC:-}
+"
+        done
+        printf '%s' "$_rows" | gum table --separator "," --border rounded --columns "Nombre,Tier,Estado,Descripcion"
+    else
+        echo "Agentes registrados:"
+        echo "---"
+        for _name in "${AGENT_ORDER[@]}"; do
+            local _dir="${AGENTS[$_name]}"
+            local _meta="$_dir/metadata.sh"
+            local _status=""
+
+            if [ -f "$_meta" ]; then
+                # shellcheck source=/dev/null
+                source "$_meta"
+            fi
+
+            if [ -n "${AGENT_BINARY:-}" ] && command -v "$AGENT_BINARY" &>/dev/null; then
+                _status="${NEXUS_COLOR_CYAN}[INSTALADO]${NEXUS_COLOR_RESET}"
+            elif [ -f "$_dir/test.sh" ] && bash "$_dir/test.sh" &>/dev/null; then
+                _status="${NEXUS_COLOR_CYAN}[INSTALADO]${NEXUS_COLOR_RESET}"
+            else
+                _status="${NEXUS_COLOR_YELLOW}[NO INSTALADO]${NEXUS_COLOR_RESET}"
+            fi
+
+            echo -e "  ${AGENT_NAME:-$_name} (Tier ${AGENT_TIER:-?}) $_status"
+            if [ -n "${AGENT_DESC:-}" ]; then
+                echo -e "    -> ${AGENT_DESC}"
+            fi
+        done
+        unset _name _dir _meta _status
+    fi
 }
 
 # ── install_agent: instala uno o todos los agentes ─
@@ -103,9 +129,13 @@ install_agent() {
         for _name in "${AGENT_ORDER[@]}"; do
             local _dir="${AGENTS[$_name]}"
             if [ -f "$_dir/install.sh" ]; then
-                log_info "Instalando $_name..."
-                # shellcheck source=/dev/null
-                (source "$_dir/install.sh") || log_warn "Fallo al instalar $_name"
+                if [ "$NEXUS_GUM_AVAILABLE" = "true" ]; then
+                    gum spin --spinner dot --title "Instalando ${_name}..." -- bash "$_dir/install.sh" 2>/dev/null || log_warn "Fallo al instalar $_name"
+                else
+                    log_info "Instalando $_name..."
+                    # shellcheck source=/dev/null
+                    (source "$_dir/install.sh") || log_warn "Fallo al instalar $_name"
+                fi
             else
                 log_warn "$_name no tiene install.sh, saltando"
             fi
@@ -123,12 +153,22 @@ install_agent() {
         return 1
     fi
 
-    if [ -f "$_dir/install.sh" ]; then
-        log_info "Instalando $target..."
-        # shellcheck source=/dev/null
-        (source "$_dir/install.sh")
+    # Per-agent install with optional gum confirm+spin
+    if [ "$NEXUS_GUM_AVAILABLE" = "true" ] && [ -t 0 ]; then
+        gum confirm "Instalar ${target}?" || { log_info "Instalacion cancelada"; return 0; }
+        if [ -f "$_dir/install.sh" ]; then
+            gum spin --spinner dot --title "Instalando ${target}..." -- bash "$_dir/install.sh" 2>/dev/null || log_warn "Fallo al instalar $target"
+        else
+            log_warn "$target no tiene install.sh"
+        fi
     else
-        log_warn "$target no tiene install.sh"
+        if [ -f "$_dir/install.sh" ]; then
+            log_info "Instalando $target..."
+            # shellcheck source=/dev/null
+            (source "$_dir/install.sh")
+        else
+            log_warn "$target no tiene install.sh"
+        fi
     fi
 }
 
@@ -155,28 +195,53 @@ remove_agent() {
 
     local _pkg="${AGENT_PACKAGE:-$AGENT_NAME}"
 
-    case "${AGENT_METHOD:-}" in
-        pip)
-            uninstall_via_pip "$_pkg"
-            ;;
-        npm)
-            uninstall_via_npm "$_pkg"
-            ;;
-        curl|cargo|apt)
-            if [ -n "${AGENT_BINARY:-}" ] && command -v "$AGENT_BINARY" &>/dev/null; then
-                rm -f "$(command -v "$AGENT_BINARY")" 2>/dev/null || true
-            fi
-            ;;
-        *)
-            log_warn "Metodo '$AGENT_METHOD' no tiene desinstalador automatico."
-            if [ -n "${AGENT_BINARY:-}" ] && command -v "$AGENT_BINARY" &>/dev/null; then
-                rm -f "$(command -v "$AGENT_BINARY")" 2>/dev/null || true
-            fi
-            ;;
-    esac
-
-    mark_removed "$target"
-    log_ok "Agente '$target' desinstalado."
+    # Gum confirm (mandatory when interactive + gum available)
+    if [ "$NEXUS_GUM_AVAILABLE" = "true" ] && [ -t 0 ]; then
+        gum confirm "Eliminar ${target}?" || { log_info "Eliminacion cancelada"; return 0; }
+        # Wrap removal in gum spin — source needed modules for the subshell
+        gum spin --spinner dot --title "Eliminando ${target}..." -- bash -c "
+            source '$NEXUS_ROOT/config/env.sh'
+            source '$NEXUS_ROOT/lib/nexus-install.sh'
+            source '$_dir/metadata.sh' 2>/dev/null
+            _pkg=\"\${AGENT_PACKAGE:-\$AGENT_NAME}\"
+            case \"\${AGENT_METHOD:-}\" in
+                pip) uninstall_via_pip \"\$_pkg\" ;;
+                npm) uninstall_via_npm \"\$_pkg\" ;;
+                curl|cargo|apt)
+                    if [ -n \"\${AGENT_BINARY:-}\" ] && command -v \"\$AGENT_BINARY\" &>/dev/null; then
+                        rm -f \"\$(command -v \"\$AGENT_BINARY\")\" 2>/dev/null || true
+                    fi ;;
+                *)
+                    if [ -n \"\${AGENT_BINARY:-}\" ] && command -v \"\$AGENT_BINARY\" &>/dev/null; then
+                        rm -f \"\$(command -v \"\$AGENT_BINARY\")\" 2>/dev/null || true
+                    fi ;;
+            esac
+        " 2>/dev/null
+        mark_removed "$target"
+        gum style --foreground 42 "Agente '${target}' desinstalado."
+    else
+        case "${AGENT_METHOD:-}" in
+            pip)
+                uninstall_via_pip "$_pkg"
+                ;;
+            npm)
+                uninstall_via_npm "$_pkg"
+                ;;
+            curl|cargo|apt)
+                if [ -n "${AGENT_BINARY:-}" ] && command -v "$AGENT_BINARY" &>/dev/null; then
+                    rm -f "$(command -v "$AGENT_BINARY")" 2>/dev/null || true
+                fi
+                ;;
+            *)
+                log_warn "Metodo '$AGENT_METHOD' no tiene desinstalador automatico."
+                if [ -n "${AGENT_BINARY:-}" ] && command -v "$AGENT_BINARY" &>/dev/null; then
+                    rm -f "$(command -v "$AGENT_BINARY")" 2>/dev/null || true
+                fi
+                ;;
+        esac
+        mark_removed "$target"
+        log_ok "Agente '$target' desinstalado."
+    fi
     unset _pkg
 }
 
@@ -235,22 +300,34 @@ agent_test() {
         return 0
     fi
 
-    local _start_time _end_time _elapsed _exit_code=0
-    _start_time=$(date +%s)
-
-    timeout 10 bash "$_test_sh" || _exit_code=$?
-
-    _end_time=$(date +%s)
-    _elapsed=$(( _end_time - _start_time ))
-
-    if [ "$_exit_code" -eq 124 ]; then
-        log_error "$_test_name: TIMEOUT (>10s)"
-    elif [ "$_exit_code" -eq 0 ]; then
-        log_ok "$_test_name: PASS (${_elapsed}.0s)"
+    if [ "$NEXUS_GUM_AVAILABLE" = "true" ]; then
+        local _exit_code=0
+        gum spin --spinner dot --title "Probando ${_test_name}..." -- timeout 10 bash "$_test_sh" 2>/dev/null || _exit_code=$?
+        if [ "$_exit_code" -eq 124 ]; then
+            gum style --foreground 196 "TIMEOUT: ${_test_name} (>10s)"
+        elif [ "$_exit_code" -eq 0 ]; then
+            gum style --foreground 42 "PASS: ${_test_name}"
+        else
+            gum style --foreground 196 "FAIL: ${_test_name}"
+        fi
     else
-        log_error "$_test_name: FAIL (${_elapsed}.0s)"
+        local _start_time _end_time _elapsed _exit_code=0
+        _start_time=$(date +%s)
+
+        timeout 10 bash "$_test_sh" || _exit_code=$?
+
+        _end_time=$(date +%s)
+        _elapsed=$(( _end_time - _start_time ))
+
+        if [ "$_exit_code" -eq 124 ]; then
+            log_error "$_test_name: TIMEOUT (>10s)"
+        elif [ "$_exit_code" -eq 0 ]; then
+            log_ok "$_test_name: PASS (${_elapsed}.0s)"
+        else
+            log_error "$_test_name: FAIL (${_elapsed}.0s)"
+        fi
+        unset _test_name _test_dir _test_sh _start_time _end_time _elapsed _exit_code
     fi
-    unset _test_name _test_dir _test_sh _start_time _end_time _elapsed _exit_code
 }
 
 # ── system_status: muestra estado del sistema ──────
@@ -272,19 +349,26 @@ system_status() {
     done
     unset _name _dir
 
-    echo "=== Estado del Sistema NEXUS AI ==="
-    echo "Version:      ${NEXUS_VERSION}"
-    echo "Entorno:      ${NEXUS_ENV}"
-    echo "Arquitectura: ${NEXUS_ARCH}"
-    echo "Directorio:   ${NEXUS_ROOT}"
-    echo "Agentes:      ${installed_count}/${agent_count} instalados"
-    echo "Language:     ${NEXUS_LANG}"
-    echo ""
-    echo "Modulos cargados:"
-    echo "  env.sh    -> ${NEXUS_ROOT}/config/env.sh"
-    echo "  registry  -> ${NEXUS_REGISTRY}"
-    echo "  log       -> ${NEXUS_ROOT}/lib/nexus-log.sh"
-    echo "  install   -> ${NEXUS_ROOT}/lib/nexus-install.sh"
+    local _info
+    _info="=== Estado del Sistema NEXUS AI ===
+Version:      ${NEXUS_VERSION}
+Entorno:      ${NEXUS_ENV}
+Arquitectura: ${NEXUS_ARCH}
+Directorio:   ${NEXUS_ROOT}
+Agentes:      ${installed_count}/${agent_count} instalados
+Language:     ${NEXUS_LANG}
+
+Modulos cargados:
+  env.sh    -> ${NEXUS_ROOT}/config/env.sh
+  registry  -> ${NEXUS_REGISTRY}
+  log       -> ${NEXUS_ROOT}/lib/nexus-log.sh
+  install   -> ${NEXUS_ROOT}/lib/nexus-install.sh"
+
+    if [ "$NEXUS_GUM_AVAILABLE" = "true" ]; then
+        echo "$_info" | gum style --border rounded --padding "1 2"
+    else
+        echo "$_info"
+    fi
 }
 
 # ═══════════════════════════════════════════════════
@@ -331,18 +415,23 @@ case "${COMMAND}" in
         exec python3 "$NEXUS_ROOT/tui/dashboard.py" "$@"
         ;;
     install)
+        show_banner
         install_agent "$@"
         ;;
     remove)
+        show_banner
         remove_agent "$@"
         ;;
     list)
+        show_banner
         list_agents
         ;;
     status)
+        show_banner
         system_status
         ;;
     agent)
+        show_banner
         SUBCOMMAND="${1:-}"
         shift 2>/dev/null || true
         case "${SUBCOMMAND}" in
@@ -359,15 +448,18 @@ case "${COMMAND}" in
         esac
         ;;
     memory)
+        show_banner
         log_error "No implementado aun. Fase 5."
         ;;
     update)
+        show_banner
         log_error "No implementado aun."
         ;;
     help|--help|"")
         show_help
         ;;
     *)
+        show_banner
         log_error "Comando desconocido: ${COMMAND}"
         echo ""
         show_help

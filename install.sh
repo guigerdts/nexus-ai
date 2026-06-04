@@ -3,7 +3,7 @@
 # Instalador principal: detecta entorno, instala dependencias, configura Zsh, plugins, prompt y MOTD
 # Version: 0.1.0
 #
-# Flags: --help, --no-zsh, --no-bashrc, --no-starship, --no-motd, --dir PATH
+# Flags: --help, --no-zsh, --no-bashrc, --no-starship, --no-motd, --no-gum, --dir PATH
 # Uso: ./install.sh [opciones]
 
 # ── Detectar modo remoto (curl | bash) ────────────
@@ -37,6 +37,7 @@ Opciones:
   --no-bashrc     Omite la configuracion de Bash (.bashrc)
   --no-starship   Omite Starship (usa vcs_info como fallback)
   --no-motd       Omite el mensaje de bienvenida (MOTD)
+  --no-gum        Omite la instalacion de Gum (Charm.sh)
   --dir PATH      Directorio de instalacion (defecto: ~/nexus-ai)
 
 Ejemplos:
@@ -91,6 +92,7 @@ INSTALL_ZSH=true
 INSTALL_BASHRC=true
 INSTALL_STARSHIP=true
 INSTALL_MOTD=true
+SKIP_GUM=false
 CUSTOM_DIR=""
 
 # ── Helper: mostrar uso ──────────────────────────
@@ -106,6 +108,7 @@ Opciones:
   --no-bashrc      Omite la configuración de Bash (.bashrc)
   --no-starship    Omite Starship (usa vcs_info como fallback)
   --no-motd        Omite el mensaje de bienvenida (MOTD)
+  --no-gum         Omite la instalación de Gum (Charm.sh)
   --dir PATH       Establece un directorio de instalación personalizado
 
 Sin opciones: instalación completa en el directorio actual.
@@ -140,6 +143,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --no-motd)
             INSTALL_MOTD=false
+            shift
+            ;;
+        --no-gum)
+            SKIP_GUM=true
             shift
             ;;
         --dir)
@@ -186,10 +193,34 @@ fail() {
     echo -e "  \033[0;31m✗\033[0m $1"
 }
 
+# ── install_gum: instala Gum (Charm.sh) ──────────
+install_gum() {
+    if [ "$SKIP_GUM" = true ]; then
+        log_info "Saltando instalación de Gum (--no-gum)"
+        return 0
+    fi
+    if command -v gum &>/dev/null; then
+        log_ok "Gum ya está instalado: $(gum --version 2>/dev/null || echo 'disponible')"
+        return 0
+    fi
+    log_info "Instalando Gum (Charm.sh)..."
+    if [ "$NEXUS_ENV" = "termux" ]; then
+        pkg install gum -y
+    else
+        local gum_url="https://github.com/charmbracelet/gum/releases/download/v0.17.0/gum_0.17.0_Linux_arm64.tar.gz"
+        local gum_tmp="/tmp/gum.tar.gz"
+        curl -fsSL "$gum_url" -o "$gum_tmp" || { log_warn "No se pudo descargar Gum"; return 0; }
+        tar -xzf "$gum_tmp" -C /tmp/ && cp /tmp/gum_*/gum "$NEXUS_ROOT/bin/gum" || { log_warn "No se pudo extraer Gum"; return 0; }
+        chmod +x "$NEXUS_ROOT/bin/gum"
+        rm -rf "$gum_tmp" /tmp/gum_*
+        log_ok "Gum instalado en $NEXUS_ROOT/bin/gum"
+    fi
+}
+
 # ==================================================
 #  PASO 1: Verificar entorno
 # ==================================================
-step 1 8 "Verificando entorno"
+step 1 9 "Verificando entorno"
 echo "  Entorno detectado: ${NEXUS_ENV}"
 echo "  Arquitectura: ${NEXUS_ARCH}"
 echo "  Directorio raíz: ${NEXUS_ROOT}"
@@ -210,7 +241,7 @@ fi
 # ==================================================
 #  PASO 2: Instalar dependencias del sistema
 # ==================================================
-step 2 8 "Instalando dependencias del sistema"
+step 2 9 "Instalando dependencias del sistema"
 
 # Seleccionar gestor de paquetes según entorno
 case "$NEXUS_ENV" in
@@ -246,7 +277,7 @@ fi
 # ==================================================
 #  PASO 3: Crear estructura de directorios
 # ==================================================
-step 3 8 "Creando estructura de directorios"
+step 3 9 "Creando estructura de directorios"
 
 mkdir -p "$NEXUS_ROOT"/{core,shell/plugins,modules,bin,config,lib,logs}
 ok "Directorios creados: core/, shell/plugins/, modules/, bin/, config/, lib/, logs/"
@@ -254,7 +285,7 @@ ok "Directorios creados: core/, shell/plugins/, modules/, bin/, config/, lib/, l
 # ==================================================
 #  PASO 4: Instalar plugins de Zsh
 # ==================================================
-step 4 8 "Instalando plugins de Zsh"
+step 4 9 "Instalando plugins de Zsh"
 
 if [ "$INSTALL_ZSH" = true ]; then
 
@@ -312,7 +343,7 @@ fi
 # ==================================================
 #  PASO 5: Configurar Starship (prompt)
 # ==================================================
-step 5 8 "Configurando Starship"
+step 5 9 "Configurando Starship"
 
 if [ "$INSTALL_STARSHIP" = true ]; then
     if command -v starship &>/dev/null; then
@@ -345,7 +376,7 @@ fi
 # ==================================================
 #  PASO 6: Configurar .zshrc (bloque idempotente)
 # ==================================================
-step 6 8 "Configurando .zshrc"
+step 6 9 "Configurando .zshrc"
 
 if [ "$INSTALL_ZSH" = true ]; then
 
@@ -424,7 +455,7 @@ fi
 # ==================================================
 #  PASO 7: Post-instalación (MOTD + bienvenida)
 # ==================================================
-step 7 8 "Post-instalación"
+step 7 9 "Post-instalación"
 
 if [ "$INSTALL_MOTD" = true ]; then
     echo ""
@@ -462,7 +493,7 @@ fi
 # ==================================================
 #  PASO 8: Configurar CLI NEXUS AI y PATH
 # ==================================================
-step 8 8 "Configurando CLI NEXUS AI"
+step 8 9 "Configurando CLI NEXUS AI"
 
 # Crear/actualizar symlink bin/nxai (ruta relativa siempre)
 ln -sf "../core/nexus.sh" "$NEXUS_ROOT/bin/nxai"
@@ -506,6 +537,12 @@ if [ "${INSTALL_ZSH:-false}" = "true" ] && [ -f "$ZSHRC" ]; then
 fi
 
 ok "CLI NEXUS AI configurado. Probá: nxai help"
+
+# ==================================================
+#  PASO 9: Instalar Gum (Charm.sh)
+# ==================================================
+step 9 9 "Instalando Gum (Charm.sh)"
+install_gum
 
 # ==================================================
 #  FIN

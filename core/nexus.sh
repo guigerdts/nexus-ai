@@ -68,7 +68,7 @@ list_agents() {
     if [ "$NEXUS_GUM_AVAILABLE" = "true" ]; then
         # ── Header ──
         printf '  \033[1m%-15s %-14s %s\033[0m\n' "Nombre" "Estado" "Descripcion"
-        printf '  \033[2m'; printf '%59s\n' '' | tr ' ' '-'; printf '\033[0m\n'
+        printf '  \033[2m'; printf '%59s' '' | tr ' ' '-'; printf '\033[0m\n'
 
         for _name in "${AGENT_ORDER[@]}"; do
             local _dir="${AGENTS[$_name]}"

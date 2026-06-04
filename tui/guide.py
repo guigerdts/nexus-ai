@@ -109,7 +109,8 @@ def build_category_table(cat_name):
             estado = "[yellow]NO INSTALADO[/yellow]"
             comando = "[dim](stub)[/dim]"
         else:
-            estado = "[green]INSTALADO[/green]"
+            is_installed = shutil.which(name) is not None
+            estado = "[green]INSTALADO[/green]" if is_installed else "[yellow]NO INSTALADO[/yellow]"
             comando = f"[yellow]{install_cmd}[/yellow]"
 
         table.add_row(name, desc, estado, comando)
@@ -208,7 +209,8 @@ def interactive_menu():
             if "(stub)" in install_cmd:
                 estado = "[yellow]NO INSTALADO[/yellow]"
             else:
-                estado = "[green]INSTALADO[/green]"
+                is_installed = shutil.which(name) is not None
+                estado = "[green]INSTALADO[/green]" if is_installed else "[yellow]NO INSTALADO[/yellow]"
             tool_table.add_row(str(i), name, desc, estado)
 
         console.print(tool_table)

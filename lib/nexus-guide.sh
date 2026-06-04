@@ -27,7 +27,7 @@ _print_category() {
 
     # Columnas
     printf "%-16s %-35s %s\n" "Herramienta" "Descripcion" "Instalar"
-    printf "%-16s %-35s %s\n" "----------" "-----------" "--------"
+    printf "%-16s %-35s %s\n" "----------------" "-----------------------------------" "--------"
 
     # Herramientas
     while [ $# -gt 0 ]; do
@@ -106,24 +106,24 @@ show_guide_category() {
                 "curl"     "HTTP client"                   "(stub)"
             ;;
         language)
-            _print_category "Lenguajes" "no" \
+            _print_category "Lenguajes" "yes" \
                 "node"   "JavaScript runtime"              "(stub)" \
                 "python" "Python language"                 "(stub)" \
                 "rust"   "Rust systems language"           "(stub)" \
                 "go"     "Go programming language"         "(stub)"
             ;;
         db)
-            _print_category "Bases de Datos" "no" \
+            _print_category "Bases de Datos" "yes" \
                 "sqlite"     "Base de datos embebida"      "(stub)" \
                 "postgresql" "Base de datos relacional"    "(stub)"
             ;;
         ui)
-            _print_category "Interfaz de Usuario" "no" \
+            _print_category "Interfaz de Usuario" "yes" \
                 "termux-ui" "Interfaz Termux"              "(stub)" \
                 "banner"    "Personalizar banner"          "(stub)"
             ;;
         automation)
-            _print_category "Automatizacion" "no" \
+            _print_category "Automatizacion" "yes" \
                 "n8n" "Workflow automation"                "(stub)"
             ;;
         *)

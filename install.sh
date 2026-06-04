@@ -479,7 +479,10 @@ if [ "${INSTALL_BASHRC:-false}" = "true" ] && [ -f "$BASHRC" ]; then
     if ! grep -qF "$NEXUS_PATH_MARKER" "$BASHRC" 2>/dev/null; then
         echo "" >> "$BASHRC"
         echo "$NEXUS_PATH_MARKER" >> "$BASHRC"
-        echo "export PATH=\"$NEXUS_ROOT/bin:\$PATH\"" >> "$BASHRC"
+        echo "case \":\$PATH:\" in" >> "$BASHRC"
+        echo "    *\":$NEXUS_ROOT/bin:\"*) ;;" >> "$BASHRC"
+        echo "    *) export PATH=\"$NEXUS_ROOT/bin:\$PATH\" ;;" >> "$BASHRC"
+        echo "esac" >> "$BASHRC"
         ok "PATH absoluto agregado a ${BASHRC}"
     else
         ok "PATH absoluto ya existe en ${BASHRC} — omitiendo"
@@ -492,7 +495,10 @@ if [ "${INSTALL_ZSH:-false}" = "true" ] && [ -f "$ZSHRC" ]; then
     if ! grep -qF "$NEXUS_PATH_MARKER" "$ZSHRC" 2>/dev/null; then
         echo "" >> "$ZSHRC"
         echo "$NEXUS_PATH_MARKER" >> "$ZSHRC"
-        echo "export PATH=\"$NEXUS_ROOT/bin:\$PATH\"" >> "$ZSHRC"
+        echo "case \":\$PATH:\" in" >> "$ZSHRC"
+        echo "    *\":$NEXUS_ROOT/bin:\"*) ;;" >> "$ZSHRC"
+        echo "    *) export PATH=\"$NEXUS_ROOT/bin:\$PATH\" ;;" >> "$ZSHRC"
+        echo "esac" >> "$ZSHRC"
         ok "PATH absoluto agregado a ${ZSHRC}"
     else
         ok "PATH absoluto ya existe en ${ZSHRC} — omitiendo"

@@ -20,9 +20,12 @@ if [ -n "$NEXUS_ROOT" ] && [ -f "$NEXUS_ROOT/config/env.sh" ]; then
     source "$NEXUS_ROOT/config/env.sh"
 fi
 
-# ── PATH ──────────────────────────────────────────
+# ── PATH (idempotente: solo agrega si no esta ya) ──
 if [ -n "$NEXUS_ROOT" ] && [ -d "$NEXUS_ROOT/bin" ]; then
-    export PATH="$NEXUS_ROOT/bin:$PATH"
+    case ":$PATH:" in
+        *":$NEXUS_ROOT/bin:"*) ;;
+        *) export PATH="$NEXUS_ROOT/bin:$PATH" ;;
+    esac
 fi
 
 # ═══════════════════════════════════════════════════

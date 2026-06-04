@@ -42,6 +42,7 @@ Comandos:
   status                    Muestra estado del sistema
   agent add <nombre> <url>  Anade un nuevo agente (esqueleto)
   agent test <nombre>       Prueba un agente instalado
+  dashboard, ui            Inicia el Dashboard TUI
   memory                    Gestion de memoria engram (proximamente)
   update                    Actualiza componentes (proximamente)
   help, --help              Muestra esta ayuda
@@ -294,6 +295,41 @@ COMMAND="${1:-}"
 shift 2>/dev/null || true
 
 case "${COMMAND}" in
+    dashboard|ui)
+        # --help flag: show usage without requiring textual
+        for _arg in "$@"; do
+            case "$_arg" in
+                --help|-h)
+                    echo "Uso: nxai dashboard [opciones]"
+                    echo "  Inicia el Dashboard TUI de NEXUS AI"
+                    echo ""
+                    echo "Opciones:"
+                    echo "  --help    Muestra esta ayuda"
+                    echo ""
+                    echo "Alias: nxai ui"
+                    exit 0
+                    ;;
+            esac
+        done
+        unset _arg
+
+        # shellcheck source=config/env.sh
+        source "$NEXUS_ROOT/config/env.sh"
+        export NEXUS_ROOT
+
+        if ! python3 -c "import textual" 2>/dev/null; then
+            echo "=== NEXUS AI Dashboard ==="
+            echo "Requiere Textual (framework TUI para Python)."
+            echo ""
+            echo "Instalalo con:"
+            echo "  pip install 'textual>=0.50.0'"
+            echo ""
+            echo "Despues volve a ejecutar: nxai dashboard"
+            exit 1
+        fi
+
+        exec python3 "$NEXUS_ROOT/tui/dashboard.py" "$@"
+        ;;
     install)
         install_agent "$@"
         ;;

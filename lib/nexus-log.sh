@@ -51,7 +51,7 @@ show_banner() {
 |  \| | |__   \ V /| |  | | (___      /  \    | |
 | . \` | |__   > < | |  | |\___ \    / /\ \   | |
 | |\  | |____ / . \| |__| |____) |  / ____ \ _| |_
-|_| \_|______/_/ \_\\____/|_____/  /_/    \_\_____|" | gum style --foreground 51 --border double --padding "1 2" 2>/dev/null
+|_| \_|______/_/ \_\\____/|_____/  /_/    \_\_____|" | gum style --foreground 14 --border double --padding "1 2" 2>/dev/null
         echo "by GUIGERDTS" | gum style --foreground 245 2>/dev/null
     else
         echo -e "\n${NEXUS_COLOR_CYAN} _   _ ________   ___    _  _____            _____"

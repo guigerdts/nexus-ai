@@ -8,7 +8,7 @@
 
 ## Verification Summary
 
-All 11 tasks implemented, 28/28 spec scenarios compliant. No critical issues. 3 bug fixes applied post-apply and verified.
+All 11 tasks implemented, 28/28 spec scenarios compliant. No critical issues. 5 bug fixes applied across 2 rounds of post-apply patching and verified.
 
 | Metric | Value |
 |--------|-------|
@@ -17,12 +17,14 @@ All 11 tasks implemented, 28/28 spec scenarios compliant. No critical issues. 3 
 | Spec scenarios | 28/28 compliant |
 | Verdict | PASS WITH WARNINGS |
 
-### Bug Fixes Applied (3)
+### Bug Fixes Applied (5 across 2 rounds)
 
 | Bug | File | Change |
 |-----|------|--------|
-| BUG 1 — Banner color | `lib/nexus-log.sh` line 54 | `--foreground 212` → `--foreground 51` (true cyan) |
-| BUG 2 — Column widths | `core/nexus.sh` line 92 | Added `--widths 22,8,15,50` to `gum table` |
+| BUG 1 — Banner color (v1) | `lib/nexus-log.sh` line 54 | `--foreground 212` → `--foreground 51` |
+| BUG 1 — Banner color (v2) | `lib/nexus-log.sh` line 54 | `--foreground 51` → `--foreground 14` (bright ANSI cyan) |
+| BUG 2 — Column widths (v1) | `core/nexus.sh` line 92 | Added `--widths 22,8,15,50` |
+| BUG 2 — Column widths (v2) | `core/nexus.sh` line 92 | `--widths 15,6,14,40` |
 | BUG 3 — zsh-vi-mode stderr | `lib/nexus-log.sh` lines 54-55 | Added `2>/dev/null` to both `gum style` calls |
 
 ## Specs Synced

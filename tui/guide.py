@@ -8,7 +8,9 @@ import sys
 import subprocess
 from rich.console import Console
 from rich.table import Table
-from rich.prompt import Prompt
+from rich.panel import Panel
+from rich.prompt import Prompt, Confirm
+from rich import box
 
 console = Console()
 
@@ -84,110 +86,170 @@ CATEGORIES = {
 }
 
 
+def build_category_table(cat_name):
+    """Build a Rich Table for a category with colored rows."""
+    cat = CATEGORIES.get(cat_name)
+    if not cat:
+        return None
+
+    table = Table(
+        title=cat["title"],
+        title_style="bold cyan",
+        header_style="bold cyan",
+        box=box.ROUNDED,
+        border_style="cyan",
+    )
+    table.add_column("Herramienta", style="cyan", no_wrap=True)
+    table.add_column("Descripcion", style="white")
+    table.add_column("Estado", style="bold", no_wrap=True)
+    table.add_column("Comando", no_wrap=True)
+
+    for name, desc, install_cmd in cat["tools"]:
+        if "(stub)" in install_cmd:
+            estado = "[yellow]NO INSTALADO[/yellow]"
+            comando = "[dim](stub)[/dim]"
+        else:
+            estado = "[green]INSTALADO[/green]"
+            comando = f"[yellow]{install_cmd}[/yellow]"
+
+        table.add_row(name, desc, estado, comando)
+
+    return table
+
+
 def show_category(cat_name):
-    """Show a single category table."""
+    """Show a single category as a Rich Panel with Table."""
     cat = CATEGORIES.get(cat_name)
     if not cat:
         console.print(f"[red]Categoria desconocida: {cat_name}[/red]")
         console.print("Categorias disponibles: " + ", ".join(CATEGORIES.keys()))
         return
 
-    table = Table(title=cat["title"], title_style="bold cyan")
-    table.add_column("Herramienta", style="cyan", no_wrap=True)
-    table.add_column("Descripcion", style="white")
-    table.add_column("Instalar", style="dim")
-
-    for name, desc, install in cat["tools"]:
-        table.add_row(name, desc, install)
-
-    console.print(table)
+    table = build_category_table(cat_name)
+    if table:
+        panel = Panel(
+            table,
+            title=f"[bold cyan]{cat['title']}[/bold cyan]",
+            border_style="cyan",
+            box=box.DOUBLE,
+        )
+        console.print(panel)
 
 
 def show_all():
-    """Show all categories."""
+    """Show all categories as Panels."""
     for cat_name in CATEGORIES:
         show_category(cat_name)
 
 
 def interactive_menu():
     """Interactive menu to select and install tools."""
-    console.print("[bold cyan]Guia Interactiva NEXUS AI[/bold cyan]")
-    console.print("")
+    console.print(Panel(
+        "[bold cyan]Guia Interactiva NEXUS AI[/bold cyan]\n"
+        "[dim]Selecciona una categoria y herramienta para instalar[/dim]",
+        border_style="cyan",
+        box=box.DOUBLE,
+    ))
 
-    # Build flat tool list
-    all_tools = []
-    for cat_name, cat in CATEGORIES.items():
-        for name, desc, install_cmd in cat["tools"]:
-            if "(stub)" not in install_cmd:
-                all_tools.append((name, desc, install_cmd, cat_name))
-
-    # Show category menu first
     cat_names = list(CATEGORIES.keys())
-    console.print("[bold]Categorias disponibles:[/bold]")
-    for i, name in enumerate(cat_names, 1):
-        console.print(f"  {i}. {name}")
 
-    choice = Prompt.ask(
-        "Selecciona una categoria (o 'all' para todas, 'q' para salir)",
-        default="all"
-    )
+    while True:
+        # Step 1: pick category
+        console.print("\n[bold]Categorias disponibles:[/bold]")
+        for i, name in enumerate(cat_names, 1):
+            console.print(f"  [cyan]{i}.[/cyan] {name}")
 
-    if choice.lower() == 'q':
-        return
+        choice = Prompt.ask(
+            "\n[bold]Selecciona una categoria[/bold] (numero, nombre, 'all' para todas, 'q' para salir)",
+            default="all"
+        )
 
-    if choice.lower() == 'all':
-        target_cats = list(CATEGORIES.keys())
-    else:
-        try:
-            idx = int(choice) - 1
-            if 0 <= idx < len(cat_names):
-                target_cats = [cat_names[idx]]
-            else:
-                console.print("[red]Opcion invalida[/red]")
-                return
-        except ValueError:
-            if choice in CATEGORIES:
-                target_cats = [choice]
-            else:
-                console.print(f"[red]Categoria desconocida: {choice}[/red]")
-                return
+        if choice.lower() == 'q':
+            break
 
-    # Show tools from selected categories
-    tools_to_show = []
-    for cat_name in target_cats:
-        cat = CATEGORIES[cat_name]
-        for name, desc, install_cmd in cat["tools"]:
-            tools_to_show.append((name, desc, install_cmd, cat_name))
+        if choice.lower() == 'all':
+            target_cats = list(CATEGORIES.keys())
+        else:
+            try:
+                idx = int(choice) - 1
+                if 0 <= idx < len(cat_names):
+                    target_cats = [cat_names[idx]]
+                else:
+                    console.print("[red]Opcion invalida[/red]")
+                    continue
+            except ValueError:
+                if choice in CATEGORIES:
+                    target_cats = [choice]
+                else:
+                    console.print(f"[red]Categoria desconocida: {choice}[/red]")
+                    continue
 
-    console.print("\n[bold]Herramientas disponibles:[/bold]")
-    for i, (name, desc, install_cmd, cat_name) in enumerate(tools_to_show, 1):
-        stub_mark = " [dim](stub)[/dim]" if "(stub)" in install_cmd else ""
-        console.print(f"  {i}. {name} — {desc}{stub_mark}")
+        # Step 2: show tools from selected categories
+        tools_to_show = []
+        for cat_name in target_cats:
+            cat = CATEGORIES[cat_name]
+            for name, desc, install_cmd in cat["tools"]:
+                tools_to_show.append((name, desc, install_cmd, cat_name))
 
-    tool_choice = Prompt.ask(
-        "Selecciona una herramienta para instalar (o 'q' para salir)"
-    )
+        if not tools_to_show:
+            console.print("[yellow]No hay herramientas en esta categoria.[/yellow]")
+            console.print("[dim]Presiona Enter para continuar...[/dim]")
+            Prompt.ask("")
+            continue
 
-    if tool_choice.lower() == 'q':
-        return
+        console.print(f"\n[bold]Herramientas en [cyan]{', '.join(target_cats)}[/cyan]:[/bold]")
+        tool_table = Table(box=box.SIMPLE, show_header=False)
+        tool_table.add_column("#", style="dim", no_wrap=True)
+        tool_table.add_column("Herramienta", style="cyan", no_wrap=True)
+        tool_table.add_column("Descripcion", style="white")
+        tool_table.add_column("Estado", no_wrap=True)
 
-    try:
-        idx = int(tool_choice) - 1
-        if 0 <= idx < len(tools_to_show):
-            name, desc, install_cmd, cat_name = tools_to_show[idx]
+        for i, (name, desc, install_cmd, cat_name) in enumerate(tools_to_show, 1):
             if "(stub)" in install_cmd:
-                console.print(f"[yellow]'{name}' es un stub — aun no disponible para instalacion.[/yellow]")
+                estado = "[yellow]NO INSTALADO[/yellow]"
             else:
+                estado = "[green]INSTALADO[/green]"
+            tool_table.add_row(str(i), name, desc, estado)
+
+        console.print(tool_table)
+
+        # Step 3: pick tool
+        tool_choice = Prompt.ask(
+            "\n[bold]Selecciona una herramienta para instalar[/bold] (numero o 'q' para salir)"
+        )
+
+        if tool_choice.lower() == 'q':
+            break
+
+        try:
+            idx = int(tool_choice) - 1
+            if 0 <= idx < len(tools_to_show):
+                name, desc, install_cmd, cat_name = tools_to_show[idx]
+
+                if "(stub)" in install_cmd:
+                    console.print(f"\n[yellow]'{name}' es un stub — aun no disponible para instalacion.[/yellow]")
+                    console.print("[dim]Presiona Enter para continuar...[/dim]")
+                    Prompt.ask("")
+                    continue
+
+                # Confirm before installing
+                if not Confirm.ask(f"\n[bold]¿Instalar [cyan]{name}[/cyan]?[/bold]"):
+                    console.print("[dim]Cancelado.[/dim]")
+                    continue
+
                 console.print(f"[cyan]Instalando {name}...[/cyan]")
                 result = subprocess.run(install_cmd.split(), capture_output=True, text=True)
                 if result.returncode == 0:
-                    console.print(f"[green]✓ {name} instalado correctamente[/green]")
+                    console.print(f"\n[green]✓ {name} instalado correctamente[/green]")
                 else:
-                    console.print(f"[red]✗ Error instalando {name}: {result.stderr}[/red]")
-        else:
-            console.print("[red]Opcion invalida[/red]")
-    except ValueError:
-        console.print("[red]Ingresa un numero valido[/red]")
+                    console.print(f"\n[red]✗ Error instalando {name}: {result.stderr}[/red]")
+            else:
+                console.print("[red]Opcion invalida[/red]")
+        except ValueError:
+            console.print("[red]Ingresa un numero valido[/red]")
+
+        console.print("[dim]Presiona Enter para volver al menu de categorias...[/dim]")
+        Prompt.ask("")
 
 
 def main():

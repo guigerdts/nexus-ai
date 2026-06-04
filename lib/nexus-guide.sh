@@ -3,10 +3,59 @@
 # Guia interactiva por categorias
 # Version: 0.6.0
 
+# ── Colores ANSI ──
+_CYAN="\033[96m"
+_YELLOW="\033[33m"
+_GRAY="\033[2m\033[90m"
+_RESET="\033[0m"
+_SEP="══════════════════════════════"
+
+# ── _print_category: renderiza una categoria ──
+# Uso: _print_category "Titulo" herramientas[] tiene_uninstall
+_print_category() {
+    local _title="$1"
+    shift
+    local _has_uninstall="$1"
+    shift
+    local _name _desc _cmd
+
+    # Header cian
+    echo ""
+    echo -e "${_CYAN}${_SEP}${_RESET}"
+    echo -e "${_CYAN}  ${_title}${_RESET}"
+    echo -e "${_CYAN}${_SEP}${_RESET}"
+
+    # Columnas
+    printf "%-16s %-35s %s\n" "Herramienta" "Descripcion" "Instalar"
+    printf "%-16s %-35s %s\n" "----------" "-----------" "--------"
+
+    # Herramientas
+    while [ $# -gt 0 ]; do
+        _name="$1"
+        _desc="$2"
+        _cmd="$3"
+        shift 3
+
+        if [ "$_cmd" = "(stub)" ]; then
+            printf "%-16s %-35s ${_GRAY}%s${_RESET}\n" "$_name" "$_desc" "$_cmd"
+        else
+            printf "%-16s %-35s ${_YELLOW}%s${_RESET}\n" "$_name" "$_desc" "$_cmd"
+        fi
+    done
+
+    # Desinstalar
+    if [ "$_has_uninstall" = "yes" ]; then
+        echo -e "${_GRAY}Desinstalar: nxai remove <herramienta>${_RESET}"
+    fi
+    echo ""
+}
+
 # ── show_guide: muestra todas las categorias ──
 show_guide() {
     echo ""
-    echo "=== Guia NEXUS AI por Categorias ==="
+    echo -e "${_CYAN}════════════════════════════════════════${_RESET}"
+    echo -e "${_CYAN}  Guia NEXUS AI por Categorias${_RESET}"
+    echo -e "${_CYAN}════════════════════════════════════════${_RESET}"
     echo ""
 
     show_guide_category "ai"
@@ -26,99 +75,59 @@ show_guide_category() {
 
     case "$_cat" in
         ai)
-            echo "IA / Agentes"
-            echo "============"
-            echo "Herramienta     Descripcion                    Instalar"
-            echo "----------     -----------                    --------"
-            echo "opencode        CLI multi-modelo 150K+ stars   nxai install opencode"
-            echo "codex           OpenAI Codex CLI               nxai install codex"
-            echo "claude-code     Claude Code CLI                nxai install claude-code"
-            echo "openclou        OpenCLO UI agent               nxai install openclou"
-            echo "antigravity     Autonomous coding agent        nxai install antigravity"
-            echo "pi              Terminal AI assistant          nxai install pi"
-            echo "gentle-ai       OpenCode Gentle AI             nxai install gentle-ai"
-            echo "engram          Persistent memory agent        nxai install engram"
-            echo ""
-            echo "Desinstalar: nxai remove <herramienta>"
-            echo ""
+            _print_category "IA / Agentes" "yes" \
+                "opencode"    "CLI multi-modelo 150K+ stars"     "nxai install opencode" \
+                "codex"       "OpenAI Codex CLI"                 "nxai install codex" \
+                "claude-code" "Claude Code CLI"                  "nxai install claude-code" \
+                "openclou"    "OpenCLO UI agent"                 "nxai install openclou" \
+                "antigravity" "Autonomous coding agent"          "nxai install antigravity" \
+                "pi"          "Terminal AI assistant"            "nxai install pi" \
+                "gentle-ai"   "OpenCode Gentle AI"               "nxai install gentle-ai" \
+                "engram"      "Persistent memory agent"          "nxai install engram"
             ;;
         editor)
-            echo "Editores"
-            echo "========"
-            echo "Herramienta     Descripcion                    Instalar"
-            echo "----------     -----------                    --------"
-            echo "aider           Coding AI Git-nativo           nxai install aider"
-            echo "neovim          Editor de texto avanzado       (stub)"
-            echo ""
-            echo "Desinstalar: nxai remove <herramienta>"
-            echo ""
+            _print_category "Editores" "yes" \
+                "aider"    "Coding AI Git-nativo"           "nxai install aider" \
+                "neovim"   "Editor de texto avanzado"      "(stub)"
             ;;
         shell)
-            echo "Terminal / Shell"
-            echo "================"
-            echo "Herramienta     Descripcion                    Instalar"
-            echo "----------     -----------                    --------"
-            echo "sgpt            ShellGPT AI assistant          nxai install sgpt"
-            echo "zsh             Z shell mejorado               (stub)"
-            echo "starship        Prompt minimalista             (stub)"
-            echo ""
-            echo "Desinstalar: nxai remove <herramienta>"
-            echo ""
+            _print_category "Terminal / Shell" "yes" \
+                "sgpt"     "ShellGPT AI assistant"         "nxai install sgpt" \
+                "zsh"      "Z shell mejorado"              "(stub)" \
+                "starship" "Prompt minimalista"            "(stub)"
             ;;
         tools)
-            echo "Herramientas"
-            echo "============"
-            echo "Herramienta     Descripcion                    Instalar"
-            echo "----------     -----------                    --------"
-            echo "fabric          AI-powered CLI toolkit         nxai install fabric"
-            echo "goose           Autonomous agent framework     nxai install goose"
-            echo "gh              GitHub CLI                     (stub)"
-            echo "fzf             Fuzzy finder                   (stub)"
-            echo "gum             Shell scripting UI             (stub)"
-            echo "curl            HTTP client                    (stub)"
-            echo ""
-            echo "Desinstalar: nxai remove <herramienta>"
-            echo ""
+            _print_category "Herramientas" "yes" \
+                "fabric"   "AI-powered CLI toolkit"        "nxai install fabric" \
+                "goose"    "Autonomous agent framework"    "nxai install goose" \
+                "gh"       "GitHub CLI"                    "(stub)" \
+                "fzf"      "Fuzzy finder"                  "(stub)" \
+                "gum"      "Shell scripting UI"            "(stub)" \
+                "curl"     "HTTP client"                   "(stub)"
             ;;
         language)
-            echo "Lenguajes"
-            echo "========="
-            echo "Herramienta     Descripcion                    Instalar"
-            echo "----------     -----------                    --------"
-            echo "node            JavaScript runtime             (stub)"
-            echo "python          Python language                (stub)"
-            echo "rust            Rust systems language          (stub)"
-            echo "go              Go programming language        (stub)"
-            echo ""
+            _print_category "Lenguajes" "no" \
+                "node"   "JavaScript runtime"              "(stub)" \
+                "python" "Python language"                 "(stub)" \
+                "rust"   "Rust systems language"           "(stub)" \
+                "go"     "Go programming language"         "(stub)"
             ;;
         db)
-            echo "Bases de Datos"
-            echo "=============="
-            echo "Herramienta     Descripcion                    Instalar"
-            echo "----------     -----------                    --------"
-            echo "sqlite          Base de datos embebida         (stub)"
-            echo "postgresql      Base de datos relacional       (stub)"
-            echo ""
+            _print_category "Bases de Datos" "no" \
+                "sqlite"     "Base de datos embebida"      "(stub)" \
+                "postgresql" "Base de datos relacional"    "(stub)"
             ;;
         ui)
-            echo "Interfaz de Usuario"
-            echo "==================="
-            echo "Herramienta     Descripcion                    Instalar"
-            echo "----------     -----------                    --------"
-            echo "termux-ui       Interfaz Termux                (stub)"
-            echo "banner          Personalizar banner            (stub)"
-            echo ""
+            _print_category "Interfaz de Usuario" "no" \
+                "termux-ui" "Interfaz Termux"              "(stub)" \
+                "banner"    "Personalizar banner"          "(stub)"
             ;;
         automation)
-            echo "Automatizacion"
-            echo "=============="
-            echo "Herramienta     Descripcion                    Instalar"
-            echo "----------     -----------                    --------"
-            echo "n8n             Workflow automation            (stub)"
-            echo ""
+            _print_category "Automatizacion" "no" \
+                "n8n" "Workflow automation"                "(stub)"
             ;;
         *)
-            echo "Categoria desconocida: $_cat"
+            echo -e "${_YELLOW}Categoria desconocida: ${_cat}${_RESET}"
             echo "Categorias disponibles: ai, editor, shell, tools, language, db, ui, automation"
             return 1
             ;;
@@ -130,7 +139,7 @@ show_guide_rich() {
     if [ "$NEXUS_RICH_AVAILABLE" = "true" ]; then
         python3 "$NEXUS_ROOT/tui/guide.py" "$@"
     else
-        echo "[INFO] Rich no disponible. Usando guia basica."
+        echo -e "${_YELLOW}[INFO]${_RESET} Rich no disponible. Usando guia basica."
         if [ $# -eq 0 ] || [ "$1" = "--interactive" ] || [ "$1" = "-i" ]; then
             show_guide
         else

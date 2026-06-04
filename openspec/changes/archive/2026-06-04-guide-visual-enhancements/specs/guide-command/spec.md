@@ -1,14 +1,11 @@
-# guide-command Specification
+# Delta for guide-command
 
-## Purpose
-
-Categorized module guide for exploring NEXUS AI tools by domain. Supports full listing, single-category filter, and interactive Rich TUI. Pure bash output for basic use, Python/Rich for interactive mode.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Guide all categories
 
 The system MUST display all 8 categories (ai, editor, shell, tools, language, db, ui, automation) with their tools and descriptions when `nxai guide` is invoked without arguments. Output MUST use ANSI cyan headers with `═` separators, `printf` column alignment, yellow-highlighted install commands, gray muted stub lines, and a dimmed uninstall line.
+(Previously: plain output with printf and ANSI, no specific color scheme)
 
 #### Scenario: Guide shows full catalog with visual hierarchy
 
@@ -27,6 +24,7 @@ The system MUST display all 8 categories (ai, editor, shell, tools, language, db
 ### Requirement: Guide single category
 
 The system MUST filter to a single category when `nxai guide <category>` is invoked. Output MUST apply the same ANSI color scheme and alignment as the full guide.
+(Previously: filtered display without specified visual treatment)
 
 #### Scenario: Valid category match with visual styling
 
@@ -43,6 +41,7 @@ The system MUST filter to a single category when `nxai guide <category>` is invo
 ### Requirement: Interactive guide
 
 The system SHOULD launch a Rich TUI when `nxai guide --interactive` is invoked, with fallback to bash category list if Rich is unavailable. In interactive mode, each category MUST be wrapped in a Rich Panel with cyan border, tools MUST display with INSTALADO/NO INSTALADO status, install MUST prompt via Confirm.ask, and stub detection MUST show gray `(stub)`.
+(Previously: Rich menu for browsing without Panel wrappers, status column, or confirmation gate)
 
 #### Scenario: All categories in Rich Panel layout
 
@@ -77,3 +76,7 @@ The system SHOULD launch a Rich TUI when `nxai guide --interactive` is invoked, 
 - WHEN `nxai guide --interactive` runs
 - THEN the system MUST fall back to bash guide output matching `nxai guide`
 - AND print a notice that Rich is unavailable
+
+## REMOVED Requirements
+
+None — all existing requirements remain, only their visual behavior is enhanced.

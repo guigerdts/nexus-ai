@@ -391,7 +391,7 @@ Modulos cargados:
   update    -> ${NEXUS_ROOT}/lib/nexus-update.sh"
 
     if [ "$NEXUS_GUM_AVAILABLE" = "true" ]; then
-        echo "$_info" | gum style --border rounded --padding "1 2"
+        echo "$_info" | gum style --border rounded --padding "1 2" 2>/dev/null
     else
         echo "$_info"
     fi

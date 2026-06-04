@@ -4,10 +4,10 @@
 # Version: 0.5.0
 #
 # Dependencias: NEXUS_ROOT, NEXUS_VERSION (desde config/env.sh)
-# Cache temporal en /tmp/nexus-version-check (TTL: 24h)
+# Cache temporal en ${TMPDIR:-/tmp}/nexus-version-check (TTL: 24h)
 
 # ── Config ────────────────────────────────────────
-_nexus_update_cache_file="/tmp/nexus-version-check"
+_nexus_update_cache_file="${TMPDIR:-/tmp}/nexus-version-check"
 _nexus_update_cache_ttl=86400  # 24 horas en segundos
 _nexus_update_log_dir="$NEXUS_ROOT/logs"
 _nexus_update_log_file="$_nexus_update_log_dir/update-check.log"
@@ -41,7 +41,7 @@ _nexus_version_compare() {
 
     # Sort version: la que aparece primero en sort -V es la menor
     local _sorted
-    _sorted="$(printf '%s\n%s\n' "$_local" "$_remote" | sort -V | head -1)"
+    _sorted="$(printf '%s\n%s\n' "$_local" "$_remote" | sort -V 2>/dev/null | head -1)"
     if [ "$_sorted" = "$_local" ]; then
         return 1  # local < remote
     else

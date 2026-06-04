@@ -32,7 +32,7 @@ The system SHALL compare local vs remote versions using semver comparison.
 
 The system MUST cache the remote version check result to avoid repeated network requests.
 
-- **Cache file**: `/tmp/nexus-version-check`
+- **Cache file**: `${TMPDIR:-/tmp}/nexus-version-check`
 - **Cache format**: `<timestamp> <version>` (space-separated)
 - **TTL**: 86400 seconds (24 hours)
 - If the cache is valid (within TTL), the system MUST NOT make a network request.

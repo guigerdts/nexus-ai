@@ -66,8 +66,10 @@ list_agents() {
     fi
 
     if [ "$NEXUS_GUM_AVAILABLE" = "true" ]; then
-        # Build CSV rows for gum table
-        local _rows=""
+        # ── Header ──
+        printf '  \033[1m%-15s %-14s %s\033[0m\n' "Nombre" "Estado" "Descripcion"
+        printf '  \033[2m'; printf '%59s\n' '' | tr ' ' '-'; printf '\033[0m\n'
+
         for _name in "${AGENT_ORDER[@]}"; do
             local _dir="${AGENTS[$_name]}"
             local _meta="$_dir/metadata.sh"
@@ -77,19 +79,38 @@ list_agents() {
                 source "$_meta"
             fi
 
-            local _status_cell
+            # Detect installed status
+            local _installed=false
             if [ -n "${AGENT_BINARY:-}" ] && command -v "$AGENT_BINARY" &>/dev/null; then
-                _status_cell="$(gum style --foreground 42 "INSTALADO")"
+                _installed=true
             elif [ -f "$_dir/test.sh" ] && bash "$_dir/test.sh" &>/dev/null; then
-                _status_cell="$(gum style --foreground 42 "INSTALADO")"
-            else
-                _status_cell="$(gum style --foreground 220 "NO INSTALADO")"
+                _installed=true
             fi
 
-            _rows="${_rows}${AGENT_NAME:-$_name},${_status_cell},${AGENT_DESC:-}
-"
+            # Status text and colors — ANSI codes go in printf FORMAT string,
+            # plain text goes as arguments, so alignment is calculated correctly
+            local _c_name _c_status _t_status
+            if [ "$_installed" = true ]; then
+                _c_name='\033[96m'
+                _c_status='\033[32m'
+                _t_status="INSTALADO"
+            else
+                _c_name='\033[97m'
+                _c_status='\033[33m'
+                _t_status="NO INSTALADO"
+            fi
+
+            # Truncate description to 35 chars
+            local _desc="${AGENT_DESC:-}"
+            if [ ${#_desc} -gt 35 ]; then
+                _desc="${_desc:0:32}..."
+            fi
+
+            # ANSI codes in format string = alignment correct,
+            # plain text args = no width miscalculation
+            printf "  ${_c_name}%-15s\033[0m ${_c_status}%-14s\033[0m %s\n" \
+                "${AGENT_NAME:-$_name}" "$_t_status" "$_desc"
         done
-        printf '%s' "$_rows" | gum table --separator "," --border rounded --columns "Nombre,Estado,Descripcion" --widths 14,13,30
     else
         echo "Agentes registrados:"
         echo "---"

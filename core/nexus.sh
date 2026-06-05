@@ -249,27 +249,49 @@ remove_agent() {
     # Gum confirm (mandatory when interactive + gum available)
     if [ "$NEXUS_GUM_AVAILABLE" = "true" ] && [ -t 0 ]; then
         gum confirm "Eliminar ${target}?" || { log_info "Eliminacion cancelada"; return 0; }
-        # Wrap removal in gum spin — source needed modules for the subshell
-        gum spin --spinner dot --title "Eliminando ${target}..." -- bash -c "
-            source '$NEXUS_ROOT/config/env.sh'
-            source '$NEXUS_ROOT/lib/nexus-install.sh'
-            source '$_dir/metadata.sh' 2>/dev/null
-            _pkg=\"\${AGENT_PACKAGE:-\$AGENT_NAME}\"
-            case \"\${AGENT_METHOD:-}\" in
-                pip) uninstall_via_pip \"\$_pkg\" ;;
-                npm) uninstall_via_npm \"\$_pkg\" ;;
-                curl|cargo|apt)
-                    if [ -n \"\${AGENT_BINARY:-}\" ] && command -v \"\$AGENT_BINARY\" &>/dev/null; then
-                        rm -f \"\$(command -v \"\$AGENT_BINARY\")\" 2>/dev/null || true
-                    fi ;;
-                *)
-                    if [ -n \"\${AGENT_BINARY:-}\" ] && command -v \"\$AGENT_BINARY\" &>/dev/null; then
-                        rm -f \"\$(command -v \"\$AGENT_BINARY\")\" 2>/dev/null || true
-                    fi ;;
-            esac
-        " 2>/dev/null
-        mark_removed "$target"
-        gum style --foreground 42 "Agente '${target}' desinstalado." 2>/dev/null
+        # Wrap removal in gum spin with TERMUX env passthrough
+        if gum spin --spinner dot --title "Eliminando ${target}..." -- env \
+            NEXUS_ROOT="$NEXUS_ROOT" \
+            NEXUS_ENV="$NEXUS_ENV" \
+            NEXUS_TERMUX_ACCESSIBLE="${NEXUS_TERMUX_ACCESSIBLE:-}" \
+            TERMUX_PREFIX="${TERMUX_PREFIX:-}" \
+            TERMUX_BIN="${TERMUX_BIN:-}" \
+            TERMUX_PIP="${TERMUX_PIP:-}" \
+            TERMUX_PKG="${TERMUX_PKG:-}" \
+            bash -c "
+                source \"\$NEXUS_ROOT/config/env.sh\"
+                source \"\$NEXUS_ROOT/lib/nexus-install.sh\"
+                source '$_dir/metadata.sh' 2>/dev/null
+                _pkg=\"\${AGENT_PACKAGE:-\$AGENT_NAME}\"
+                case \"\${AGENT_METHOD:-}\" in
+                    pip)  uninstall_via_pip \"\$_pkg\" ;;
+                    npm)  uninstall_via_npm \"\$_pkg\" ;;
+                    pkg)  uninstall_via_apt \"\$_pkg\" ;;
+                    apt)  uninstall_via_apt \"\$_pkg\" ;;
+                    git)
+                        echo \"[INFO] Agente instalado via git. Elimina el directorio clonado manualmente.\"
+                        ;;
+                    stub)
+                        echo \"[INFO] Agente stub — no requiere desinstalacion. Elimina el binario manualmente si lo instalaste.\"
+                        ;;
+                    curl|cargo|binary)
+                        if [ -n \"\${AGENT_BINARY:-}\" ] && command -v \"\$AGENT_BINARY\" &>/dev/null; then
+                            rm -f \"\$(command -v \"\$AGENT_BINARY\")\" 2>/dev/null || true
+                        fi ;;
+                    *)
+                        if [ -n \"\${AGENT_BINARY:-}\" ] && command -v \"\$AGENT_BINARY\" &>/dev/null; then
+                            echo \"[INFO] Metodo '\${AGENT_METHOD:-}' sin desinstalador. Eliminando binario...\"
+                            rm -f \"\$(command -v \"\$AGENT_BINARY\")\" 2>/dev/null || true
+                        else
+                            echo \"[INFO] No se encontro binario ni desinstalador para '\${AGENT_METHOD:-}'.\"
+                        fi ;;
+                esac
+            "; then
+            mark_removed "$target"
+            gum style --foreground 42 "✓ Agente '${target}' desinstalado." 2>/dev/null
+        else
+            gum style --foreground 196 "✗ Error al desinstalar '${target}'" 2>/dev/null
+        fi
     else
         case "${AGENT_METHOD:-}" in
             pip)
@@ -278,7 +300,20 @@ remove_agent() {
             npm)
                 uninstall_via_npm "$_pkg"
                 ;;
-            curl|cargo|apt)
+            pkg)
+                uninstall_via_apt "$_pkg"
+                ;;
+            apt)
+                uninstall_via_apt "$_pkg"
+                ;;
+            git)
+                log_info "Agente instalado via git. Elimina el directorio clonado manualmente."
+                ;;
+            stub)
+                log_info "Agente stub — no requiere desinstalacion."
+                log_info "Elimina el binario manualmente si lo instalaste."
+                ;;
+            curl|cargo|binary)
                 if [ -n "${AGENT_BINARY:-}" ] && command -v "$AGENT_BINARY" &>/dev/null; then
                     rm -f "$(command -v "$AGENT_BINARY")" 2>/dev/null || true
                 fi
@@ -286,6 +321,7 @@ remove_agent() {
             *)
                 log_warn "Metodo '$AGENT_METHOD' no tiene desinstalador automatico."
                 if [ -n "${AGENT_BINARY:-}" ] && command -v "$AGENT_BINARY" &>/dev/null; then
+                    log_info "Eliminando binario $AGENT_BINARY..."
                     rm -f "$(command -v "$AGENT_BINARY")" 2>/dev/null || true
                 fi
                 ;;

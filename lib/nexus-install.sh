@@ -180,6 +180,29 @@ uninstall_via_npm() {
     fi
 }
 
+# ── uninstall_via_apt: apt/pkg remove ──────────────
+# Detecta Termux (NEXUS_TERMUX_ACCESSIBLE o NEXUS_ENV=termux)
+# y usa pkg uninstall en ese caso, apt remove en caso contrario
+uninstall_via_apt() {
+    local package="$1"
+
+    if [ "${NEXUS_TERMUX_ACCESSIBLE:-false}" = "true" ]; then
+        log_info "Desinstalando $package via pkg (Termux bind-mount)..."
+        "${TERMUX_PKG:-pkg}" uninstall -y "$package" 2>/dev/null || true
+    elif [ "${NEXUS_ENV:-}" = "termux" ]; then
+        log_info "Desinstalando $package via pkg (Termux)..."
+        pkg uninstall -y "$package" 2>/dev/null || true
+    else
+        log_info "Desinstalando $package via apt..."
+        if command -v apt &>/dev/null; then
+            apt remove -y "$package" 2>/dev/null || true
+        else
+            log_error "apt no disponible."
+            return 1
+        fi
+    fi
+}
+
 # ── mark_installed: registra instalacion ───────────
 # Formato: 2026-06-03 10:00:00 | INSTALLED | aider | 0.73.1
 # Idempotente: actualiza la entrada existente si ya existe

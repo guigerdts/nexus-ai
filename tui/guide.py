@@ -22,67 +22,94 @@ CATEGORIES = {
         "tools": [
             ("opencode", "CLI multi-modelo 150K+ stars", "nxai install opencode"),
             ("codex", "OpenAI Codex CLI", "nxai install codex"),
-            ("claude-code", "Claude Code CLI", "nxai install claude-code"),
-            ("openclou", "OpenCLO UI agent", "nxai install openclou"),
-            ("antigravity", "Autonomous coding agent", "nxai install antigravity"),
-            ("pi", "Terminal AI assistant", "nxai install pi"),
-            ("gentle-ai", "OpenCode Gentle AI", "nxai install gentle-ai"),
-            ("engram", "Persistent memory agent", "nxai install engram"),
+            ("gemini-cli", "CLI oficial de Google Gemini", "nxai install gemini-cli"),
+            ("claude-code", "Claude Code CLI de Anthropic", "nxai install claude-code"),
+            ("ollama", "Ejecuta LLMs locales (LLaMA, Mistral)", "nxai install ollama"),
+            ("engram", "Memoria persistente para sesiones de IA", "nxai install engram"),
+            ("sgpt", "Asistente de terminal GPT", "nxai install sgpt"),
+            ("fabric", "Framework de automatizacion con IA", "nxai install fabric"),
+            ("antigravity", "CLI experimental de IA", "(stub)"),
+            ("pi", "Asistente de IA desde terminal", "(stub)"),
+            ("gentle-ai", "CLI de desarrollo asistido por IA", "(stub)"),
+            ("qwen-code", "CLI de codigo asistido por Qwen AI", "(stub)"),
+            ("minimax-cli", "CLI para la API de MiniMax AI", "(stub)"),
+            ("codegraph", "Analizador de grafos de codigo con IA", "(stub)"),
+            ("openclaude", "CLI de IA para programacion", "(stub)"),
+            ("mistral-vibe", "CLI para Mistral AI Vibe coding", "(stub)"),
         ]
     },
     "editor": {
         "title": "Editores",
         "tools": [
-            ("aider", "Coding AI Git-nativo", "nxai install aider"),
-            ("neovim", "Editor de texto avanzado", "(stub)"),
+            ("neovim", "Editor moderno con LSP nativo", "nxai install neovim"),
+            ("nvchad", "Configuracion NvChad para Neovim", "nxai install nvchad"),
         ]
     },
     "shell": {
         "title": "Terminal / Shell",
         "tools": [
-            ("sgpt", "ShellGPT AI assistant", "nxai install sgpt"),
-            ("zsh", "Z shell mejorado", "(stub)"),
-            ("starship", "Prompt minimalista", "(stub)"),
+            ("zsh", "Z shell con plugins y temas", "nxai install zsh"),
+            ("starship", "Prompt minimalista personalizable", "nxai install starship"),
+            ("oh-my-zsh", "Framework para gestionar Zsh", "nxai install oh-my-zsh"),
+            ("sgpt", "Asistente de terminal GPT", "nxai install sgpt"),
         ]
     },
     "tools": {
         "title": "Herramientas",
         "tools": [
-            ("fabric", "AI-powered CLI toolkit", "nxai install fabric"),
-            ("goose", "Autonomous agent framework", "nxai install goose"),
-            ("gh", "GitHub CLI", "(stub)"),
-            ("fzf", "Fuzzy finder", "(stub)"),
-            ("gum", "Shell scripting UI", "(stub)"),
-            ("curl", "HTTP client", "(stub)"),
+            ("gh", "GitHub CLI oficial", "nxai install gh"),
+            ("bat", "cat con sintaxis coloreada", "nxai install bat"),
+            ("eza", "ls moderno con colores y arbol", "nxai install eza"),
+            ("lazygit", "UI interactiva para Git", "nxai install lazygit"),
+            ("jq", "Procesador JSON de linea de comandos", "nxai install jq"),
+            ("fzf", "Buscador difuso interactivo", "nxai install fzf"),
+            ("gum", "Toolkit de UI para shell scripts", "nxai install gum"),
+            ("curl", "Cliente HTTP/HTTPS para transferencia", "nxai install curl"),
+            ("git", "Sistema de control de versiones distribuido", "nxai install git"),
+            ("wget", "Descarga de archivos via HTTP/HTTPS/FTP", "nxai install wget"),
         ]
     },
     "language": {
         "title": "Lenguajes",
         "tools": [
-            ("node", "JavaScript runtime", "(stub)"),
-            ("python", "Python language", "(stub)"),
-            ("rust", "Rust systems language", "(stub)"),
-            ("go", "Go programming language", "(stub)"),
+            ("nodejs", "Entorno JavaScript Node.js y npm", "nxai install nodejs"),
+            ("python", "Python 3 interprete y pip", "nxai install python"),
+            ("rust", "Compilador Rust y cargo", "nxai install rust"),
+            ("golang", "Lenguaje Go — compilador y herramientas", "nxai install golang"),
+            ("perl", "Lenguaje de programacion Perl", "nxai install perl"),
+            ("php", "Lenguaje de programacion PHP", "nxai install php"),
+            ("clang", "Compilador C/C++ LLVM Clang", "nxai install clang"),
         ]
     },
     "db": {
         "title": "Bases de Datos",
         "tools": [
-            ("sqlite", "Base de datos embebida", "(stub)"),
-            ("postgresql", "Base de datos relacional", "(stub)"),
+            ("sqlite", "BD SQL embebida zero-config", "nxai install sqlite"),
+            ("postgresql", "BD SQL relacional PostgreSQL", "nxai install postgresql"),
+            ("mariadb", "BD SQL fork de MySQL — rapida y open source", "nxai install mariadb"),
+            ("mongodb", "BD NoSQL orientada a documentos", "(stub)"),
+        ]
+    },
+    "node": {
+        "title": "Node.js",
+        "tools": [
+            ("typescript", "Compilador de TypeScript a JavaScript", "nxai install typescript"),
+            ("pm2", "Administrador de procesos Node.js", "nxai install pm2"),
+            ("nodemon", "Monitor de reinicio automatico para Node.js", "nxai install nodemon"),
         ]
     },
     "ui": {
         "title": "Interfaz de Usuario",
         "tools": [
-            ("termux-ui", "Interfaz Termux", "(stub)"),
-            ("banner", "Personalizar banner", "(stub)"),
+            ("termux-styling", "Personalizacion visual de Termux", "(stub)"),
+            ("nerd-fonts", "Fuentes Nerd Fonts para terminal", "(stub)"),
+            ("banner", "Banner ASCII de NEXUS AI (ya incluido)", "(stub)"),
         ]
     },
     "automation": {
         "title": "Automatizacion",
         "tools": [
-            ("n8n", "Workflow automation", "(stub)"),
+            ("n8n", "Workflow automation — alternativa a Zapier", "nxai install n8n"),
         ]
     }
 }

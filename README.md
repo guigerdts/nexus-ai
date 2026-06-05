@@ -3,7 +3,7 @@
 Framework de entorno para Termux/proot-Ubuntu.
 Convierte Android en una workstation profesional para agentes de IA.
 
-**Estado:** v0.6.0 — estable. Dual-environment (Termux nativo + proot-Ubuntu).
+**Estado:** v0.7.0 — estable. Dual-environment (Termux nativo + proot-Ubuntu).
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
@@ -29,19 +29,57 @@ nexus-ai/
 │   ├── nexus-install.sh    # Funciones de instalación (pip, apt, npm, pkg)
 │   ├── nexus-log.sh        # Logging con colores [OK]/[WARN]/[ERROR]
 │   └── nexus-update.sh     # Actualizaciones: check silencioso + apply
-├── modules/                # 12 agentes registrados
-│   ├── aider/              # Tier 1 — asistente de código
-│   ├── opencode/           # Tier 1 — CLI multi-modelo
-│   ├── codex/              # Tier 1 — OpenAI Codex CLI
-│   ├── antigravity/        # Tier 2 — CLI experimental
-│   ├── pi/                 # Tier 2 — asistente de terminal
-│   ├── fabric/             # Tier 2 — framework de automatización
-│   ├── sgpt/               # Tier 2 — shell-gpt
-│   ├── goose/              # Tier 2 — agente autónomo
-│   ├── engram/             # Tier 2 — memoria persistente
-│   ├── gentle-ai/          # Tier 3 — CLI de desarrollo asistido
-│   ├── openclou/           # Tier 3 — CLI de programación
-│   └── claude-code/        # Tier 3 — Claude Code CLI
+├── modules/                # 49 modulos registrados (9 categorias)
+│   ├── opencode/           # AI  — CLI multi-modelo
+│   ├── codex/              # AI  — OpenAI Codex CLI
+│   ├── gemini-cli/         # AI  — Google Gemini CLI
+│   ├── claude-code/        # AI  — Claude Code CLI
+│   ├── ollama/             # AI  — LLMs locales
+│   ├── engram/             # AI  — memoria persistente
+│   ├── sgpt/               # AI  — shell-gpt
+│   ├── fabric/             # AI  — automatizacion IA
+│   ├── antigravity/        # AI  — CLI experimental (stub)
+│   ├── pi/                 # AI  — asistente terminal (stub)
+│   ├── gentle-ai/          # AI  — desarrollo asistido (stub)
+│   ├── qwen-code/          # AI  — Qwen AI (stub)
+│   ├── minimax-cli/        # AI  — MiniMax AI (stub)
+│   ├── codegraph/          # AI  — analizador grafos (stub)
+│   ├── openclaude/         # AI  — CLI programacion (stub)
+│   ├── mistral-vibe/       # AI  — Mistral Vibe (stub)
+│   ├── neovim/             # editor — Neovim LSP
+│   ├── nvchad/             # editor — NvChad config
+│   ├── zsh/                # shell — Z shell
+│   ├── starship/           # shell — prompt minimalista
+│   ├── oh-my-zsh/          # shell — framework Zsh
+│   ├── gh/                 # tools — GitHub CLI
+│   ├── bat/                # tools — cat coloreado
+│   ├── eza/                # tools — ls moderno
+│   ├── lazygit/            # tools — Git TUI
+│   ├── jq/                 # tools — JSON CLI
+│   ├── fzf/                # tools — fuzzy finder
+│   ├── gum/                # tools — UI toolkit
+│   ├── curl/               # tools — HTTP client
+│   ├── git/                # tools — control versiones
+│   ├── wget/               # tools — descarga archivos
+│   ├── nodejs/             # language — Node.js
+│   ├── python/             # language — Python 3
+│   ├── rust/               # language — Rust
+│   ├── golang/             # language — Go
+│   ├── perl/               # language — Perl
+│   ├── php/                # language — PHP
+│   ├── clang/              # language — C/C++
+│   ├── sqlite/             # db — BD embebida
+│   ├── postgresql/         # db — BD relacional
+│   ├── mariadb/            # db — BD MySQL fork
+│   ├── mongodb/            # db — BD NoSQL (stub)
+│   ├── typescript/         # node — TypeScript
+│   ├── pm2/                # node — admin procesos
+│   ├── nodemon/            # node — reinicio automatico
+│   ├── termux-styling/     # ui — personalizacion (stub)
+│   ├── nerd-fonts/         # ui — fuentes (stub)
+│   ├── banner/             # ui — ASCII banner (stub)
+│   ├── n8n/                # automation — workflows
+│   └── ...
 ├── logs/                   # Archivos de registro
 │   └── agents.log
 └── install.sh              # Instalador principal (8 pasos)
@@ -107,26 +145,106 @@ cd ~/nexus-ai
 | thefuck | Corrección automática de comandos |
 | zsh-vi-mode | Modo vi para Zsh |
 
-## Agentes disponibles (12)
+## Modulos disponibles (49 por categoria)
 
-Los agentes se organizan en 3 tiers según su madurez y soporte:
+Los modulos se organizan en 9 categorias. Ejecuta `nxai guide` para ver la guia completa.
 
-| Agente | Tier | Método | Descripción |
-|--------|------|--------|-------------|
-| **aider** | 1 | pip | Asistente de código Git-nativo con IA |
-| **opencode** | 1 | npm | CLI multi-modelo de código abierto (150K+ stars) |
-| **codex** | 1 | npm | OpenAI Codex CLI (GPT-5.5) |
-| **antigravity** | 2 | manual | CLI experimental de IA |
-| **pi** | 2 | pip | Asistente de IA desde terminal (Pi.ai) |
-| **fabric** | 2 | pip | Framework open-source para automatización con IA |
-| **sgpt** | 2 | pip | Asistente de terminal GPT (shell-gpt) |
-| **goose** | 2 | curl | Agente de código autónomo (Block) |
-| **engram** | 2 | manual | Memoria persistente para sesiones de IA |
-| **gentle-ai** | 3 | stub | CLI de desarrollo asistido por IA |
-| **openclou** | 3 | stub | CLI de programación con IA |
-| **claude-code** | 3 | stub | Claude Code CLI de Anthropic |
+### IA / Agentes (16)
 
-Uso: `nxai install --all` para instalar todos, o `nxai install <agente>` para uno solo.
+| Modulo | Metodo | Descripcion |
+|--------|--------|-------------|
+| opencode | npm | CLI multi-modelo de codigo abierto (150K+ stars) |
+| codex | npm | OpenAI Codex CLI (GPT-5.5) |
+| gemini-cli | npm | CLI oficial de Google Gemini |
+| claude-code | npm | Claude Code CLI de Anthropic |
+| ollama | curl | Ejecuta LLMs locales (LLaMA, Mistral, Qwen) |
+| engram | binary | Memoria persistente para sesiones de IA |
+| sgpt | pip | Asistente de terminal GPT (shell-gpt) |
+| fabric | pip | Framework open-source para automatizacion con IA |
+| antigravity | stub | CLI experimental de IA |
+| pi | stub | Asistente de IA desde terminal (Pi.ai) |
+| gentle-ai | stub | CLI de desarrollo asistido por IA |
+| qwen-code | stub | CLI de codigo asistido por Qwen AI |
+| minimax-cli | stub | CLI para la API de MiniMax AI |
+| codegraph | stub | Analizador de grafos de codigo con IA |
+| openclaude | stub | CLI de IA para programacion |
+| mistral-vibe | stub | CLI para Mistral AI Vibe coding |
+
+### Editores (2)
+
+| Modulo | Metodo | Descripcion |
+|--------|--------|-------------|
+| neovim | pkg | Editor moderno con LSP nativo |
+| nvchad | git | Configuracion NvChad para Neovim |
+
+### Terminal / Shell (4)
+
+| Modulo | Metodo | Descripcion |
+|--------|--------|-------------|
+| zsh | pkg | Z shell con plugins y temas |
+| starship | curl | Prompt minimalista personalizable |
+| oh-my-zsh | git | Framework para gestionar Zsh |
+| sgpt | pip | Asistente de terminal GPT (tambien en AI) |
+
+### Herramientas (10)
+
+| Modulo | Metodo | Descripcion |
+|--------|--------|-------------|
+| gh | pkg | GitHub CLI oficial |
+| bat | pkg | cat con sintaxis coloreada |
+| eza | pkg | ls moderno con colores y arbol |
+| lazygit | pkg | UI interactiva para Git |
+| jq | pkg | Procesador JSON de linea de comandos |
+| fzf | pkg | Buscador difuso interactivo |
+| gum | pkg | Toolkit de UI para shell scripts |
+| curl | pkg | Cliente HTTP/HTTPS para transferencia |
+| git | pkg | Sistema de control de versiones distribuido |
+| wget | pkg | Descarga de archivos via HTTP/HTTPS/FTP |
+
+### Lenguajes (7)
+
+| Modulo | Metodo | Descripcion |
+|--------|--------|-------------|
+| nodejs | pkg | Entorno JavaScript Node.js y npm |
+| python | pkg | Python 3 interprete y pip |
+| rust | pkg | Compilador Rust y cargo |
+| golang | pkg | Lenguaje Go — compilador y herramientas |
+| perl | pkg | Lenguaje de programacion Perl |
+| php | pkg | Lenguaje de programacion PHP |
+| clang | pkg | Compilador C/C++ LLVM Clang |
+
+### Bases de Datos (4)
+
+| Modulo | Metodo | Descripcion |
+|--------|--------|-------------|
+| sqlite | pkg | BD SQL embebida zero-config |
+| postgresql | pkg | BD SQL relacional PostgreSQL |
+| mariadb | pkg | BD SQL fork de MySQL |
+| mongodb | stub | BD NoSQL orientada a documentos |
+
+### Node.js (3)
+
+| Modulo | Metodo | Descripcion |
+|--------|--------|-------------|
+| typescript | npm | Compilador de TypeScript a JavaScript |
+| pm2 | npm | Administrador de procesos Node.js |
+| nodemon | npm | Monitor de reinicio automatico para Node.js |
+
+### Interfaz de Usuario (3)
+
+| Modulo | Metodo | Descripcion |
+|--------|--------|-------------|
+| termux-styling | stub | Personalizacion visual de Termux |
+| nerd-fonts | stub | Fuentes Nerd Fonts para terminal |
+| banner | stub | Banner ASCII de NEXUS AI (ya incluido) |
+
+### Automatizacion (1)
+
+| Modulo | Metodo | Descripcion |
+|--------|--------|-------------|
+| n8n | npm | Workflow automation — alternativa a Zapier/Make |
+
+Uso: `nxai install --all` para instalar todos, o `nxai install <modulo>` para uno solo.
 
 ## Uso
 

@@ -57,15 +57,17 @@ show_help() {
     printf "  \033[1;36mnxai dashboard\033[0m          Abrir panel visual\n"
     printf "\n"
     printf "\033[1mModulos por categoria (\033[1;36mnxai install\033[0m \033[1m<modulo>\033[0m\033[1m):\033[0m\n"
-    printf "  \033[1m%-12s\033[0m opencode, codex, claude-code, openclou, antigravity,\n" "ai"
-    printf "  %-12s  pi, gentle-ai, engram\n" ""
-    printf "  \033[1m%-12s\033[0m aider, neovim (stub)\n" "editor"
-    printf "  \033[1m%-12s\033[0m sgpt, zsh, starship\n" "shell"
-    printf "  \033[1m%-12s\033[0m fabric, goose, gh, fzf, gum, curl\n" "tools"
-    printf "  \033[1m%-12s\033[0m node, python, rust, go (stubs)\n" "language"
-    printf "  \033[1m%-12s\033[0m sqlite, postgresql (stubs)\n" "db"
-    printf "  \033[1m%-12s\033[0m termux-ui, banner (stubs)\n" "ui"
-    printf "  \033[1m%-12s\033[0m n8n (stub)\n" "automation"
+    printf "  \033[1m%-12s\033[0m opencode, codex, gemini-cli, claude-code, ollama, engram,\n" "ai"
+    printf "  %-12s  sgpt, fabric, antigravity, pi, gentle-ai, qwen-code,\n" ""
+    printf "  %-12s  minimax-cli, codegraph, openclaude, mistral-vibe\n" ""
+    printf "  \033[1m%-12s\033[0m neovim, nvchad\n" "editor"
+    printf "  \033[1m%-12s\033[0m zsh, starship, oh-my-zsh, sgpt\n" "shell"
+    printf "  \033[1m%-12s\033[0m gh, bat, eza, lazygit, jq, fzf, gum, curl, git, wget\n" "tools"
+    printf "  \033[1m%-12s\033[0m nodejs, python, rust, golang, perl, php, clang\n" "language"
+    printf "  \033[1m%-12s\033[0m sqlite, postgresql, mariadb, mongodb\n" "db"
+    printf "  \033[1m%-12s\033[0m typescript, pm2, nodemon\n" "node"
+    printf "  \033[1m%-12s\033[0m termux-styling, nerd-fonts, banner\n" "ui"
+    printf "  \033[1m%-12s\033[0m n8n\n" "automation"
 }
 
 # ── list_agents: lista agentes y su estado ─────────
@@ -526,7 +528,7 @@ case "${COMMAND}" in
             --interactive|-i)
                 show_guide_rich --interactive
                 ;;
-            ai|editor|shell|tools|language|db|ui|automation)
+            ai|editor|shell|tools|language|db|node|ui|automation)
                 show_guide_category "$1"
                 ;;
             "")
@@ -535,7 +537,7 @@ case "${COMMAND}" in
             *)
                 echo "Categoria desconocida: $1"
                 echo "Uso: nxai guide [categoria|--interactive]"
-                echo "Categorias: ai, editor, shell, tools, language, db, ui, automation"
+                echo "Categorias: ai, editor, shell, tools, language, db, node, ui, automation"
                 exit 1
                 ;;
         esac

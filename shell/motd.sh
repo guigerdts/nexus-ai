@@ -15,7 +15,7 @@ fi
 unset _motd_src _motd_dir
 
 # ── Valores por defecto (si env.sh no existe) ─────
-NEXUS_VERSION="${NEXUS_VERSION:-0.6.0}"
+NEXUS_VERSION="${NEXUS_VERSION:-0.7.0}"
 COLOR_GRAY='\033[1;30m'
 
 # ── Forzar banner completo (usado por install.sh) ──
@@ -74,7 +74,7 @@ TIPS=(
 
     "Anade un agente personalizado con 'nxai agent add <nombre> <url>'."
 
-    "Usa 'nxai install aider' para instalar el asistente de codigo aider."
+    "Explora los modulos con 'nxai guide' para ver todas las categorias."
 
     "Revisa 'nxai remove <agente>' para desinstalar un agente."
     "Puedes personalizar tu prompt en shell/starship.toml."

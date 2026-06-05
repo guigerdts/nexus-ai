@@ -61,7 +61,7 @@ The installer MUST detect when it is being run remotely (via `curl ... | bash`, 
 
 ### Requirement: Environment detection before action
 
-The installer MUST detect the environment before performing any modifications. Detection MUST classify as `"termux"` (via `$PREFIX`), `"proot-ubuntu"` (via proot markers), or `"linux"` (otherwise), and select the appropriate package manager (`pkg` for Termux, `apt` otherwise).
+The installer MUST detect the environment before performing any modifications. Detection MUST classify as `"termux"` (via `$PREFIX`), `"proot-ubuntu"` (via proot markers), or `"linux"` (otherwise), and select the appropriate package manager (`pkg` for Termux, `apt` otherwise). When generating shell configs, the hardcoded PATH block MUST include Termux bind-mount directories when `/data/data/com.termux/files/usr/bin` exists at install time.
 
 #### Scenario: Termux native detection
 
@@ -69,6 +69,19 @@ The installer MUST detect the environment before performing any modifications. D
 - WHEN the installer checks the environment
 - THEN it MUST use `pkg` for package management
 - AND NOT use `apt`
+
+#### Scenario: Install in proot + bind-mounts
+
+- GIVEN the script runs in proot-Ubuntu with `/data/data/com.termux/files/usr/bin` present
+- WHEN the installer generates shell configs
+- THEN `/data/data/com.termux/files/usr/bin` and `/data/data/com.termux/files/usr/local/bin` MUST be prepended to the hardcoded PATH
+- AND each entry SHALL be guarded by `[ -d "$dir" ]`
+
+#### Scenario: Install in proot no bind-mounts
+
+- GIVEN `/data/data/com.termux/files/usr/bin` does NOT exist at install time
+- WHEN the installer generates shell configs
+- THEN no Termux PATH entries MUST be written
 
 #### Scenario: Unsupported environment
 

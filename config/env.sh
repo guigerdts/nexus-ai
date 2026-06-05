@@ -78,6 +78,36 @@ else
 fi
 
 # ============================================
+# Detección de Termux accesible (bind-mounts)
+# ============================================
+# Cuando NEXUS_ENV=proot-ubuntu y TERMUX_BIN existe y es ejecutable,
+# significa que Termux está accesible via bind-mounts. En este modo
+# híbrido (también llamado "hybrid mode") se pueden usar pkg y pip
+# de Termux dentro de proot, evitando compilación desde source.
+export NEXUS_TERMUX_ACCESSIBLE="false"
+if [ "${NEXUS_ENV:-}" = "proot-ubuntu" ] && [ -x "/data/data/com.termux/files/usr/bin" ]; then
+    export NEXUS_TERMUX_ACCESSIBLE="true"
+    export TERMUX_BIN="/data/data/com.termux/files/usr/bin"
+    export TERMUX_PREFIX="/data/data/com.termux/files/usr"
+    export TERMUX_PKG="/data/data/com.termux/files/usr/bin/pkg"
+    export TERMUX_PIP="/data/data/com.termux/files/usr/bin/pip3"
+
+    # Prepend Termux bin dirs to PATH (idempotent via case guard)
+    if [ -d "$TERMUX_BIN" ]; then
+        case ":$PATH:" in
+            *":$TERMUX_BIN:"*) ;;
+            *) export PATH="$TERMUX_BIN:$PATH" ;;
+        esac
+    fi
+    if [ -d "$TERMUX_PREFIX/local/bin" ]; then
+        case ":$PATH:" in
+            *":$TERMUX_PREFIX/local/bin:"*) ;;
+            *) export PATH="$TERMUX_PREFIX/local/bin:$PATH" ;;
+        esac
+    fi
+fi
+
+# ============================================
 # Detección de arquitectura
 # ============================================
 case "$(uname -m)" in

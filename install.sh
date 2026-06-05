@@ -513,6 +513,20 @@ if [ "${INSTALL_BASHRC:-false}" = "true" ] && [ -f "$BASHRC" ]; then
     if ! grep -qF "$NEXUS_PATH_MARKER" "$BASHRC" 2>/dev/null; then
         echo "" >> "$BASHRC"
         echo "$NEXUS_PATH_MARKER" >> "$BASHRC"
+        # ── Termux bind-mount dirs (runtime-checked) ──
+        echo "if [ -d \"/data/data/com.termux/files/usr/bin\" ]; then" >> "$BASHRC"
+        echo "    case \":\$PATH:\" in" >> "$BASHRC"
+        echo "        *\":/data/data/com.termux/files/usr/bin:\"*) ;;" >> "$BASHRC"
+        echo "        *) export PATH=\"/data/data/com.termux/files/usr/bin:\$PATH\" ;;" >> "$BASHRC"
+        echo "    esac" >> "$BASHRC"
+        echo "fi" >> "$BASHRC"
+        echo "if [ -d \"/data/data/com.termux/files/usr/local/bin\" ]; then" >> "$BASHRC"
+        echo "    case \":\$PATH:\" in" >> "$BASHRC"
+        echo "        *\":/data/data/com.termux/files/usr/local/bin:\"*) ;;" >> "$BASHRC"
+        echo "        *) export PATH=\"/data/data/com.termux/files/usr/local/bin:\$PATH\" ;;" >> "$BASHRC"
+        echo "    esac" >> "$BASHRC"
+        echo "fi" >> "$BASHRC"
+        # ── NEXUS_ROOT/bin guard ──
         echo "case \":\$PATH:\" in" >> "$BASHRC"
         echo "    *\":$NEXUS_ROOT/bin:\"*) ;;" >> "$BASHRC"
         echo "    *) export PATH=\"$NEXUS_ROOT/bin:\$PATH\" ;;" >> "$BASHRC"
@@ -529,6 +543,20 @@ if [ "${INSTALL_ZSH:-false}" = "true" ] && [ -f "$ZSHRC" ]; then
     if ! grep -qF "$NEXUS_PATH_MARKER" "$ZSHRC" 2>/dev/null; then
         echo "" >> "$ZSHRC"
         echo "$NEXUS_PATH_MARKER" >> "$ZSHRC"
+        # ── Termux bind-mount dirs (runtime-checked) ──
+        echo "if [ -d \"/data/data/com.termux/files/usr/bin\" ]; then" >> "$ZSHRC"
+        echo "    case \":\$PATH:\" in" >> "$ZSHRC"
+        echo "        *\":/data/data/com.termux/files/usr/bin:\"*) ;;" >> "$ZSHRC"
+        echo "        *) export PATH=\"/data/data/com.termux/files/usr/bin:\$PATH\" ;;" >> "$ZSHRC"
+        echo "    esac" >> "$ZSHRC"
+        echo "fi" >> "$ZSHRC"
+        echo "if [ -d \"/data/data/com.termux/files/usr/local/bin\" ]; then" >> "$ZSHRC"
+        echo "    case \":\$PATH:\" in" >> "$ZSHRC"
+        echo "        *\":/data/data/com.termux/files/usr/local/bin:\"*) ;;" >> "$ZSHRC"
+        echo "        *) export PATH=\"/data/data/com.termux/files/usr/local/bin:\$PATH\" ;;" >> "$ZSHRC"
+        echo "    esac" >> "$ZSHRC"
+        echo "fi" >> "$ZSHRC"
+        # ── NEXUS_ROOT/bin guard ──
         echo "case \":\$PATH:\" in" >> "$ZSHRC"
         echo "    *\":$NEXUS_ROOT/bin:\"*) ;;" >> "$ZSHRC"
         echo "    *) export PATH=\"$NEXUS_ROOT/bin:\$PATH\" ;;" >> "$ZSHRC"

@@ -49,7 +49,11 @@ install_via_pip() {
     local package="$1"
     local pip_cmd=""
 
-    if command -v pip3 &>/dev/null; then
+    # Cuando NEXUS_TERMUX_ACCESSIBLE=true, preferir pip de Termux
+    if [ "${NEXUS_TERMUX_ACCESSIBLE:-false}" = "true" ]; then
+        pip_cmd="${TERMUX_PIP:-pip3}"
+        log_info "Instalando $package via pip (Termux: $pip_cmd)..."
+    elif command -v pip3 &>/dev/null; then
         pip_cmd="pip3"
     elif command -v pip &>/dev/null; then
         pip_cmd="pip"
@@ -118,7 +122,10 @@ install_via_curl() {
 install_via_apt() {
     local package="$1"
 
-    if [ "${NEXUS_ENV:-}" = "termux" ]; then
+    if [ "${NEXUS_TERMUX_ACCESSIBLE:-false}" = "true" ]; then
+        log_info "Instalando $package via pkg (Termux bind-mount)..."
+        "${TERMUX_PKG:-pkg}" install -y "$package"
+    elif [ "${NEXUS_ENV:-}" = "termux" ]; then
         log_info "Instalando $package via pkg (Termux)..."
         pkg install -y "$package"
     else

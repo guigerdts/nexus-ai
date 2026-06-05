@@ -14,6 +14,8 @@ if [ -n "${PREFIX:-}" ]; then
     NEXUS_ENV="termux"
 elif command -v pkg &>/dev/null && [ -d "/data/data/com.termux" ] 2>/dev/null; then
     NEXUS_ENV="termux"
+elif [ "${NEXUS_TERMUX_ACCESSIBLE:-false}" = "true" ]; then
+    : # hybrid mode: Termux bind-mounts accessible, keep parent env (proot-ubuntu)
 elif [ -n "${NEXUS_ENV:-}" ]; then
     : # ya definido por el parent shell (source)
 else
@@ -64,6 +66,7 @@ if command -v fabric &>/dev/null; then
 else
     log_error "fabric no se encuentra en PATH despues de la instalacion."
     log_info "Intenta: pip3 install --user fabric-ai"
+    log_info "En Termux o hybrid: TERMUX_PKG/pkg install ... y pip3 install --user fabric-ai"
     log_info "O con uv: pip3 install uv && uv pip install fabric-ai"
     exit 1
 fi

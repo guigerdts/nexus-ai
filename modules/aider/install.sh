@@ -16,6 +16,8 @@ if [ -n "${PREFIX:-}" ]; then
     NEXUS_ENV="termux"
 elif command -v pkg &>/dev/null && [ -d "/data/data/com.termux" ] 2>/dev/null; then
     NEXUS_ENV="termux"
+elif [ "${NEXUS_TERMUX_ACCESSIBLE:-false}" = "true" ]; then
+    : # hybrid mode: Termux bind-mounts accessible, keep parent env (proot-ubuntu)
 elif [ -n "${NEXUS_ENV:-}" ]; then
     : # ya definido por el parent shell (source)
 else
@@ -35,9 +37,18 @@ check_dependency "pip3" "pip3 --version" || {
 # ═══════════════════════════════════════════════════
 # Python 3.12+ removio pkgutil.ImpImporter, necesario
 # para compilar numpy desde source. En cada entorno se
-# instala el paquete del sistema: python-numpy (Termux)
-# o python3-numpy (proot-Ubuntu/Debian).
-if [ "$NEXUS_ENV" = "termux" ]; then
+# instala el paquete del sistema: python-numpy (Termux/pkg)
+# o python3-numpy (proot-Ubuntu/Debian). En modo hybrid
+# (proot + Termux bind-mount), TERMUX_PKG se usa automaticamente.
+if [ "${NEXUS_TERMUX_ACCESSIBLE:-false}" = "true" ]; then
+    log_info "Termux accesible: instalando numpy pre-compilado via pkg..."
+    if "${TERMUX_PKG:-pkg}" install -y python-numpy 2>/dev/null; then
+        log_ok "numpy instalado via pkg"
+    else
+        log_warn "No se pudo instalar python-numpy via pkg"
+        log_warn "aider puede fallar si numpy no compila desde source en Python 3.12+"
+    fi
+elif [ "$NEXUS_ENV" = "termux" ]; then
     log_info "Termux detectado: instalando numpy pre-compilado via pkg..."
     if pkg install -y python-numpy 2>/dev/null; then
         log_ok "numpy instalado via pkg"
@@ -147,9 +158,9 @@ if command -v aider &>/dev/null; then
     log_ok "aider instalado correctamente ($version)"
 else
     log_error "aider no se encuentra en PATH despues de la instalacion."
-    log_info "En Termux: pkg install python-numpy && pip3 install --user aider-chat"
+    log_info "En Termux o hybrid (proot+Termux): (TERMUX_)pkg install python-numpy && pip3 install --user aider-chat"
     log_info "En proot-Ubuntu/Linux: apt install python3-numpy && pip3 install --user aider-chat"
-    log_info "O con uv: apt install python3-numpy && uv pip install aider-chat --no-build"
+    log_info "O con uv: apt/python3-numpy (o TERMUX_PKG/python-numpy en hybrid) && uv pip install aider-chat --no-build"
     exit 1
 fi
 

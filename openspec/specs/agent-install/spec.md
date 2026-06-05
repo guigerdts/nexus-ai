@@ -60,7 +60,14 @@ The system MUST record install state in `$NEXUS_ROOT/logs/agents.log` with times
 
 ### Requirement: Environment-aware installation
 
-The system MUST detect the runtime environment before installing and select the appropriate package manager (`pkg` on Termux, `apt` on proot-Ubuntu).
+The system MUST detect the runtime environment and `NEXUS_TERMUX_ACCESSIBLE` before selecting package managers. Priority: (1) when `NEXUS_TERMUX_ACCESSIBLE=true`, `install_via_pip` MUST use `TERMUX_PIP`, `install_via_apt` MUST map to `TERMUX_PKG`; (2) when `NEXUS_ENV=termux`, existing Termux-native behavior (`pkg` for apt) MUST be preserved; (3) on all other environments, standard system package managers (`apt`, `pip3`) MUST be used. Agent installers MUST NOT defer to parent NEXUS_ENV when Termux accessible.
+
+#### Scenario: proot-Ubuntu + Termux bind-mounts (happy path)
+
+- GIVEN `NEXUS_ENV=proot-ubuntu` and `NEXUS_TERMUX_ACCESSIBLE=true`
+- WHEN `install_via_pip "aider-chat"` is called
+- THEN `TERMUX_PIP install --user aider-chat` MUST execute
+- AND `TERMUX_PKG install python-numpy` MUST run — no source compilation OOM
 
 #### Scenario: Termux uses pkg
 
@@ -68,3 +75,27 @@ The system MUST detect the runtime environment before installing and select the 
 - WHEN `install_via_apt` is called
 - THEN the function MUST silently map to `pkg install`
 - AND NOT call `apt` directly
+
+#### Scenario: proot-Ubuntu without Termux (fallback)
+
+- GIVEN `NEXUS_ENV=proot-ubuntu` and `NEXUS_TERMUX_ACCESSIBLE=false`
+- WHEN `install_via_apt "python3-numpy"` is called
+- THEN `apt install -y` MUST execute (original behavior)
+- AND numpy --no-build / --no-deps fallback must remain available
+
+#### Scenario: Python version mismatch (risk)
+
+- GIVEN Termux pip Python 3.13, proot python 3.12
+- WHEN `TERMUX_PIP install --user aider-chat` succeeds
+- THEN `python3 -c "import aider"` MUST resolve to Termux python3
+
+### Requirement: Agent installer NEXUS_ENV fix
+
+Agent install scripts (`modules/*/install.sh`) MUST check `NEXUS_TERMUX_ACCESSIBLE` before deferring to parent. When `true`, MUST use `TERMUX_PKG install python-numpy` for numpy pre-install.
+
+#### Scenario: Aider numpy uses pkg
+
+- GIVEN `NEXUS_TERMUX_ACCESSIBLE=true`
+- WHEN aider install runs numpy pre-install
+- THEN `TERMUX_PKG install python-numpy` MUST be called
+- AND numpy compilation fallback MUST be skipped

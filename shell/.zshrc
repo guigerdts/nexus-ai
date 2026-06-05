@@ -110,6 +110,7 @@ fi
 # Cargar al final para no interferir con keybindings de otros plugins.
 # Ver diseño: zsh-vi-mode rewrites keybindings; si carga antes, rompe
 # zsh-autosuggestions (accept-suggestion) y zsh-syntax-highlighting.
+ZVM_CURSOR_STYLE_ENABLED=false
 if [ -f "$_PLUGIN_DIR/zsh-vi-mode/zsh-vi-mode.plugin.zsh" ]; then
     source "$_PLUGIN_DIR/zsh-vi-mode/zsh-vi-mode.plugin.zsh"
 fi

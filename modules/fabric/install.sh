@@ -45,7 +45,7 @@ if [ "$_install_rc" -ne 0 ]; then
     fi
     if command -v uv &>/dev/null; then
         log_info "Instalando fabric-ai via uv..."
-        uv pip install fabric-ai && _install_rc=0 || log_warn "uv tampoco pudo instalar fabric"
+        uv pip install fabric-ai --no-build && _install_rc=0 || log_warn "uv tampoco pudo instalar fabric"
     else
         log_warn "uv no esta disponible. No se pudo instalar fabric."
     fi

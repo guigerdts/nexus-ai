@@ -13,15 +13,19 @@
 #   mark_installed(agente, version) — registra en logs/agents.log
 #   mark_removed(agente)            — registra en logs/agents.log
 
-# ── Source log helpers si no estan cargados ────────
-if ! command -v log_ok &>/dev/null; then
-    # shellcheck source=lib/nexus-log.sh
-    _nexus_install_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-    if [ -f "$_nexus_install_dir/nexus-log.sh" ]; then
-        source "$_nexus_install_dir/nexus-log.sh"
-    fi
-    unset _nexus_install_dir
+# ── Source env.sh y log helpers ────────────────────
+# Garantiza que las variables NEXUS_COLOR_* esten definidas
+# antes de que nexux-log.sh las use (evita unbound variable
+# con set -u cuando un install.sh sourcea directamente
+# nexux-install.sh sin pasar por nexus.sh).
+_NEXUS_LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -f "$_NEXUS_LIB_DIR/../config/env.sh" ]; then
+    source "$_NEXUS_LIB_DIR/../config/env.sh"
 fi
+if [ -f "$_NEXUS_LIB_DIR/nexus-log.sh" ]; then
+    source "$_NEXUS_LIB_DIR/nexus-log.sh"
+fi
+unset _NEXUS_LIB_DIR
 
 # ── check_dependency: verifica que un binario existe ─
 # Uso: check_dependency "Python 3" "python3 --version"
@@ -56,14 +60,18 @@ install_via_pip() {
 
     log_info "Instalando $package via pip..."
 
-    # Intento 1: --user (funciona en Termux, falla en Ubuntu 24+ por PEP 668)
-    if $pip_cmd install --user "$package"; then
+    # Intento 1: --user + --no-build-isolation
+    # --no-build-isolation evita pip-build-env con setuptools
+    # del sistema incompatible con Python 3.12+
+    if $pip_cmd install --user --no-build-isolation "$package"; then
         return 0
     fi
 
-    # Intento 2: --break-system-packages (workaround PEP 668 en Ubuntu/Debian)
+    # Intento 2: --break-system-packages + --no-build-isolation
+    # --no-build-isolation evita pip-build-env con setuptools
+    # del sistema incompatible con Python 3.12+
     log_info "Fallo --user, reintentando con --break-system-packages..."
-    if $pip_cmd install --break-system-packages "$package"; then
+    if $pip_cmd install --break-system-packages --no-build-isolation "$package"; then
         return 0
     fi
 

@@ -45,7 +45,7 @@ if [ "$_install_rc" -ne 0 ]; then
     fi
     if command -v uv &>/dev/null; then
         log_info "Instalando shell-gpt via uv..."
-        uv pip install shell-gpt && _install_rc=0 || log_warn "uv tampoco pudo instalar sgpt"
+        uv pip install shell-gpt --no-build && _install_rc=0 || log_warn "uv tampoco pudo instalar sgpt"
     else
         log_warn "uv no esta disponible. No se pudo instalar sgpt."
     fi

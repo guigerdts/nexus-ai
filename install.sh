@@ -87,6 +87,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=config/env.sh
 source "$SCRIPT_DIR/config/env.sh"
 
+# shellcheck source=lib/nexus-log.sh
+source "$SCRIPT_DIR/lib/nexus-log.sh"
+
 # ── Flags por defecto ────────────────────────────
 INSTALL_ZSH=true
 INSTALL_BASHRC=true

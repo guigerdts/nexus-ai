@@ -3,7 +3,7 @@
 Framework de entorno para Termux/proot-Ubuntu.
 Convierte Android en una workstation profesional para agentes de IA.
 
-**Estado:** v0.5.0 — estable. Dual-environment (Termux nativo + proot-Ubuntu).
+**Estado:** v0.6.0 — estable. Dual-environment (Termux nativo + proot-Ubuntu).
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 

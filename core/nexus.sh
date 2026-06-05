@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # NEXUS AI — core/nexus.sh
 # CLI principal: ruteo de subcomandos via case/esac
-# Version: 0.5.0
+# Version: 0.6.0
 #
 # Symlink: bin/nxai -> ../core/nexus.sh
 # Uso: nxai <comando> [opciones]

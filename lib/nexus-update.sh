@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # NEXUS AI — lib/nexus-update.sh
 # Módulo de actualizaciones: check silencioso, check verbose, apply
-# Version: 0.5.0
+# Version: 0.6.0
 #
 # Dependencias: NEXUS_ROOT, NEXUS_VERSION (desde config/env.sh)
 # Cache temporal en ${TMPDIR:-/tmp}/nexus-version-check (TTL: 24h)
@@ -79,7 +79,7 @@ _nexus_update_cache_read() {
 }
 
 # ── _nexus_update_cache_write: escribe cache de version check ──
-# Uso: _nexus_update_cache_write "v0.5.0"
+# Uso: _nexus_update_cache_write "v0.6.0"
 _nexus_update_cache_write() {
     local _version="${1:-unknown}"
     local _now

@@ -15,7 +15,7 @@ fi
 unset _motd_src _motd_dir
 
 # ── Valores por defecto (si env.sh no existe) ─────
-NEXUS_VERSION="${NEXUS_VERSION:-0.5.0}"
+NEXUS_VERSION="${NEXUS_VERSION:-0.6.0}"
 COLOR_GRAY='\033[1;30m'
 
 # ── Forzar banner completo (usado por install.sh) ──
@@ -31,7 +31,7 @@ ascii_art_block() {
     echo ' _   _ ________   ___    _  _____            _____ '
     echo '| \ | |  ____\ \ / / |  | |/ ____|     /\   |_   _|'
     echo '|  \| | |__   \ V /| |  | | (___      /  \    | |  '
-    echo '| . ` |  __|   > < | |  | |\___ \    / /\ \   | |  '
+    echo '| . ` | |__   > < | |  | |\___ \    / /\ \   | |  '
     echo '| |\  | |____ / . \| |__| |____) |  / ____ \ _| |_ '
     echo '|_| \_|______/_/ \_\\____/|_____/  /_/    \_\_____|'
     echo ""

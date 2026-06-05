@@ -128,11 +128,21 @@ install_via_curl() {
 }
 
 # ── install_via_apt: apt / pkg install ─────────────
-# Detecta Termux (NEXUS_ENV=termux) y usa pkg en ese caso
+# Detecta Termux (NEXUS_ENV=termux) y usa pkg en ese caso.
+# Si se ejecuta como root, usa apt siempre porque pkg
+# (Termux) rechaza root.
 install_via_apt() {
     local package="$1"
 
-    if [ "${NEXUS_TERMUX_ACCESSIBLE:-false}" = "true" ]; then
+    if [ "$(id -u)" -eq 0 ]; then
+        log_info "Instalando $package via apt (root — pkg no disponible como root)..."
+        if command -v apt &>/dev/null; then
+            apt install -y "$package"
+        else
+            log_error "apt no disponible."
+            return 1
+        fi
+    elif [ "${NEXUS_TERMUX_ACCESSIBLE:-false}" = "true" ]; then
         log_info "Instalando $package via pkg (Termux bind-mount)..."
         "${TERMUX_PKG:-pkg}" install -y "$package"
     elif [ "${NEXUS_ENV:-}" = "termux" ]; then
@@ -202,11 +212,21 @@ uninstall_via_npm() {
 
 # ── uninstall_via_apt: apt/pkg remove ──────────────
 # Detecta Termux (NEXUS_TERMUX_ACCESSIBLE o NEXUS_ENV=termux)
-# y usa pkg uninstall en ese caso, apt remove en caso contrario
+# y usa pkg uninstall en ese caso, apt remove en caso contrario.
+# Si se ejecuta como root, usa apt siempre porque pkg
+# (Termux) rechaza root.
 uninstall_via_apt() {
     local package="$1"
 
-    if [ "${NEXUS_TERMUX_ACCESSIBLE:-false}" = "true" ]; then
+    if [ "$(id -u)" -eq 0 ]; then
+        log_info "Desinstalando $package via apt (root — pkg no disponible como root)..."
+        if command -v apt &>/dev/null; then
+            apt remove -y "$package" 2>/dev/null || true
+        else
+            log_error "apt no disponible."
+            return 1
+        fi
+    elif [ "${NEXUS_TERMUX_ACCESSIBLE:-false}" = "true" ]; then
         log_info "Desinstalando $package via pkg (Termux bind-mount)..."
         "${TERMUX_PKG:-pkg}" uninstall -y "$package" 2>/dev/null || true
     elif [ "${NEXUS_ENV:-}" = "termux" ]; then

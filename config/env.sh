@@ -42,17 +42,14 @@ export NEXUS_LANG="es"
 # ============================================
 # Detección de Rich (Python TUI)
 # ============================================
-export PYTHONPATH="/usr/local/lib/python3.13/dist-packages:${PYTHONPATH:-}"
+_python_site=$(python3 -c "import site; print(site.getsitepackages()[0])" 2>/dev/null || true)
+[ -n "$_python_site" ] && export PYTHONPATH="$_python_site:${PYTHONPATH:-}"
+unset _python_site
+
 if python3 -c "import rich" 2>/dev/null; then
     export NEXUS_RICH_AVAILABLE="true"
 else
-    # Attempt fix with break-system-packages
-    pip3 install --break-system-packages --user rich 2>/dev/null || true
-    if python3 -c "import rich" 2>/dev/null; then
-        export NEXUS_RICH_AVAILABLE="true"
-    else
-        export NEXUS_RICH_AVAILABLE="false"
-    fi
+    export NEXUS_RICH_AVAILABLE="false"
 fi
 
 # ============================================

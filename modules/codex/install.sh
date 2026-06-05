@@ -11,12 +11,11 @@ check_dependency "Node.js" "node --version" || exit 1
 check_dependency "npm" "npm --version" || exit 1
 
 # ── Instalar codex via npm ─────────────────────────
-local _install_rc=0
+_install_rc=0
 install_via_npm "@openai/codex" || _install_rc=$?
 
 # ── Verificar instalacion ──────────────────────────
 if command -v codex &>/dev/null; then
-    local version
     version="$(codex --version 2>/dev/null | awk '{print $NF}' || echo "0.0.0")"
     if [ "$_install_rc" -ne 0 ]; then
         log_warn "El comando npm fallo pero codex ya estaba instalado ($version)"

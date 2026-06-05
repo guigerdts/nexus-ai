@@ -4,6 +4,7 @@ NEXUS AI — Guide interactivo con Rich
 Uso: python3 tui/guide.py [categoria|--interactive]
 """
 
+import os
 import shutil
 import sys
 import subprocess
@@ -241,11 +242,19 @@ def interactive_menu():
                     continue
 
                 console.print(f"[cyan]Instalando {name}...[/cyan]")
-                result = subprocess.run(install_cmd.split(), capture_output=True, text=True)
-                if result.returncode == 0:
-                    console.print(f"\n[green]✓ {name} instalado correctamente[/green]")
-                else:
-                    console.print(f"\n[red]✗ Error instalando {name}: {result.stderr}[/red]")
+                try:
+                    nexus_root = os.environ.get("NEXUS_ROOT", "")
+                    nxai_bin = os.path.join(nexus_root, "bin", "nxai")
+                    if not nexus_root or not os.path.isfile(nxai_bin):
+                        console.print(f"\n[red]✗ NEXUS_ROOT no encontrado o nxai no disponible en {nxai_bin}[/red]")
+                        continue
+                    subprocess.run([nxai_bin, "install", name], timeout=300)
+                    if shutil.which(name) is not None:
+                        console.print(f"\n[green]✓ {name} instalado correctamente[/green]")
+                    else:
+                        console.print(f"\n[red]✗ {name} NO se instalo — verifica con 'which {name}'[/red]")
+                except subprocess.TimeoutExpired:
+                    console.print(f"\n[red]✗ Timeout: {name} no se instalo en 5 minutos[/red]")
             else:
                 console.print("[red]Opcion invalida[/red]")
         except ValueError:

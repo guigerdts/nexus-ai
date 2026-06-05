@@ -14,12 +14,11 @@ check_dependency "pip3" "pip3 --version" || {
 }
 
 # ── Instalar pi via pip ────────────────────────────
-local _install_rc=0
+_install_rc=0
 install_via_pip "pi-ai" || _install_rc=$?
 
 # ── Verificar instalacion ──────────────────────────
 if command -v pi &>/dev/null; then
-    local version
     version="$(pi --version 2>/dev/null || echo "0.0.0")"
     if [ "$_install_rc" -ne 0 ]; then
         log_warn "El comando pip fallo pero pi ya estaba instalado ($version)"

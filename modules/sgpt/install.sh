@@ -14,12 +14,11 @@ check_dependency "pip3" "pip3 --version" || {
 }
 
 # ── Instalar sgpt via pip ──────────────────────────
-local _install_rc=0
+_install_rc=0
 install_via_pip "shell-gpt" || _install_rc=$?
 
 # ── Verificar instalacion ──────────────────────────
 if command -v sgpt &>/dev/null; then
-    local version
     version="$(sgpt --version 2>/dev/null || echo "0.0.0")"
     if [ "$_install_rc" -ne 0 ]; then
         log_warn "El comando pip fallo pero sgpt ya estaba instalado ($version)"

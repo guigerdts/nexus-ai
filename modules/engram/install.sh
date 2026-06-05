@@ -8,7 +8,6 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/lib/nexus-install.sh
 
 # ── Verificar si engram ya esta en PATH ────────────
 if command -v engram &>/dev/null; then
-    local version
     version="$(engram --version 2>/dev/null || echo "0.0.0")"
     mark_installed "engram" "$version"
     log_ok "engram ya esta instalado ($version)"

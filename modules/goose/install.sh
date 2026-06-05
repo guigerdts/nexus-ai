@@ -10,12 +10,11 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/lib/nexus-install.sh
 check_dependency "curl" "curl --version" || exit 1
 
 # ── Instalar goose via curl ────────────────────────
-local _install_rc=0
+_install_rc=0
 install_via_curl "https://github.com/block/goose/install.sh" || _install_rc=$?
 
 # ── Verificar instalacion ──────────────────────────
 if command -v goose &>/dev/null; then
-    local version
     version="$(goose --version 2>/dev/null || echo "0.0.0")"
     if [ "$_install_rc" -ne 0 ]; then
         log_warn "El script de instalacion fallo pero goose ya estaba instalado ($version)"

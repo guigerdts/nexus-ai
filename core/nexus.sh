@@ -161,7 +161,7 @@ install_agent() {
             local _dir="${AGENTS[$_name]}"
             if [ -f "$_dir/install.sh" ]; then
                 if [ "$NEXUS_GUM_AVAILABLE" = "true" ]; then
-                    gum spin --spinner dot --title "Instalando ${_name}..." -- bash "$_dir/install.sh" 2>/dev/null || log_warn "Fallo al instalar $_name"
+                    gum spin --spinner dot --title "Instalando ${_name}..." -- bash "$_dir/install.sh" || { log_warn "Fallo al instalar $_name"; continue; }
                 else
                     log_info "Instalando $_name..."
                     # shellcheck source=/dev/null
@@ -186,9 +186,11 @@ install_agent() {
 
     # Per-agent install with optional gum confirm+spin
     if [ "$NEXUS_GUM_AVAILABLE" = "true" ] && [ -t 0 ]; then
-        gum confirm "Instalar ${target}?" || { log_info "Instalacion cancelada"; return 0; }
         if [ -f "$_dir/install.sh" ]; then
-            gum spin --spinner dot --title "Instalando ${target}..." -- bash "$_dir/install.sh" 2>/dev/null || log_warn "Fallo al instalar $target"
+            if ! gum spin --spinner dot --title "Instalando ${target}..." -- bash "$_dir/install.sh"; then
+                log_warn "Fallo al instalar $target"
+                return 1
+            fi
         else
             log_warn "$target no tiene install.sh"
         fi
@@ -249,7 +251,7 @@ remove_agent() {
             esac
         " 2>/dev/null
         mark_removed "$target"
-        gum style --foreground 42 "Agente '${target}' desinstalado."
+        gum style --foreground 42 "Agente '${target}' desinstalado." 2>/dev/null
     else
         case "${AGENT_METHOD:-}" in
             pip)
@@ -335,11 +337,11 @@ agent_test() {
         local _exit_code=0
         gum spin --spinner dot --title "Probando ${_test_name}..." -- timeout 10 bash "$_test_sh" 2>/dev/null || _exit_code=$?
         if [ "$_exit_code" -eq 124 ]; then
-            gum style --foreground 196 "TIMEOUT: ${_test_name} (>10s)"
+            gum style --foreground 196 "TIMEOUT: ${_test_name} (>10s)" 2>/dev/null
         elif [ "$_exit_code" -eq 0 ]; then
-            gum style --foreground 42 "PASS: ${_test_name}"
+            gum style --foreground 42 "PASS: ${_test_name}" 2>/dev/null
         else
-            gum style --foreground 196 "FAIL: ${_test_name}"
+            gum style --foreground 196 "FAIL: ${_test_name}" 2>/dev/null
         fi
     else
         local _start_time _end_time _elapsed _exit_code=0

@@ -11,12 +11,11 @@ check_dependency "Node.js" "node --version" || exit 1
 check_dependency "npm" "npm --version" || exit 1
 
 # ── Instalar opencode via npm ──────────────────────
-local _install_rc=0
+_install_rc=0
 install_via_npm "opencode-ai" || _install_rc=$?
 
 # ── Verificar instalacion ──────────────────────────
 if command -v opencode &>/dev/null; then
-    local version
     version="$(opencode --version 2>/dev/null || echo "0.0.0")"
     if [ "$_install_rc" -ne 0 ]; then
         log_warn "El comando npm fallo pero opencode ya estaba instalado ($version)"

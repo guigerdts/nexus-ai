@@ -14,12 +14,11 @@ check_dependency "pip3" "pip3 --version" || {
 }
 
 # ── Instalar aider via pip ─────────────────────────
-local _install_rc=0
+_install_rc=0
 install_via_pip "aider-chat" || _install_rc=$?
 
 # ── Verificar instalacion ──────────────────────────
 if command -v aider &>/dev/null; then
-    local version
     version="$(aider --version 2>/dev/null || echo "0.0.0")"
     if [ "$_install_rc" -ne 0 ]; then
         log_warn "El comando pip fallo pero aider ya estaba instalado ($version)"

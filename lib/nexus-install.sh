@@ -43,16 +43,40 @@ check_dependency() {
 # ── install_via_pip: pip3 install ──────────────────
 install_via_pip() {
     local package="$1"
+    local pip_cmd=""
 
-    log_info "Instalando $package via pip..."
     if command -v pip3 &>/dev/null; then
-        pip3 install --user "$package"
+        pip_cmd="pip3"
     elif command -v pip &>/dev/null; then
-        pip install --user "$package"
+        pip_cmd="pip"
     else
         log_error "pip3/pip no disponible. Instala python3-pip primero."
         return 1
     fi
+
+    log_info "Instalando $package via pip..."
+
+    # Intento 1: --user (funciona en Termux, falla en Ubuntu 24+ por PEP 668)
+    if $pip_cmd install --user "$package"; then
+        return 0
+    fi
+
+    # Intento 2: --break-system-packages (workaround PEP 668 en Ubuntu/Debian)
+    log_info "Fallo --user, reintentando con --break-system-packages..."
+    if $pip_cmd install --break-system-packages "$package"; then
+        return 0
+    fi
+
+    # Intento 3: pipx (fallback universal, recomienda PEP 668)
+    if command -v pipx &>/dev/null; then
+        log_info "Fallo pip, intentando via pipx..."
+        pipx install "$package"
+        return $?
+    fi
+
+    log_error "No se pudo instalar $package via pip ni pipx."
+    log_info "Instala manualmente: pip3 install --user $package"
+    return 1
 }
 
 # ── install_via_npm: npm install -g ────────────────

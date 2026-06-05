@@ -14,12 +14,11 @@ check_dependency "pip3" "pip3 --version" || {
 }
 
 # ── Instalar fabric via pip ────────────────────────
-local _install_rc=0
+_install_rc=0
 install_via_pip "fabric-ai" || _install_rc=$?
 
 # ── Verificar instalacion ──────────────────────────
 if command -v fabric &>/dev/null; then
-    local version
     version="$(fabric --version 2>/dev/null || echo "0.0.0")"
     if [ "$_install_rc" -ne 0 ]; then
         log_warn "El comando pip fallo pero fabric ya estaba instalado ($version)"

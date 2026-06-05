@@ -161,7 +161,15 @@ install_agent() {
             local _dir="${AGENTS[$_name]}"
             if [ -f "$_dir/install.sh" ]; then
                 if [ "$NEXUS_GUM_AVAILABLE" = "true" ]; then
-                    gum spin --spinner dot --title "Instalando ${_name}..." -- bash "$_dir/install.sh" || { log_warn "Fallo al instalar $_name"; continue; }
+                    gum spin --spinner dot --title "Instalando ${_name}..." -- env \
+                        NEXUS_ROOT="$NEXUS_ROOT" \
+                        NEXUS_ENV="$NEXUS_ENV" \
+                        NEXUS_TERMUX_ACCESSIBLE="${NEXUS_TERMUX_ACCESSIBLE:-}" \
+                        TERMUX_PREFIX="${TERMUX_PREFIX:-}" \
+                        TERMUX_BIN="${TERMUX_BIN:-}" \
+                        TERMUX_PIP="${TERMUX_PIP:-}" \
+                        TERMUX_PKG="${TERMUX_PKG:-}" \
+                        bash "$_dir/install.sh" || { log_warn "Fallo al instalar $_name"; continue; }
                 else
                     log_info "Instalando $_name..."
                     # shellcheck source=/dev/null
@@ -187,7 +195,15 @@ install_agent() {
     # Per-agent install with optional gum confirm+spin
     if [ "$NEXUS_GUM_AVAILABLE" = "true" ] && [ -t 0 ]; then
         if [ -f "$_dir/install.sh" ]; then
-            if ! gum spin --spinner dot --title "Instalando ${target}..." -- bash "$_dir/install.sh"; then
+            if ! gum spin --spinner dot --title "Instalando ${target}..." -- env \
+                NEXUS_ROOT="$NEXUS_ROOT" \
+                NEXUS_ENV="$NEXUS_ENV" \
+                NEXUS_TERMUX_ACCESSIBLE="${NEXUS_TERMUX_ACCESSIBLE:-}" \
+                TERMUX_PREFIX="${TERMUX_PREFIX:-}" \
+                TERMUX_BIN="${TERMUX_BIN:-}" \
+                TERMUX_PIP="${TERMUX_PIP:-}" \
+                TERMUX_PKG="${TERMUX_PKG:-}" \
+                bash "$_dir/install.sh"; then
                 log_warn "Fallo al instalar $target"
                 return 1
             fi

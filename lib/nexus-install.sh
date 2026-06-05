@@ -92,12 +92,22 @@ install_via_pip() {
 }
 
 # ── install_via_npm: npm install -g ────────────────
+# Cuando NEXUS_TERMUX_ACCESSIBLE=true, usa TERMUX_NPM
+# (npm de Termux) para que el paquete quede disponible
+# en el entorno Termux real, no en proot.
 install_via_npm() {
     local package="$1"
+    local npm_cmd="npm"
 
-    log_info "Instalando $package via npm..."
-    if command -v npm &>/dev/null; then
-        npm install -g "$package"
+    if [ "${NEXUS_TERMUX_ACCESSIBLE:-false}" = "true" ] && [ -n "${TERMUX_NPM:-}" ]; then
+        npm_cmd="$TERMUX_NPM"
+        log_info "Instalando $package via npm (Termux: $npm_cmd)..."
+    else
+        log_info "Instalando $package via npm..."
+    fi
+
+    if command -v "${npm_cmd}" &>/dev/null; then
+        $npm_cmd install -g "$package"
     else
         log_error "npm no disponible. Instala Node.js primero."
         return 1
@@ -168,12 +178,22 @@ uninstall_via_pip() {
 }
 
 # ── uninstall_via_npm: npm uninstall -g ────────────
+# Cuando NEXUS_TERMUX_ACCESSIBLE=true, usa TERMUX_NPM
+# (npm de Termux) para que el uninstall encuentre el
+# paquete en el entorno Termux real, no en proot.
 uninstall_via_npm() {
     local package="$1"
+    local npm_cmd="npm"
 
-    log_info "Desinstalando $package via npm..."
-    if command -v npm &>/dev/null; then
-        npm uninstall -g "$package" 2>/dev/null || true
+    if [ "${NEXUS_TERMUX_ACCESSIBLE:-false}" = "true" ] && [ -n "${TERMUX_NPM:-}" ]; then
+        npm_cmd="$TERMUX_NPM"
+        log_info "Desinstalando $package via npm (Termux: $npm_cmd)..."
+    else
+        log_info "Desinstalando $package via npm..."
+    fi
+
+    if command -v "${npm_cmd}" &>/dev/null; then
+        $npm_cmd uninstall -g "$package" 2>/dev/null || true
     else
         log_error "npm no disponible."
         return 1

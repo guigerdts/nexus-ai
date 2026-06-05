@@ -91,6 +91,7 @@ if [ "${NEXUS_ENV:-}" = "proot-ubuntu" ] && [ -x "/data/data/com.termux/files/us
     export TERMUX_PREFIX="/data/data/com.termux/files/usr"
     export TERMUX_PKG="/data/data/com.termux/files/usr/bin/pkg"
     export TERMUX_PIP="/data/data/com.termux/files/usr/bin/pip3"
+    export TERMUX_NPM="/data/data/com.termux/files/usr/bin/npm"
 
     # Prepend Termux bin dirs to PATH (idempotent via case guard)
     if [ -d "$TERMUX_BIN" ]; then

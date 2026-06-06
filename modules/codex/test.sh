@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
 # modules/codex/test.sh
-# Verifica que codex esta instalado y responde
-command -v codex && codex --version >/dev/null 2>&1
-exit $?
+# Codex CLI stub — no disponible en ARM64
+echo "INFO: Codex CLI no soportado en ARM64 — test omitido"
+exit 1

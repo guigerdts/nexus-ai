@@ -526,6 +526,13 @@ if [ "${INSTALL_BASHRC:-false}" = "true" ] && [ -f "$BASHRC" ]; then
         echo "        *) export PATH=\"/data/data/com.termux/files/usr/local/bin:\$PATH\" ;;" >> "$BASHRC"
         echo "    esac" >> "$BASHRC"
         echo "fi" >> "$BASHRC"
+        # ── ~/.local/bin (uv, fabric, etc.) ──
+        echo "if [ -d \"\$HOME/.local/bin\" ]; then" >> "$BASHRC"
+        echo "    case \":\$PATH:\" in" >> "$BASHRC"
+        echo "        *\":\$HOME/.local/bin:\"*) ;;" >> "$BASHRC"
+        echo "        *) export PATH=\"\$HOME/.local/bin:\$PATH\" ;;" >> "$BASHRC"
+        echo "    esac" >> "$BASHRC"
+        echo "fi" >> "$BASHRC"
         # ── NEXUS_ROOT/bin guard ──
         echo "case \":\$PATH:\" in" >> "$BASHRC"
         echo "    *\":$NEXUS_ROOT/bin:\"*) ;;" >> "$BASHRC"
@@ -554,6 +561,13 @@ if [ "${INSTALL_ZSH:-false}" = "true" ] && [ -f "$ZSHRC" ]; then
         echo "    case \":\$PATH:\" in" >> "$ZSHRC"
         echo "        *\":/data/data/com.termux/files/usr/local/bin:\"*) ;;" >> "$ZSHRC"
         echo "        *) export PATH=\"/data/data/com.termux/files/usr/local/bin:\$PATH\" ;;" >> "$ZSHRC"
+        echo "    esac" >> "$ZSHRC"
+        echo "fi" >> "$ZSHRC"
+        # ── ~/.local/bin (uv, fabric, etc.) ──
+        echo "if [ -d \"\$HOME/.local/bin\" ]; then" >> "$ZSHRC"
+        echo "    case \":\$PATH:\" in" >> "$ZSHRC"
+        echo "        *\":\$HOME/.local/bin:\"*) ;;" >> "$ZSHRC"
+        echo "        *) export PATH=\"\$HOME/.local/bin:\$PATH\" ;;" >> "$ZSHRC"
         echo "    esac" >> "$ZSHRC"
         echo "fi" >> "$ZSHRC"
         # ── NEXUS_ROOT/bin guard ──

@@ -109,6 +109,16 @@ if [ "${NEXUS_ENV:-}" = "proot-ubuntu" ] && [ -x "/data/data/com.termux/files/us
 fi
 
 # ============================================
+# ~/.local/bin — binarios de usuario (uv, fabric, etc.)
+# ============================================
+if [ -d "$HOME/.local/bin" ]; then
+    case ":$PATH:" in
+        *":$HOME/.local/bin:"*) ;;
+        *) export PATH="$HOME/.local/bin:$PATH" ;;
+    esac
+fi
+
+# ============================================
 # Detección de arquitectura
 # ============================================
 case "$(uname -m)" in

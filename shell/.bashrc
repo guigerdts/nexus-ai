@@ -46,6 +46,14 @@ if [ -d "/data/data/com.termux/files/usr/local/bin" ]; then
     esac
 fi
 
+# ── ~/.local/bin (uv, fabric, etc.) ────────────────
+if [ -d "$HOME/.local/bin" ]; then
+    case ":$PATH:" in
+        *":$HOME/.local/bin:"*) ;;
+        *) export PATH="$HOME/.local/bin:$PATH" ;;
+    esac
+fi
+
 # ═══════════════════════════════════════════════════
 #  MOTD
 # ═══════════════════════════════════════════════════

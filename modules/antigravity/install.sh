@@ -6,26 +6,23 @@ set -euo pipefail
 # shellcheck source=../../lib/nexus-install.sh
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/lib/nexus-install.sh"
 
-# ── antigravity: CLI experimental (instalacion manual) ──
-# Este agente no tiene un metodo de instalacion automatizado.
-# Se muestran instrucciones para instalacion manual.
+# ── antigravity → redirige a agy ──────────────────
+# antigravity CLI ha sido reemplazado por agy (CLI oficial de Google).
+# Este install.sh instala agy y lo registra como antigravity.
+log_info "antigravity ha sido reemplazado por agy (CLI oficial de Google)"
+log_info "Instalando agy como reemplazo..."
 
-cat <<'EOF'
-╔══════════════════════════════════════════════════════════════╗
-║  antigravity — CLI experimental de IA                       ║
-║                                                              ║
-║  La instalacion es manual por ahora.                         ║
-║                                                              ║
-║  1. Clona el repositorio:                                    ║
-║       git clone https://github.com/antigravity-ai/antigravity ║
-║                                                              ║
-║  2. Sigue las instrucciones en el README del proyecto        ║
-║                                                              ║
-║  3. Asegurate de que el binario quede en tu PATH             ║
-║                                                              ║
-║  Una vez instalado, ejecuta:  nxai status                   ║
-╚══════════════════════════════════════════════════════════════╝
-EOF
+# Instalar agy via script oficial
+install_via_curl "https://antigravity.google/cli/install.sh"
 
-log_warn "antigravity requiere instalacion manual"
-exit 0
+# ── Verificar instalacion ──────────────────────────
+if command -v agy &>/dev/null; then
+    version="$(agy --version 2>/dev/null || echo "latest")"
+    # Se registra como "antigravity" para mantener compatibilidad
+    mark_installed "antigravity" "$version"
+    log_ok "antigravity → agy instalado correctamente ($version)"
+else
+    log_error "agy no se encuentra en PATH despues de la instalacion."
+    log_info "Intenta manualmente: nxai install agy"
+    exit 1
+fi

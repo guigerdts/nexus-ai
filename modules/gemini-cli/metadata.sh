@@ -2,7 +2,7 @@
 # modules/gemini-cli/metadata.sh
 export AGENT_NAME="gemini-cli"
 export AGENT_VERSION="0.0.0"
-export AGENT_DESC="CLI oficial de Google Gemini desde la terminal"
+export AGENT_DESC="DEPRECATED — gemini-cli sunset 18/6/2026. Usa: nxai install agy"
 export AGENT_URL="https://github.com/google-gemini/gemini-cli"
 export AGENT_TIER="1"
 export AGENT_CATEGORY="ai"

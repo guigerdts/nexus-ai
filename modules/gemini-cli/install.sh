@@ -6,6 +6,18 @@ set -euo pipefail
 # shellcheck source=../../lib/nexus-install.sh
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/lib/nexus-install.sh"
 
+# ╔══════════════════════════════════════════════════════════════╗
+# ║  ⚠  DEPRECATED — gemini-cli tiene sunset el 18 junio 2026 ║
+# ║                                                              ║
+# ║  Google esta migrando gemini-cli a su nueva CLI oficial:     ║
+# ║    nxai install agy                                          ║
+# ║                                                              ║
+# ║  agy ofrece el mismo asistente de IA con soporte activo.    ║
+# ╚══════════════════════════════════════════════════════════════╝
+log_warn "gemini-cli tiene sunset el 18 junio 2026"
+log_warn "Instala el reemplazo: nxai install agy"
+echo ""
+
 # ── Verificar dependencias ─────────────────────────
 check_dependency "Node.js" "node --version" || exit 1
 check_dependency "npm" "npm --version" || exit 1

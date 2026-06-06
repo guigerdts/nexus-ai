@@ -33,9 +33,10 @@ check_dependency "pip3" "pip3 --version" || {
 # ═══════════════════════════════════════════════════
 #  Instalar sgpt via pip (ARM64-safe)
 # ═══════════════════════════════════════════════════
-# Estrategia: separar dependencias para evitar
-# jiter/maturin (openai>=2.0.0) que falla en ARM64.
-# openai==0.27.6 es puro Python, compatible con sgpt.
+# Estrategia: openai>=2.0.0 es necesario para sgpt.
+# jiter (dep de openai) tiene wheels manylinux aarch64
+# que funcionan en proot-Ubuntu. En Termux se compila
+# desde fuente y requiere Rust (pkg install rust).
 _install_rc=0
 
 # Detectar pip correcto (Termux vs system)
@@ -50,12 +51,19 @@ $_pip_cmd install --no-deps --no-build-isolation shell-gpt 2>/dev/null || true
 log_info "Instalando dependencias puras Python..."
 $_pip_cmd install --no-build-isolation distro rich typer prompt-toolkit 2>/dev/null || true
 
-log_info "Instalando openai==0.27.6 (puro Python, ARM64-safe)..."
-if ! $_pip_cmd install --no-build-isolation openai==0.27.6 2>/dev/null; then
-    log_info "pip directo fallo. Reintentando con --user..."
-    if ! $_pip_cmd install --user --no-build-isolation openai==0.27.6 2>/dev/null; then
-        log_info "Fallo --user. Reintentando con --break-system-packages..."
-        $_pip_cmd install --break-system-packages --no-build-isolation openai==0.27.6 2>/dev/null || _install_rc=$?
+log_info "Instalando openai>=2.0.0..."
+if ! $_pip_cmd install "openai>=2.0.0" 2>/dev/null; then
+    # openai>=2.0.0 requiere jiter (Rust/maturin).
+    # En Termux los wheels manylinux no son compatibles,
+    # necesita compilar desde fuente con Rust.
+    if [ "$NEXUS_ENV" = "termux" ]; then
+        log_info "openai>=2.0.0 requiere Rust para compilar jiter en Termux..."
+        pkg install -y rust 2>/dev/null || true
+        $_pip_cmd install "openai>=2.0.0" 2>/dev/null || _install_rc=$?
+    else
+        log_info "pip directo fallo. Reintentando con --user..."
+        $_pip_cmd install --user "openai>=2.0.0" 2>/dev/null || \
+        $_pip_cmd install --break-system-packages "openai>=2.0.0" 2>/dev/null || _install_rc=$?
     fi
 fi
 

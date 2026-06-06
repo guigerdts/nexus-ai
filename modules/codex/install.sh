@@ -12,7 +12,17 @@ check_dependency "npm" "npm --version" || exit 1
 
 # ── Instalar codex via npm ─────────────────────────
 _install_rc=0
-install_via_npm "@openai/codex" || _install_rc=$?
+# @latest + --force asegura que se instale el binary nativo
+# ARM64 (@openai/codex-linux-arm64) que es optionalDependency.
+# Sin --force, npm puede saltarlo si ya hay una instalacion
+# parcial o si el resolver no lo baja correctamente.
+_npm_cmd="npm"
+if [ "${NEXUS_TERMUX_ACCESSIBLE:-false}" = "true" ] && [ -n "${TERMUX_NPM:-}" ]; then
+    _npm_cmd="$TERMUX_NPM"
+fi
+log_info "Instalando @openai/codex@latest..."
+$_npm_cmd install -g "@openai/codex@latest" --force 2>/dev/null || _install_rc=$?
+unset _npm_cmd
 
 # ── Verificar instalacion ──────────────────────────
 if command -v codex &>/dev/null; then

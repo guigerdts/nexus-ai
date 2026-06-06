@@ -31,10 +31,33 @@ check_dependency "pip3" "pip3 --version" || {
 }
 
 # ═══════════════════════════════════════════════════
-#  Instalar sgpt via pip
+#  Instalar sgpt via pip (ARM64-safe)
 # ═══════════════════════════════════════════════════
+# Estrategia: separar dependencias para evitar
+# jiter/maturin (openai>=2.0.0) que falla en ARM64.
+# openai==0.27.6 es puro Python, compatible con sgpt.
 _install_rc=0
-install_via_pip "shell-gpt" || _install_rc=$?
+
+# Detectar pip correcto (Termux vs system)
+_pip_cmd="pip3"
+if [ "${NEXUS_TERMUX_ACCESSIBLE:-false}" = "true" ] && [ -n "${TERMUX_PIP:-}" ]; then
+    _pip_cmd="$TERMUX_PIP"
+fi
+
+log_info "Instalando shell-gpt sin dependencias..."
+$_pip_cmd install --no-deps --no-build-isolation shell-gpt 2>/dev/null || true
+
+log_info "Instalando dependencias puras Python..."
+$_pip_cmd install --no-build-isolation distro rich typer prompt-toolkit 2>/dev/null || true
+
+log_info "Instalando openai==0.27.6 (puro Python, ARM64-safe)..."
+if ! $_pip_cmd install --no-build-isolation openai==0.27.6 2>/dev/null; then
+    log_info "pip directo fallo. Reintentando con --user..."
+    if ! $_pip_cmd install --user --no-build-isolation openai==0.27.6 2>/dev/null; then
+        log_info "Fallo --user. Reintentando con --break-system-packages..."
+        $_pip_cmd install --break-system-packages --no-build-isolation openai==0.27.6 2>/dev/null || _install_rc=$?
+    fi
+fi
 
 # ═══════════════════════════════════════════════════
 #  Fallback: uv pip install

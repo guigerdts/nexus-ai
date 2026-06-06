@@ -22,30 +22,54 @@ esac
 
 if [ "$NEXUS_ENV" = "termux" ]; then
     # Termux: descargar binary directo
-    _ollama_url="https://github.com/ollama/ollama/releases/latest/download/ollama-linux-${_ollama_arch}.tgz"
+    # El asset usa .tar.zst, requiere zstd para extraer
+    if ! command -v zstd &>/dev/null; then
+        log_info "Instalando zstd (necesario para extraer ollama)..."
+        pkg install -y zstd 2>/dev/null || {
+            log_error "No se pudo instalar zstd. Instalalo manualmente: pkg install zstd"
+            exit 1
+        }
+    fi
+
+    log_info "Obteniendo ultima version de ollama via GitHub API..."
+    _ollama_version="$(curl -s https://api.github.com/repos/ollama/ollama/releases/latest | grep '"tag_name"' | cut -d'"' -f4)"
+    if [ -z "$_ollama_version" ]; then
+        log_error "No se pudo obtener la ultima version de ollama desde GitHub API"
+        exit 1
+    fi
+    log_info "Version detectada: $_ollama_version"
+
+    _ollama_url="https://github.com/ollama/ollama/releases/download/${_ollama_version}/ollama-linux-${_ollama_arch}.tar.zst"
     _ollama_tmp="$(mktemp -d)"
-    log_info "Descargando ollama para Termux desde GitHub releases..."
-    if curl -fsSL "$_ollama_url" -o "$_ollama_tmp/ollama.tgz"; then
-        tar -xzf "$_ollama_tmp/ollama.tgz" -C "$_ollama_tmp"
-        # El tarball contiene el binary en la raiz
-        if [ -f "$_ollama_tmp/ollama" ]; then
+    log_info "Descargando ollama ${_ollama_version} para ARM64..."
+    if curl -fSL "$_ollama_url" -o "$_ollama_tmp/ollama.tar.zst"; then
+        tar --zstd -xf "$_ollama_tmp/ollama.tar.zst" -C "$_ollama_tmp"
+        if [ -f "$_ollama_tmp/bin/ollama" ]; then
+            mv "$_ollama_tmp/bin/ollama" "$PREFIX/bin/ollama"
+        elif [ -f "$_ollama_tmp/ollama" ]; then
             mv "$_ollama_tmp/ollama" "$PREFIX/bin/ollama"
-            chmod +x "$PREFIX/bin/ollama"
-            rm -rf "$_ollama_tmp"
-            log_ok "ollama instalado en $PREFIX/bin/ollama"
         else
-            log_error "Binary no encontrado en el tarball"
+            log_error "Binary no encontrado en el archive"
+            ls -la "$_ollama_tmp"
             rm -rf "$_ollama_tmp"
             exit 1
         fi
+        chmod +x "$PREFIX/bin/ollama"
+        rm -rf "$_ollama_tmp"
+        log_ok "ollama ${_ollama_version} instalado en $PREFIX/bin/ollama"
     else
-        log_error "Fallo la descarga de ollama desde $_ollama_url"
+        log_error "Fallo la descarga desde $_ollama_url"
         rm -rf "$_ollama_tmp"
         exit 1
     fi
 else
     # proot-Ubuntu / Linux nativo: script oficial
+    # El script oficial maneja zstd internamente
     log_info "Instalando ollama via script oficial..."
+    if ! command -v zstd &>/dev/null; then
+        log_info "Instalando zstd (posiblemente necesario)..."
+        install_via_apt "zstd" 2>/dev/null || true
+    fi
     if curl -fsSL https://ollama.com/install.sh | sh; then
         : # ok
     else
@@ -65,4 +89,4 @@ else
     log_info "Verifica que el binario este en PATH"
     exit 1
 fi
-unset _ollama_arch _ollama_url _ollama_tmp
+unset _ollama_arch _ollama_version _ollama_url _ollama_tmp

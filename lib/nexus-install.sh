@@ -12,6 +12,7 @@
 #   install_via_cargo(paquete)     — cargo install
 #   mark_installed(agente, version) — registra en logs/agents.log
 #   mark_removed(agente)            — registra en logs/agents.log
+#   update_installed_manifest(agente, accion) — agrega/elimina de logs/installed.txt
 
 # ── Source env.sh y log helpers ────────────────────
 # Garantiza que las variables NEXUS_COLOR_* esten definidas
@@ -243,6 +244,27 @@ uninstall_via_apt() {
     fi
 }
 
+# ── update_installed_manifest: agrega/elimina de instaled.txt ─
+# Uso: update_installed_manifest "agent-name" "install|remove"
+# Manifest en $NEXUS_ROOT/logs/installed.txt — un nombre por linea
+# Idempotente: install no duplica, remove no falla si no existe
+update_installed_manifest() {
+    local agent="$1"
+    local action="$2"
+    local manifest="${NEXUS_ROOT}/logs/installed.txt"
+
+    mkdir -p "$(dirname "$manifest")"
+
+    case "$action" in
+        install)
+            grep -Fx "$agent" "$manifest" 2>/dev/null || echo "$agent" >> "$manifest"
+            ;;
+        remove)
+            sed -i "/^${agent}$/d" "$manifest" 2>/dev/null || true
+            ;;
+    esac
+}
+
 # ── mark_installed: registra instalacion ───────────
 # Formato: 2026-06-03 10:00:00 | INSTALLED | aider | 0.73.1
 # Idempotente: actualiza la entrada existente si ya existe
@@ -263,6 +285,9 @@ mark_installed() {
 
     echo "${timestamp} | INSTALLED | ${agent} | ${version}" >> "$log_file"
     log_ok "Instalacion registrada: $agent $version"
+
+    # Sincronizar manifest de instalacion
+    update_installed_manifest "$agent" "install"
 }
 
 # ── mark_removed: registra eliminacion ─────────────
@@ -277,4 +302,7 @@ mark_removed() {
     echo "${timestamp} | REMOVED | ${agent}" >> "$log_file"
 
     log_ok "Eliminacion registrada: $agent"
+
+    # Sincronizar manifest de instalacion
+    update_installed_manifest "$agent" "remove"
 }

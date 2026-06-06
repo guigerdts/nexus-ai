@@ -48,6 +48,7 @@ show_help() {
     printf "  \033[1m%-12s\033[0m %s\n" "guide"     "Guia de uso por categorias"
     printf "  \033[1m%-12s\033[0m %s\n" "dashboard" "Abrir panel TUI"
     printf "  \033[1m%-12s\033[0m %s\n" "agent"     "Gestionar agentes custom"
+    printf "  \033[1m%-12s\033[0m %s\n" "manifest"  "Gestionar manifest de instalaciones"
     printf "  \033[1m%-12s\033[0m %s\n" "help"      "Mostrar esta ayuda"
     printf "\n"
     printf "\033[1mInicio rapido:\033[0m\n"
@@ -516,6 +517,55 @@ Modulos cargados:
     fi
 }
 
+# ── manifest_import: importa binarios existentes al manifest ─
+# Escanea modules/ y agrega a installed.txt los agentes cuyo
+# binario existe en PATH. Util para migrar instalaciones
+# previas al sistema de tracking.
+manifest_import() {
+    local manifest="${NEXUS_ROOT}/logs/installed.txt"
+    local imported=0
+    local skipped=0
+
+    mkdir -p "$(dirname "$manifest")"
+
+    for _name in "${AGENT_ORDER[@]}"; do
+        local _dir="${AGENTS[$_name]}"
+        if [ -f "$_dir/metadata.sh" ]; then
+            # shellcheck source=/dev/null
+            source "$_dir/metadata.sh"
+        fi
+
+        # Saltar stubs — no tienen binario real
+        if [ "${AGENT_METHOD:-}" = "stub" ]; then
+            skipped=$((skipped + 1))
+            continue
+        fi
+
+        # Saltar si no tiene binario definido
+        if [ -z "${AGENT_BINARY:-}" ]; then
+            skipped=$((skipped + 1))
+            continue
+        fi
+
+        # Verificar si el binario existe en PATH
+        if command -v "$AGENT_BINARY" &>/dev/null; then
+            # Ya esta en el manifest?
+            if grep -Fx "$_name" "$manifest" &>/dev/null; then
+                skipped=$((skipped + 1))
+            else
+                echo "$_name" >> "$manifest"
+                log_ok "Importado: $_name (binario: $AGENT_BINARY)"
+                imported=$((imported + 1))
+            fi
+        else
+            skipped=$((skipped + 1))
+        fi
+    done
+    unset _name _dir
+
+    log_ok "Manifest importado: $imported agregados, $skipped omitidos"
+}
+
 # ═══════════════════════════════════════════════════
 #  MAIN: Ruteo de subcomandos
 # ═══════════════════════════════════════════════════
@@ -611,6 +661,19 @@ case "${COMMAND}" in
                 ;;
             *)
                 apply_update
+                ;;
+        esac
+        ;;
+    manifest)
+        show_banner
+        check_update_silent
+        case "${1:-}" in
+            import)
+                manifest_import
+                ;;
+            *)
+                log_error "Uso: nxai manifest import"
+                exit 1
                 ;;
         esac
         ;;

@@ -1,0 +1,11 @@
+gemini-cli
+fabric
+sgpt
+ollama
+eza
+lazygit
+nodemon
+typescript
+pm2
+nvchad
+oh-my-zsh

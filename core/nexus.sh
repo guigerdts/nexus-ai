@@ -391,7 +391,7 @@ agent_test() {
 
     if [ "$NEXUS_GUM_AVAILABLE" = "true" ]; then
         local _exit_code=0
-        gum spin --spinner dot --title "Probando ${_test_name}..." -- timeout 10 bash "$_test_sh" 2>/dev/null || _exit_code=$?
+        gum spin --spinner dot --title "Probando ${_test_name}..." -- timeout 10 env PATH="$PATH" bash "$_test_sh" 2>/dev/null || _exit_code=$?
         if [ "$_exit_code" -eq 124 ]; then
             gum style --foreground 196 "TIMEOUT: ${_test_name} (>10s)" 2>/dev/null
         elif [ "$_exit_code" -eq 0 ]; then
@@ -403,7 +403,7 @@ agent_test() {
         local _start_time _end_time _elapsed _exit_code=0
         _start_time=$(date +%s)
 
-        timeout 10 bash "$_test_sh" || _exit_code=$?
+        timeout 10 env PATH="$PATH" bash "$_test_sh" || _exit_code=$?
 
         _end_time=$(date +%s)
         _elapsed=$(( _end_time - _start_time ))

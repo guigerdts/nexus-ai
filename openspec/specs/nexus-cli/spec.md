@@ -74,6 +74,7 @@ The system MUST call `show_banner()` before every command EXCEPT `dashboard` and
 ### Requirement: Gum formatting with fallback
 
 Each command MUST check `NEXUS_GUM_AVAILABLE` inline. When true, use gum features. When false, fall back to current ANSI output.
+(Previously: list fallback showed only [INSTALADO]/[NO INSTALADO])
 
 #### Scenario: install with gum confirm and spin
 
@@ -99,11 +100,12 @@ Each command MUST check `NEXUS_GUM_AVAILABLE` inline. When true, use gum feature
 
 - GIVEN `NEXUS_GUM_AVAILABLE=false`
 - WHEN `nxai list` runs with banner
-- THEN current echo-based agent list with ANSI [INSTALADO]/[NO INSTALADO] MUST display
+- THEN echo-based agent list with ANSI [INSTALADO]/[EXTERNO]/[NO INSTALADO] MUST display
 
 ### Requirement: Subcommand operations
 
-The system MUST implement `install`, `remove`, `list`, `status`, `agent add`, `agent test`, `dashboard`, `ui`, `update`, and `help`. `dashboard`/`ui` MUST source `env.sh`, check `import textual`, and exec dashboard.py. Each command (except help/--help/dashboard/ui) MUST call `show_banner()`. When `NEXUS_GUM_AVAILABLE`, `list` uses `gum table`, `status` uses `gum style`, `install`/`remove` use `gum confirm`+`gum spin`, `agent test` uses `gum spin`+styled PASS/FAIL — all with ANSI fallback.
+The system MUST implement `install`, `remove`, `list`, `status`, `agent add`, `agent test`, `dashboard`, `ui`, `update`, and `help`. `dashboard`/`ui` MUST source `env.sh`, check `import textual`, and exec dashboard.py. Each command (except help/--help/dashboard/ui) MUST call `show_banner()`. When `NEXUS_GUM_AVAILABLE`, `list` uses `gum table` with three-state (INSTALADO/EXTERNO/NO INSTALADO) coloring, `status` uses `gum style`, `install`/`remove` use `gum confirm`+`gum spin`, `agent test` uses `gum spin`+styled PASS/FAIL — all with ANSI fallback.
+(Previously: list had two-state INSTALADO/NO INSTALADO; install/remove did not sync manifest)
 
 #### Scenario: Install all agents
 
@@ -118,12 +120,24 @@ The system MUST implement `install`, `remove`, `list`, `status`, `agent add`, `a
 - WHEN agent-add runs with banner
 - THEN `modules/foo/` MUST be created with metadata.sh, install.sh, test.sh, README.md
 
-#### Scenario: List shows agent status
+#### Scenario: List shows agent status with three states
 
-- GIVEN some agents installed, some not
+- GIVEN some agents installed, some external, some not installed
 - WHEN `nxai list` runs with banner
 - THEN agents appear in gum table (gum available) or ANSI list (fallback)
-- AND INSTALADO green, NO INSTALADO yellow
+- AND INSTALADO SHALL be green, EXTERNO SHALL be cyan, NO INSTALADO SHALL be yellow
+
+#### Scenario: EXTERNO detection for PATH-only agents
+
+- GIVEN an agent binary exists in PATH but is NOT in `installed.txt`
+- WHEN `nxai list` runs with banner
+- THEN the agent MUST show as EXTERNO with cyan color
+
+#### Scenario: INSTALADO shows for manifest-tracked agents
+
+- GIVEN an agent is listed in `installed.txt` and binary exists in PATH
+- WHEN `nxai list` runs with banner
+- THEN the agent MUST show as INSTALADO with green color
 
 #### Scenario: Agent test reports PASS/FAIL
 
@@ -144,6 +158,7 @@ The system MUST implement `install`, `remove`, `list`, `status`, `agent add`, `a
 - WHEN `nxai remove <agent>` runs with banner
 - THEN mandatory gum confirm (or prompt fallback) MUST precede removal
 - AND entry in agents.log MUST be cleared
+- AND agent MUST be removed from `installed.txt` manifest
 
 #### Scenario: Dashboard launches TUI
 

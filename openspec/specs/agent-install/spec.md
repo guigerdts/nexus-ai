@@ -18,8 +18,9 @@ The library MUST provide the following functions for any agent script to call:
 | `install_via_curl(url)` | Pipes `curl <url> \| bash` |
 | `install_via_apt(package)` | Installs with `apt install -y` |
 | `install_via_cargo(package)` | Installs with `cargo install` |
-| `mark_installed(agent)` | Logs agent as installed in `agents.log` |
-| `mark_removed(agent)` | Logs agent as removed in `agents.log` |
+| `mark_installed(agent)` | Logs agent as installed in `agents.log` AND adds to `installed.txt` manifest |
+| `mark_removed(agent)` | Logs agent as removed in `agents.log` AND removes from `installed.txt` manifest |
+| `update_installed_manifest(agent, action)` | Adds/removes agent name from `installed.txt` manifest |
 
 #### Scenario: Pip install works end-to-end
 
@@ -40,6 +41,28 @@ The library MUST provide the following functions for any agent script to call:
 - GIVEN a valid URL to an install script
 - WHEN `install_via_curl "https://example.com/install.sh"` is called
 - THEN the script MUST download and pipe it to bash
+
+### Requirement: Install manifest tracking
+
+The system MUST maintain an install manifest at `$NEXUS_ROOT/logs/installed.txt` — a plain-text file with one agent name per line. The function `update_installed_manifest(agent, action)` MUST add (action="install") or remove (action="remove") the agent name from `installed.txt`.
+
+#### Scenario: Install adds agent to manifest
+
+- GIVEN an agent install succeeds
+- WHEN `mark_installed` triggers `update_installed_manifest` with action "install"
+- THEN the agent name MUST appear in `logs/installed.txt`
+
+#### Scenario: Remove deletes agent from manifest
+
+- GIVEN an agent name exists in `logs/installed.txt`
+- WHEN `mark_removed` triggers `update_installed_manifest` with action "remove"
+- THEN the agent name MUST NOT appear in `logs/installed.txt`
+
+#### Scenario: Remove non-installed agent is no-op
+
+- GIVEN an agent name is NOT in `logs/installed.txt`
+- WHEN `update_installed_manifest` is called with action "remove"
+- THEN `logs/installed.txt` MUST remain unchanged
 
 ### Requirement: Agent install state
 

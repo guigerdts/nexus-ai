@@ -244,7 +244,7 @@ uninstall_via_apt() {
     fi
 }
 
-# ── update_installed_manifest: agrega/elimina de instaled.txt ─
+# ── update_installed_manifest: agrega/elimina de installed.txt ─
 # Uso: update_installed_manifest "agent-name" "install|remove"
 # Manifest en $NEXUS_ROOT/logs/installed.txt — un nombre por linea
 # Idempotente: install no duplica, remove no falla si no existe

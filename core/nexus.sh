@@ -162,7 +162,12 @@ install_agent() {
         for _name in "${AGENT_ORDER[@]}"; do
             local _dir="${AGENTS[$_name]}"
             if [ -f "$_dir/install.sh" ]; then
-                if [ "$NEXUS_GUM_AVAILABLE" = "true" ]; then
+                # Stubs: ejecutar directamente para mostrar mensaje (gum spin oculta output)
+                local _method
+                _method=$(sed -n 's/^export AGENT_METHOD="\(.*\)"/\1/p' "$_dir/metadata.sh" 2>/dev/null || echo "")
+                if [ "$_method" = "stub" ]; then
+                    bash "$_dir/install.sh"
+                elif [ "$NEXUS_GUM_AVAILABLE" = "true" ]; then
                     gum spin --spinner dot --title "Instalando ${_name}..." -- env \
                         NEXUS_ROOT="$NEXUS_ROOT" \
                         NEXUS_ENV="$NEXUS_ENV" \
@@ -195,7 +200,18 @@ install_agent() {
     fi
 
     # Per-agent install with optional gum confirm+spin
-    if [ "$NEXUS_GUM_AVAILABLE" = "true" ] && [ -t 0 ]; then
+    # Stubs: detectar para evitar gum spin que oculta el output
+    local _method
+    _method=$(sed -n 's/^export AGENT_METHOD="\(.*\)"/\1/p' "$_dir/metadata.sh" 2>/dev/null || echo "")
+
+    if [ "$_method" = "stub" ]; then
+        # Stub: ejecutar install.sh directamente para mostrar mensaje al usuario
+        if [ -f "$_dir/install.sh" ]; then
+            bash "$_dir/install.sh"
+        else
+            log_warn "$target no tiene install.sh"
+        fi
+    elif [ "$NEXUS_GUM_AVAILABLE" = "true" ] && [ -t 0 ]; then
         if [ -f "$_dir/install.sh" ]; then
             if gum spin --spinner dot --title "Instalando ${target}..." -- env \
                 NEXUS_ROOT="$NEXUS_ROOT" \

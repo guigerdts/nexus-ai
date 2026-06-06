@@ -176,6 +176,10 @@ install_agent() {
                         TERMUX_BIN="${TERMUX_BIN:-}" \
                         TERMUX_PIP="${TERMUX_PIP:-}" \
                         TERMUX_PKG="${TERMUX_PKG:-}" \
+                        PREFIX="${PREFIX:-}" \
+                        PATH="${PATH:-}" \
+                        TMPDIR="${TMPDIR:-}" \
+                        HOME="${HOME:-}" \
                         bash "$_dir/install.sh" || { log_warn "Fallo al instalar $_name"; continue; }
                 else
                     log_info "Instalando $_name..."
@@ -221,6 +225,10 @@ install_agent() {
                 TERMUX_BIN="${TERMUX_BIN:-}" \
                 TERMUX_PIP="${TERMUX_PIP:-}" \
                 TERMUX_PKG="${TERMUX_PKG:-}" \
+                PREFIX="${PREFIX:-}" \
+                PATH="${PATH:-}" \
+                TMPDIR="${TMPDIR:-}" \
+                HOME="${HOME:-}" \
                 bash "$_dir/install.sh"; then
                 gum style --foreground 42 "[OK] ${target} instalado correctamente" 2>/dev/null
             else

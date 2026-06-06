@@ -1,30 +1,31 @@
 #!/usr/bin/env bash
 # modules/n8n/install.sh
+# n8n es pesado para instalar via npm en ARM64.
+# Stub con instrucciones manuales.
 set -euo pipefail
 
 # ── Source install library ─────────────────────────
 # shellcheck source=../../lib/nexus-install.sh
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/lib/nexus-install.sh"
 
-# ── Verificar dependencias ─────────────────────────
-check_dependency "Node.js" "node --version" || exit 1
-check_dependency "npm" "npm --version" || exit 1
+cat <<'STUB_EOF'
+╔══════════════════════════════════════════════════╗
+║  n8n — Workflow automation                        ║
+║                                                   ║
+║  n8n requiere mucha RAM (>2GB) para compilar.     ║
+║                                                   ║
+║  Instalacion manual:                              ║
+║   npm install -g n8n                              ║
+║   (puede tardar 10-15 min en ARM64)               ║
+║                                                   ║
+║  Alternativa con Docker:                          ║
+║   docker run -it --rm \                           ║
+║     -p 5678:5678 \                                ║
+║     n8nio/n8n                                     ║
+║                                                   ║
+║  Web: https://n8n.io                              ║
+╚══════════════════════════════════════════════════╝
+STUB_EOF
 
-# ── Instalar n8n via npm ───────────────────────────
-_install_rc=0
-install_via_npm "n8n" || _install_rc=$?
-
-# ── Verificar instalacion ──────────────────────────
-if command -v n8n &>/dev/null; then
-    version="$(n8n --version 2>/dev/null || echo "0.0.0")"
-    if [ "$_install_rc" -ne 0 ]; then
-        log_warn "El comando npm fallo pero n8n ya estaba instalado ($version)"
-    fi
-    mark_installed "n8n" "$version"
-    log_ok "n8n instalado correctamente ($version)"
-else
-    log_error "n8n no se encuentra en PATH despues de la instalacion."
-    log_info "Intenta: npm install -g n8n"
-    exit 1
-fi
-unset _install_rc
+log_ok "n8n — segui las instrucciones manuales arriba"
+exit 0

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # modules/fabric/install.sh
 # Fabric: AI-powered CLI for common tasks
-# Dual-environment: Termux (pkg + pip) / proot-Ubuntu (pip)
+# Go-based. Instalar via curl (ARM64 binary) o go install.
 set -euo pipefail
 
 # ── Source install library ─────────────────────────
@@ -9,67 +9,52 @@ set -euo pipefail
 _NEXUS_INSTALL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 source "$_NEXUS_INSTALL_DIR/lib/nexus-install.sh"
 
-# ── Detectar entorno (auto-contenido) ──────────────
-if [ -n "${PREFIX:-}" ]; then
-    NEXUS_ENV="termux"
-elif command -v pkg &>/dev/null && [ -d "/data/data/com.termux" ] 2>/dev/null; then
-    NEXUS_ENV="termux"
-elif [ "${NEXUS_TERMUX_ACCESSIBLE:-false}" = "true" ]; then
-    : # hybrid mode: Termux bind-mounts accessible, keep parent env (proot-ubuntu)
-elif [ -n "${NEXUS_ENV:-}" ]; then
-    : # ya definido por el parent shell (source)
-else
-    NEXUS_ENV="linux"
-fi
-export NEXUS_ENV
+_fabric_dir="$NEXUS_ROOT/bin"
+_fabric_bin="$_fabric_dir/fabric"
 
-# ── Verificar dependencias ─────────────────────────
-check_dependency "Python 3" "python3 --version" || exit 1
-check_dependency "pip3" "pip3 --version" || {
-    log_info "Intentando instalar pip3..."
-    install_via_apt "python3-pip"
-}
+mkdir -p "$_fabric_dir"
 
 # ═══════════════════════════════════════════════════
-#  Instalar fabric via pip
+#  Opcion 1: go install (si golang esta disponible)
 # ═══════════════════════════════════════════════════
-_install_rc=0
-install_via_pip "fabric-ai" || _install_rc=$?
-
-# ═══════════════════════════════════════════════════
-#  Fallback: uv pip install
-# ═══════════════════════════════════════════════════
-if [ "$_install_rc" -ne 0 ]; then
-    log_info "pip fallo. Intentando con uv como fallback..."
-    if ! command -v uv &>/dev/null; then
-        log_info "Instalando uv via pip..."
-        pip3 install uv 2>/dev/null || pip3 install --user uv 2>/dev/null || true
-    fi
-    if command -v uv &>/dev/null; then
-        log_info "Instalando fabric-ai via uv..."
-        uv pip install fabric-ai --no-build && _install_rc=0 || log_warn "uv tampoco pudo instalar fabric"
+if command -v go &>/dev/null; then
+    log_info "Instalando fabric via go install..."
+    if go install github.com/danielmiessler/fabric@latest 2>/dev/null; then
+        cp "$(go env GOPATH)/bin/fabric" "$_fabric_bin" 2>/dev/null || true
+        log_ok "fabric instalado via go"
     else
-        log_warn "uv no esta disponible. No se pudo instalar fabric."
+        log_warn "go install fallo, intentando descarga directa..."
+    fi
+fi
+
+# ═══════════════════════════════════════════════════
+#  Opcion 2: curl binary desde GitHub Releases
+# ═══════════════════════════════════════════════════
+if [ ! -f "$_fabric_bin" ]; then
+    log_info "Descargando fabric binary ARM64 desde GitHub Releases..."
+    _fabric_url="https://github.com/danielmiessler/fabric/releases/latest/download/fabric-linux-arm64"
+    if curl -fsSL "$_fabric_url" -o "$_fabric_bin"; then
+        chmod +x "$_fabric_bin"
+        log_ok "fabric binary descargado a $_fabric_bin"
+    else
+        log_warn "Descarga directa fallo. El release puede no existir o tener otro nombre."
     fi
 fi
 
 # ═══════════════════════════════════════════════════
 #  Verificar instalacion
 # ═══════════════════════════════════════════════════
-if command -v fabric &>/dev/null; then
-    version="$(fabric --version 2>/dev/null || echo "0.0.0")"
-    if [ "$_install_rc" -ne 0 ]; then
-        log_warn "El comando pip fallo pero fabric ya estaba instalado ($version)"
-    fi
+if [ -f "$_fabric_bin" ]; then
+    version="$("$_fabric_bin" --version 2>/dev/null || echo "0.0.0")"
     mark_installed "fabric" "$version"
     log_ok "fabric instalado correctamente ($version)"
+    log_info "Ejecuta: fabric --help"
 else
-    log_error "fabric no se encuentra en PATH despues de la instalacion."
-    log_info "Intenta: pip3 install --user fabric-ai"
-    log_info "En Termux o hybrid: TERMUX_PKG/pkg install ... y pip3 install --user fabric-ai"
-    log_info "O con uv: pip3 install uv && uv pip install fabric-ai"
+    log_error "fabric no se pudo instalar automaticamente."
+    log_info "Instalacion manual:"
+    log_info "  Con Go: go install github.com/danielmiessler/fabric@latest"
+    log_info "  Con curl: curl -fsSL https://raw.githubusercontent.com/danielmiessler/fabric/main/install.sh | bash"
     exit 1
 fi
 
-# ── Cleanup ─────────────────────────────────────────
-unset _install_rc _NEXUS_INSTALL_DIR
+unset _NEXUS_INSTALL_DIR _fabric_dir _fabric_bin _fabric_url

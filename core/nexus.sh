@@ -389,25 +389,31 @@ agent_test() {
         return 0
     fi
 
+    # NOTA: no usar gum spin — no hereda env vars en Termux.
+    # Ejecucion directa con env PATH="$PATH" garantiza que
+    # ~/.local/bin y paths de Termux esten disponibles.
+    local _exit_code=0
+    local _start_time _end_time _elapsed
+    _start_time=$(date +%s)
+
     if [ "$NEXUS_GUM_AVAILABLE" = "true" ]; then
-        local _exit_code=0
-        gum spin --spinner dot --title "Probando ${_test_name}..." -- timeout 10 env PATH="$PATH" bash "$_test_sh" 2>/dev/null || _exit_code=$?
+        printf "  Probando %s... " "$_test_name" >&2
+    fi
+
+    timeout 10 env PATH="$PATH" bash "$_test_sh" 2>/dev/null || _exit_code=$?
+
+    _end_time=$(date +%s)
+    _elapsed=$(( _end_time - _start_time ))
+
+    if [ "$NEXUS_GUM_AVAILABLE" = "true" ]; then
         if [ "$_exit_code" -eq 124 ]; then
-            gum style --foreground 196 "TIMEOUT: ${_test_name} (>10s)" 2>/dev/null
+            gum style --foreground 196 "TIMEOUT (>10s)" 2>/dev/null
         elif [ "$_exit_code" -eq 0 ]; then
-            gum style --foreground 42 "PASS: ${_test_name}" 2>/dev/null
+            gum style --foreground 42 "PASS (${_elapsed}.0s)" 2>/dev/null
         else
-            gum style --foreground 196 "FAIL: ${_test_name}" 2>/dev/null
+            gum style --foreground 196 "FAIL (${_elapsed}.0s)" 2>/dev/null
         fi
     else
-        local _start_time _end_time _elapsed _exit_code=0
-        _start_time=$(date +%s)
-
-        timeout 10 env PATH="$PATH" bash "$_test_sh" || _exit_code=$?
-
-        _end_time=$(date +%s)
-        _elapsed=$(( _end_time - _start_time ))
-
         if [ "$_exit_code" -eq 124 ]; then
             log_error "$_test_name: TIMEOUT (>10s)"
         elif [ "$_exit_code" -eq 0 ]; then
@@ -415,8 +421,9 @@ agent_test() {
         else
             log_error "$_test_name: FAIL (${_elapsed}.0s)"
         fi
-        unset _test_name _test_dir _test_sh _start_time _end_time _elapsed _exit_code
     fi
+
+    unset _test_name _test_dir _test_sh _start_time _end_time _elapsed _exit_code
 }
 
 # ── system_status: muestra estado del sistema ──────

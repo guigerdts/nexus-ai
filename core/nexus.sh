@@ -91,21 +91,32 @@ list_agents() {
                 source "$_meta"
             fi
 
-            # Detect installed status
-            local _installed=false
+            # ── Three-state detection ─────────────────
+            # 1. Manifest check: installed.txt (nxai-tracked)
+            local _in_manifest=false
+            if [ -f "${NEXUS_ROOT}/logs/installed.txt" ] && grep -Fx "$_name" "${NEXUS_ROOT}/logs/installed.txt" &>/dev/null; then
+                _in_manifest=true
+            fi
+
+            # 2. Binary check: command -v or test.sh fallback
+            local _in_path=false
             if [ -n "${AGENT_BINARY:-}" ] && command -v "$AGENT_BINARY" &>/dev/null; then
-                _installed=true
+                _in_path=true
             elif [ -f "$_dir/test.sh" ] && bash "$_dir/test.sh" &>/dev/null; then
-                _installed=true
+                _in_path=true
             fi
 
             # Status text and colors — ANSI codes go in printf FORMAT string,
             # plain text goes as arguments, so alignment is calculated correctly
             local _c_name _c_status _t_status
-            if [ "$_installed" = true ]; then
+            if [ "$_in_manifest" = true ] && [ "$_in_path" = true ]; then
                 _c_name='\033[96m'
                 _c_status='\033[32m'
                 _t_status="INSTALADO"
+            elif [ "$_in_path" = true ]; then
+                _c_name='\033[95m'
+                _c_status='\033[36m'
+                _t_status="EXTERNO"
             else
                 _c_name='\033[97m'
                 _c_status='\033[33m'
@@ -136,10 +147,23 @@ list_agents() {
                 source "$_meta"
             fi
 
+            # ── Three-state detection ─────────────────
+            local _in_manifest=false
+            if [ -f "${NEXUS_ROOT}/logs/installed.txt" ] && grep -Fx "$_name" "${NEXUS_ROOT}/logs/installed.txt" &>/dev/null; then
+                _in_manifest=true
+            fi
+
+            local _in_path=false
             if [ -n "${AGENT_BINARY:-}" ] && command -v "$AGENT_BINARY" &>/dev/null; then
-                _status="${NEXUS_COLOR_CYAN}[INSTALADO]${NEXUS_COLOR_RESET}"
+                _in_path=true
             elif [ -f "$_dir/test.sh" ] && bash "$_dir/test.sh" &>/dev/null; then
-                _status="${NEXUS_COLOR_CYAN}[INSTALADO]${NEXUS_COLOR_RESET}"
+                _in_path=true
+            fi
+
+            if [ "$_in_manifest" = true ] && [ "$_in_path" = true ]; then
+                _status="${NEXUS_COLOR_GREEN}[INSTALADO]${NEXUS_COLOR_RESET}"
+            elif [ "$_in_path" = true ]; then
+                _status="${NEXUS_COLOR_CYAN}[EXTERNO]${NEXUS_COLOR_RESET}"
             else
                 _status="${NEXUS_COLOR_YELLOW}[NO INSTALADO]${NEXUS_COLOR_RESET}"
             fi

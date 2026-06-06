@@ -77,6 +77,21 @@ if [ "$_install_rc" -ne 0 ]; then
 fi
 
 # ═══════════════════════════════════════════════════
+#  Suprimir setup interactivo de API key
+# ═══════════════════════════════════════════════════
+# sgpt pide API key al ejecutarse por primera vez.
+# Creamos un config minimo para que no se cuelgue.
+_sgpt_config_dir="$HOME/.config/shell_gpt"
+if [ ! -f "$_sgpt_config_dir/.sgptrc" ]; then
+    mkdir -p "$_sgpt_config_dir"
+    cat > "$_sgpt_config_dir/.sgptrc" <<- SGPTRC
+	OPENAI_API_KEY=your-api-key-here
+	SGPTRC
+    log_info "Config creado: $_sgpt_config_dir/.sgptrc (edita con tu API key)"
+fi
+unset _sgpt_config_dir
+
+# ═══════════════════════════════════════════════════
 #  Verificar instalacion
 # ═══════════════════════════════════════════════════
 if command -v sgpt &>/dev/null; then

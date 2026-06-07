@@ -356,9 +356,41 @@ remove_agent() {
         return 1
     fi
 
+    # ── Category mode: uninstall agents from a category ─────────
+    if [[ -v CATEGORIES["$target"] ]]; then
+        local _cat_name="$target"
+        shift
+        local _cat_agents=()
+
+        if [ $# -gt 0 ]; then
+            # Parse flags → agent names via FLAG_TO_AGENT[]
+            for _flag in "$@"; do
+                local _fname="${_flag#--}"
+                local _agent="${FLAG_TO_AGENT[$_fname]:-}"
+                if [ -n "$_agent" ]; then
+                    _cat_agents+=("$_agent")
+                else
+                    log_warn "Flag desconocida: $_flag (categoria: $_cat_name)"
+                fi
+            done
+        else
+            # No flags → uninstall ALL agents in this category
+            read -ra _cat_agents <<< "${CATEGORIES[$_cat_name]}"
+            log_info "Desinstalando todos los agentes de categoria: $_cat_name"
+        fi
+
+        for _agent in "${_cat_agents[@]}"; do
+            remove_agent "$_agent"
+        done
+        unset _flag _fname _agent _cat_agents _cat_name
+        return 0
+    fi
+
+    # ── Existing single-agent logic (backward compat) ──────────
     local _dir="${AGENTS[$target]:-}"
     if [ -z "$_dir" ]; then
         log_error "Agente '$target' no encontrado."
+        log_info "Agentes disponibles: ${AGENT_ORDER[*]}"
         return 1
     fi
 

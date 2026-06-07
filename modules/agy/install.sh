@@ -172,7 +172,7 @@ PY
     _cert_path="${_prefix}/etc/tls/cert.pem"
     _home="${HOME}"
 
-    cat > "/tmp/agy_helper.c" << C_CODE
+    cat > "${TMPDIR:-/tmp}/agy_helper.c" << C_CODE
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
@@ -208,13 +208,13 @@ int main(int argc, char** argv) {
 }
 C_CODE
 
-    clang -O2 -o "${_prefix}/bin/agy" "/tmp/agy_helper.c" || {
+    clang -O2 -o "${_prefix}/bin/agy" "${TMPDIR:-/tmp}/agy_helper.c" || {
         log_error "Fallo compilacion del helper C"
-        rm -f "/tmp/agy_helper.c"
+        rm -f "${TMPDIR:-/tmp}/agy_helper.c"
         exit 1
     }
     chmod +x "${_prefix}/bin/agy"
-    rm -f "/tmp/agy_helper.c"
+    rm -f "${TMPDIR:-/tmp}/agy_helper.c"
     log_ok "Helper C compilado: ${_prefix}/bin/agy"
 
 elif [ "${NEXUS_ENV:-}" = "proot-ubuntu" ]; then

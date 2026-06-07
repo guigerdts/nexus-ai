@@ -1,35 +1,43 @@
 #!/usr/bin/env bash
 # modules/claude-code/uninstall.sh
-# Desinstala Claude-code
+# Desinstala claude-code — limpia helper C, data dir y wrapper proot
+set -euo pipefail
 
-# Source functions
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$SCRIPT_DIR/../../lib/nexus-install.sh" 2>/dev/null || {
-    echo "[ERROR] nexus-install.sh no encontrado"
-    exit 1
-}
-source "$SCRIPT_DIR/metadata.sh" 2>/dev/null || true
+# ── Source install library ─────────────────────────
+# shellcheck source=../../lib/nexus-install.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/lib/nexus-install.sh"
 
-log_info "Desinstalando ${AGENT_NAME:-claude-code}..."
+log_info "Desinstalando claude-code..."
 
-# Dispatch by method — map AGENT_METHOD to correct uninstall function
-case "${AGENT_METHOD:-}" in
-    pip)   uninstall_via_pip "${AGENT_PACKAGE:-$AGENT_NAME}" ;;
-    npm)   uninstall_via_npm "${AGENT_PACKAGE:-$AGENT_NAME}" ;;
-    pkg)   uninstall_via_apt "${AGENT_PACKAGE:-$AGENT_NAME}" ;;
-    apt)   uninstall_via_apt "${AGENT_PACKAGE:-$AGENT_NAME}" ;;
-    curl)  uninstall_via_binary "$AGENT_NAME" "$AGENT_BINARY" ;;
-    cargo) uninstall_via_binary "$AGENT_NAME" "$AGENT_BINARY" ;;
-    binary) uninstall_via_binary "$AGENT_NAME" "$AGENT_BINARY" ;;
-    git)   log_info "Agente instalado via git. Elimina el directorio clonado manualmente." ;;
-    stub)  log_info "Agente stub — no requiere desinstalacion." ;;
-    *)     log_warn "Metodo '${AGENT_METHOD:-}' no tiene desinstalador automatico."
-           if [ -n "${AGENT_BINARY:-}" ] && command -v "$AGENT_BINARY" &>/dev/null; then
-               rm -f "$(command -v "$AGENT_BINARY")" 2>/dev/null || true
-           fi
-           ;;
-esac
+# 1. Helper C en PREFIX/bin/claude (Termux nativo)
+if [ -n "${PREFIX:-}" ] && [ -f "${PREFIX}/bin/claude" ]; then
+    rm -f "${PREFIX}/bin/claude"
+    log_info "Eliminado: ${PREFIX}/bin/claude"
+fi
 
-mark_removed "$AGENT_NAME"
-log_ok "Agente '${AGENT_NAME}' desinstalado."
+# 2. Wrapper proot en PREFIX/bin/claude (Termux + proot)
+if [ -n "${NEXUS_ROOT:-}" ] && [ -f "${NEXUS_ROOT}/bin/claude" ]; then
+    rm -f "${NEXUS_ROOT}/bin/claude"
+fi
+
+# 3. Data dir con binario descargado
+CLAUDE_DATA_DIR="${HOME}/.local/share/nexus-ai/claude"
+if [ -d "$CLAUDE_DATA_DIR" ]; then
+    rm -rf "$CLAUDE_DATA_DIR"
+    log_info "Eliminado: ${CLAUDE_DATA_DIR}"
+fi
+
+# 4. Bootstrap oficial de claude (proot/Linux) — $HOME/.claude
+if [ -d "${HOME}/.claude" ]; then
+    rm -rf "${HOME}/.claude"
+    log_info "Eliminado: ${HOME}/.claude"
+fi
+
+# 5. Limpiar cualquier binario en PATH
+if command -v claude &>/dev/null; then
+    rm -f "$(command -v claude)" 2>/dev/null || true
+fi
+
+mark_removed "claude-code"
+log_ok "claude-code desinstalado."
 exit 0

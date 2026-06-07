@@ -13,6 +13,10 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/lib/nexus-install.sh
 MANIFEST_BASE="https://antigravity-cli-auto-updater-974169037036.us-central1.run.app"
 AGY_DATA_DIR="${HOME}/.local/share/nexus-ai/antigravity-cli"
 
+# ── Variables globales para valores de retorno ─────
+AGY_BINARY=""       # path al binario descargado (set por download_agy_binary)
+AGY_VERSION=""      # version extraida del manifest
+
 # ── detect_platform: os/arch para manifest ─────────
 detect_platform() {
     local _os _arch
@@ -40,12 +44,14 @@ download_agy_binary() {
     local _manifest_url="${MANIFEST_BASE}/manifests/${_platform}.json"
 
     log_info "Descargando manifest: ${_manifest_url}"
+    local _manifest_json
     _manifest_json="$(curl -fsSL "$_manifest_url")" || {
         log_error "No se pudo obtener manifest para ${_platform}"
         return 1
     }
 
-    _version="$(echo "$_manifest_json" | jq -r '.version // empty')"
+    AGY_VERSION="$(echo "$_manifest_json" | jq -r '.version // empty')"
+    local _download_url
     _download_url="$(echo "$_manifest_json" | jq -r '.url // empty')"
 
     if [ -z "$_download_url" ]; then
@@ -54,7 +60,7 @@ download_agy_binary() {
     fi
 
     mkdir -p "$AGY_DATA_DIR"
-    log_info "Descargando agy v${_version:-?} desde ${_download_url}..."
+    log_info "Descargando agy v${AGY_VERSION:-?} desde ${_download_url}..."
     curl -fsSL -o "${AGY_DATA_DIR}/agy.tar.gz" "$_download_url" || {
         log_error "Fallo descarga"
         return 1
@@ -69,22 +75,20 @@ download_agy_binary() {
     rm -f "${AGY_DATA_DIR}/agy.tar.gz"
 
     # Buscar el binario — puede llamarse agy o antigravity
-    _upstream_bin=""
+    AGY_BINARY=""
     for _candidate in agy antigravity; do
         if [ -f "${AGY_DATA_DIR}/${_candidate}" ]; then
-            _upstream_bin="${AGY_DATA_DIR}/${_candidate}"
-            chmod +x "$_upstream_bin"
+            AGY_BINARY="${AGY_DATA_DIR}/${_candidate}"
+            chmod +x "$AGY_BINARY"
             break
         fi
     done
 
-    if [ -z "$_upstream_bin" ]; then
+    if [ -z "$AGY_BINARY" ]; then
         log_error "No se encontro binario agy/antigravity en el tarball"
         ls -la "$AGY_DATA_DIR"
         return 1
     fi
-
-    echo "$_upstream_bin"
 }
 
 # ════════════════════════════════════════════════════
@@ -97,8 +101,8 @@ _platform="$(detect_platform)" || exit 1
 log_info "Plataforma detectada: ${_platform}"
 
 # ── Descargar binario (comun a todos los entornos) ─
-_upstream_bin="$(download_agy_binary "$_platform")" || exit 1
-_version="${_version:-0.0.0}"
+download_agy_binary "$_platform" || exit 1
+AGY_VERSION="${AGY_VERSION:-0.0.0}"
 
 # ── Branch segun entorno ───────────────────────────
 if [ "${NEXUS_ENV:-}" = "termux" ]; then
@@ -116,12 +120,12 @@ if [ "${NEXUS_ENV:-}" = "termux" ]; then
 
     _prefix="${PREFIX:-/data/data/com.termux/files/usr}"
 
-    # PASO 2: Descargar ya hecho en _upstream_bin
-    log_info "PASO 2/4 — Binario descargado en ${AGY_DATA_DIR}"
+    # PASO 2: Descargar ya hecho en AGY_BINARY
+    log_info "PASO 2/4 — Binario descargado en ${AGY_BINARY}"
 
     # PASO 3: Aplicar parches VA39 (obligatorio Android aarch64)
     log_info "PASO 3/4 — Aplicando parches VA39 para compatibilidad Android..."
-    python3 - "$_upstream_bin" "${AGY_DATA_DIR}/agy.va39" << 'PY'
+    python3 - "$AGY_BINARY" "${AGY_DATA_DIR}/agy.va39" << 'PY'
 import sys, shutil, struct, pathlib
 src = pathlib.Path(sys.argv[1])
 dst = pathlib.Path(sys.argv[2])
@@ -218,9 +222,9 @@ elif [ "${NEXUS_ENV:-}" = "proot-ubuntu" ]; then
     #  PROOT-UBUNTU — binario glibc directo
     # ════════════════════════════════════════════════════
     log_info "Entorno proot-Ubuntu — instalando binario glibc directo..."
-    install_via_binary "agy" "file://${_upstream_bin}" "agy" 2>/dev/null || {
+    install_via_binary "agy" "file://${AGY_BINARY}" "agy" 2>/dev/null || {
         # Fallback: copia directa
-        cp "$_upstream_bin" "${NEXUS_ROOT}/bin/agy"
+        cp "$AGY_BINARY" "${NEXUS_ROOT}/bin/agy"
         chmod +x "${NEXUS_ROOT}/bin/agy"
     }
 else
@@ -228,8 +232,8 @@ else
     #  LINUX — binario glibc directo
     # ════════════════════════════════════════════════════
     log_info "Entorno Linux — instalando binario..."
-    install_via_binary "agy" "file://${_upstream_bin}" "agy" 2>/dev/null || {
-        cp "$_upstream_bin" "${NEXUS_ROOT}/bin/agy"
+    install_via_binary "agy" "file://${AGY_BINARY}" "agy" 2>/dev/null || {
+        cp "$AGY_BINARY" "${NEXUS_ROOT}/bin/agy"
         chmod +x "${NEXUS_ROOT}/bin/agy"
     }
 fi
@@ -238,15 +242,16 @@ fi
 if command -v agy &>/dev/null; then
     _v="$(agy --version 2>/dev/null || true)"
     mark_installed "agy" "$_v"
-    log_ok "agy instalado correctamente (${_v:-v${_version}})"
+    log_ok "agy instalado correctamente (${_v:-v${AGY_VERSION}})"
 elif [ -f "${NEXUS_ROOT}/bin/agy" ]; then
     _v="$("${NEXUS_ROOT}/bin/agy" --version 2>/dev/null || true)"
     mark_installed "agy" "$_v"
-    log_ok "agy instalado en ${NEXUS_ROOT}/bin/agy (${_v:-v${_version}})"
+    log_ok "agy instalado en ${NEXUS_ROOT}/bin/agy (${_v:-v${AGY_VERSION}})"
 else
     log_error "agy no encontrado en PATH. Revisa la instalacion manual."
     exit 1
 fi
 
-unset _platform _manifest_url _manifest_json _version _download_url _upstream_bin
+unset _platform _manifest_url _manifest_json _download_url
 unset _loader _lib_path _cert_path _home _prefix
+unset AGY_BINARY AGY_VERSION

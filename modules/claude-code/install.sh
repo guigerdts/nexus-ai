@@ -1,33 +1,28 @@
 #!/usr/bin/env bash
 # modules/claude-code/install.sh
+# Instala @anthropic-ai/claude-code via npm (paquete oficial Anthropic)
 set -euo pipefail
 
 # ── Source install library ─────────────────────────
 # shellcheck source=../../lib/nexus-install.sh
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/lib/nexus-install.sh"
 
-# ── claude-code: instalacion manual (pesada) ───────
-cat <<'EOF'
-╔══════════════════════════════════════════════════════════════╗
-║  claude-code — Claude Code CLI de Anthropic                  ║
-║                                                              ║
-║  ⚠️  INSTALACION PESADA — puede requerir ~2GB en Termux     ║
-║                                                              ║
-║  La instalacion automatizada no esta disponible.             ║
-║                                                              ║
-║  1. Instala Node.js (v18+):                                  ║
-║       pkg install nodejs  (Termux)                           ║
-║       apt install nodejs   (proot-Ubuntu)                    ║
-║                                                              ║
-║  2. Instala globalmente:                                     ║
-║       npm install -g @anthropic-ai/claude-code               ║
-║                                                              ║
-║  ⚠️  En Termux nativo, la instalacion puede consumir        ║
-║     mucha RAM y espacio. Se recomienda proot-Ubuntu.         ║
-║                                                              ║
-║  Una vez instalado, ejecuta:  nxai status                   ║
-╚══════════════════════════════════════════════════════════════╝
-EOF
+# ── claude-code: instalacion via npm ───────────────
+log_info "Instalando claude-code (${AGENT_PACKAGE:-@anthropic-ai/claude-code})..."
 
-log_warn "claude-code requiere instalacion manual (pesada)"
-exit 0
+if [ "${NEXUS_ENV:-}" = "termux" ]; then
+    log_warn "claude-code requiere ~2GB en Termux nativo. Recomendado: proot-Ubuntu."
+    log_info "Continua con la instalacion en Termux..."
+fi
+
+check_dependency "npm" "npm --version" || exit 1
+
+install_via_npm "${AGENT_PACKAGE:-@anthropic-ai/claude-code}" || {
+    log_error "Fallo instalacion via npm"
+    exit 1
+}
+
+# Registrar en installed.txt
+_v="$(claude --version 2>/dev/null || true)"
+mark_installed "claude-code" "${_v:-}"
+log_ok "claude-code instalado correctamente (${_v:-latest})"

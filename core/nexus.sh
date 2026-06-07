@@ -81,6 +81,10 @@ show_help() {
 list_agents() {
     local _filter="${1:-}"
 
+    # ── Limpiar variables de metadata que pueden filtrarse del startup ──
+    unset AGENT_DEPRECATED AGENT_SUCCESSOR AGENT_NAME AGENT_VERSION AGENT_DESC
+    unset AGENT_URL AGENT_TIER AGENT_CATEGORY AGENT_FLAG AGENT_METHOD AGENT_BINARY AGENT_PACKAGE
+
     # ── Sin filtro: mostrar resumen de categorias ──
     if [ -z "$_filter" ]; then
         echo ""
@@ -133,32 +137,44 @@ list_agents() {
                 source "$_meta"
             fi
 
-            # ── Three-state detection ─────────────────
-            local _in_manifest=false
-            if [ -f "${NEXUS_ROOT}/logs/installed.txt" ] && grep -Fx "$_name" "${NEXUS_ROOT}/logs/installed.txt" &>/dev/null; then
-                _in_manifest=true
-            fi
-
-            local _in_path=false
-            if [ -n "${AGENT_BINARY:-}" ] && command -v "$AGENT_BINARY" &>/dev/null; then
-                _in_path=true
-            elif [ -f "$_dir/test.sh" ] && bash "$_dir/test.sh" &>/dev/null; then
-                _in_path=true
-            fi
-
+            # ── DEPRECATED check ─────────────────────
             local _c_name _c_status _t_status
-            if [ "$_in_manifest" = true ] && [ "$_in_path" = true ]; then
-                _c_name='\033[96m'
-                _c_status='\033[32m'
-                _t_status="INSTALADO"
-            elif [ "$_in_path" = true ]; then
-                _c_name='\033[95m'
-                _c_status='\033[36m'
-                _t_status="EXTERNO"
+            if [ "${AGENT_DEPRECATED:-}" = "true" ]; then
+                local _succ="${AGENT_SUCCESSOR:-}"
+                _c_name='\033[90m'
+                _c_status='\033[91m'
+                if [ -n "$_succ" ]; then
+                    _t_status="DEPRECADO→${_succ}"
+                else
+                    _t_status="DEPRECADO"
+                fi
             else
-                _c_name='\033[97m'
-                _c_status='\033[33m'
-                _t_status="NO INSTAL."
+                # ── Three-state detection ─────────────────
+                local _in_manifest=false
+                if [ -f "${NEXUS_ROOT}/logs/installed.txt" ] && grep -Fx "$_name" "${NEXUS_ROOT}/logs/installed.txt" &>/dev/null; then
+                    _in_manifest=true
+                fi
+
+                local _in_path=false
+                if [ -n "${AGENT_BINARY:-}" ] && command -v "$AGENT_BINARY" &>/dev/null; then
+                    _in_path=true
+                elif [ -f "$_dir/test.sh" ] && bash "$_dir/test.sh" &>/dev/null; then
+                    _in_path=true
+                fi
+
+                if [ "$_in_manifest" = true ] && [ "$_in_path" = true ]; then
+                    _c_name='\033[96m'
+                    _c_status='\033[32m'
+                    _t_status="INSTALADO"
+                elif [ "$_in_path" = true ]; then
+                    _c_name='\033[95m'
+                    _c_status='\033[36m'
+                    _t_status="EXTERNO"
+                else
+                    _c_name='\033[97m'
+                    _c_status='\033[33m'
+                    _t_status="NO INSTAL."
+                fi
             fi
 
             local _flag="${AGENT_TO_FLAG[$_name]:-}"
@@ -170,6 +186,7 @@ list_agents() {
 
             printf "  ${_c_name}%-18s\033[0m %-16s %-12s ${_c_status}%s\033[0m\n" \
                 "$_display_name" "$_flag_display" "$_cmd" "$_t_status"
+            unset AGENT_DEPRECATED AGENT_SUCCESSOR
         done
     else
         # ── Tabla plana (sin ANSI) ──
@@ -185,26 +202,36 @@ list_agents() {
                 source "$_meta"
             fi
 
-            # ── Three-state detection ─────────────────
-            local _in_manifest=false
-            if [ -f "${NEXUS_ROOT}/logs/installed.txt" ] && grep -Fx "$_name" "${NEXUS_ROOT}/logs/installed.txt" &>/dev/null; then
-                _in_manifest=true
-            fi
-
-            local _in_path=false
-            if [ -n "${AGENT_BINARY:-}" ] && command -v "$AGENT_BINARY" &>/dev/null; then
-                _in_path=true
-            elif [ -f "$_dir/test.sh" ] && bash "$_dir/test.sh" &>/dev/null; then
-                _in_path=true
-            fi
-
-            local _t_status
-            if [ "$_in_manifest" = true ] && [ "$_in_path" = true ]; then
-                _t_status="INSTALADO"
-            elif [ "$_in_path" = true ]; then
-                _t_status="EXTERNO"
+            # ── DEPRECATED check ─────────────────────
+            if [ "${AGENT_DEPRECATED:-}" = "true" ]; then
+                local _succ="${AGENT_SUCCESSOR:-}"
+                if [ -n "$_succ" ]; then
+                    _t_status="DEPRECADO→${_succ}"
+                else
+                    _t_status="DEPRECADO"
+                fi
             else
-                _t_status="NO INSTAL."
+                # ── Three-state detection ─────────────────
+                local _in_manifest=false
+                if [ -f "${NEXUS_ROOT}/logs/installed.txt" ] && grep -Fx "$_name" "${NEXUS_ROOT}/logs/installed.txt" &>/dev/null; then
+                    _in_manifest=true
+                fi
+
+                local _in_path=false
+                if [ -n "${AGENT_BINARY:-}" ] && command -v "$AGENT_BINARY" &>/dev/null; then
+                    _in_path=true
+                elif [ -f "$_dir/test.sh" ] && bash "$_dir/test.sh" &>/dev/null; then
+                    _in_path=true
+                fi
+
+                local _t_status
+                if [ "$_in_manifest" = true ] && [ "$_in_path" = true ]; then
+                    _t_status="INSTALADO"
+                elif [ "$_in_path" = true ]; then
+                    _t_status="EXTERNO"
+                else
+                    _t_status="NO INSTAL."
+                fi
             fi
 
             local _flag="${AGENT_TO_FLAG[$_name]:-}"
@@ -216,9 +243,10 @@ list_agents() {
 
             printf "  %-18s %-16s %-12s %s\n" \
                 "$_display_name" "$_flag_display" "$_cmd" "$_t_status"
+            unset AGENT_DEPRECATED AGENT_SUCCESSOR
         done
     fi
-    unset _filter _agents_to_show _name _dir _meta _in_manifest _in_path _c_name _c_status _t_status _flag _flag_display _cmd _display_name
+    unset _filter _agents_to_show _name _dir _meta _in_manifest _in_path _c_name _c_status _t_status _flag _flag_display _cmd _display_name AGENT_DEPRECATED AGENT_SUCCESSOR
 }
 
 # ── install_agent: instala uno o todos los agentes ─

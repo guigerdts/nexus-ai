@@ -68,8 +68,9 @@ fi
 # shellcheck source=config/categories.sh
 source "$NEXUS_ROOT/config/categories.sh"
 
-# Limpiar variables temporales
+# Limpiar variables temporales y metadatos que puedan filtrarse
 unset _agent_dir _agent_name _agent_version _agent_desc _agent_url _agent_tier _agent_category _agent_flag _agent_method _agent_binary
+unset AGENT_DEPRECATED AGENT_SUCCESSOR
 
 # ── Funcion helper: listar agentes registrados ────
 registry_list() {

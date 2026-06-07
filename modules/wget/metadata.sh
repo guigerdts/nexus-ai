@@ -6,6 +6,7 @@ export AGENT_DESC="Descarga de archivos via HTTP/HTTPS/FTP — herramienta de re
 export AGENT_URL="https://www.gnu.org/software/wget/"
 export AGENT_TIER="1"
 export AGENT_CATEGORY="tools"
+export AGENT_FLAG="wget"
 export AGENT_METHOD="pkg"
 export AGENT_PACKAGE="wget"
 export AGENT_BINARY="wget"

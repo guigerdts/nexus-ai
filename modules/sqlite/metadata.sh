@@ -6,6 +6,7 @@ export AGENT_DESC="Base de datos SQL embebida — ligera, sin servidor, zero con
 export AGENT_URL="https://www.sqlite.org/"
 export AGENT_TIER="1"
 export AGENT_CATEGORY="db"
+export AGENT_FLAG="sqlite"
 export AGENT_METHOD="pkg"
 export AGENT_PACKAGE="sqlite"
 export AGENT_BINARY="sqlite3"

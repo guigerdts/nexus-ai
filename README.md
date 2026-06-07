@@ -3,7 +3,7 @@
 Framework de entorno para Termux/proot-Ubuntu.
 Convierte Android en una workstation profesional para agentes de IA.
 
-**Estado:** v0.7.0 — estable. Dual-environment (Termux nativo + proot-Ubuntu).
+**Estado:** v0.8.0 — estable. Dual-environment (Termux nativo + proot-Ubuntu).
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
@@ -149,6 +149,8 @@ cd ~/nexus-ai
 
 Los modulos se organizan en 9 categorias. Ejecuta `nxai guide` para ver la guia completa.
 
+> **Nota**: sgpt aparece listado en IA / Agentes y en Terminal / Shell. Son 49 modulos unicos (los subtotales suman 50 porque sgpt cuenta en ambas).
+
 ### IA / Agentes (16)
 
 | Modulo | Metodo | Descripcion |
@@ -162,7 +164,7 @@ Los modulos se organizan en 9 categorias. Ejecuta `nxai guide` para ver la guia 
 | sgpt | pip | Asistente de terminal GPT (shell-gpt) |
 | fabric | pip | Framework open-source para automatizacion con IA |
 | antigravity | stub | CLI experimental de IA |
-| pi | stub | Asistente de IA desde terminal (Pi.ai) |
+| pi | pip | Asistente de IA desde terminal (Pi.ai) |
 | gentle-ai | stub | CLI de desarrollo asistido por IA |
 | qwen-code | stub | CLI de codigo asistido por Qwen AI |
 | minimax-cli | stub | CLI para la API de MiniMax AI |

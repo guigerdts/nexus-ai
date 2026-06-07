@@ -1,0 +1,20 @@
+schema: sdd-change
+change: nexus-ai-v0.8-cli-restructure
+created: 2026-06-07
+status: in-progress
+current_phase: apply
+current_pr: 1
+artifact_store: openspec
+delivery_strategy: auto-chain
+chain_strategy: feature-branch-chain
+review_budget_lines: 800
+phases_completed:
+  - explore
+  - propose
+  - design
+  - tasks
+prs:
+  1: completed
+  2: pending
+  3: pending
+  4: pending

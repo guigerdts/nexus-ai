@@ -203,3 +203,57 @@ apply_update() {
         fi
     fi
 }
+
+# ── module_update: actualiza un modulo especifico ──
+# Uso: module_update "agent-name"
+# Si el modulo tiene update.sh, lo ejecuta
+module_update() {
+    local agent="$1"
+    local dir="${AGENTS[$agent]:-}"
+
+    if [ -z "$dir" ]; then
+        log_warn "Agente '${agent}' no encontrado."
+        return 1
+    fi
+
+    if [ -f "$dir/update.sh" ]; then
+        log_info "Actualizando ${agent}..."
+        (source "$dir/update.sh")
+    elif [ -f "$dir/install.sh" ]; then
+        log_info "${agent} no tiene update.sh, reinstalando..."
+        (source "$dir/install.sh")
+    else
+        log_warn "${agent} no tiene install.sh ni update.sh."
+        return 1
+    fi
+}
+
+# ── module_update_category: actualiza todos los agentes de una categoria ──
+# Uso: module_update_category "ai" [--flags...]
+module_update_category() {
+    local category="$1"
+    shift
+    local agents_list="${CATEGORIES[$category]:-}"
+
+    if [ -z "$agents_list" ]; then
+        log_error "Categoria '${category}' no encontrada."
+        return 1
+    fi
+
+    if [ $# -gt 0 ]; then
+        # Flags especificos → resolver via FLAG_TO_AGENT
+        local _parsed=()
+        for _flag in "$@"; do
+            local _name="${_flag#--}"
+            local _agent="${FLAG_TO_AGENT[$_name]:-}"
+            [ -n "$_agent" ] && _parsed+=("$_agent")
+        done
+        agents_list="${_parsed[*]}"
+        unset _flag _name _agent _parsed
+    fi
+
+    for _agent in $agents_list; do
+        module_update "$_agent"
+    done
+    unset _agent
+}

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # NEXUS AI — lib/nexus-guide.sh
 # Guia interactiva por categorias
-# Version: 0.7.0
+# Version: 0.8.0
 
 # ── Colores ANSI ──
 _CYAN="\033[96m"

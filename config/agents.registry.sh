@@ -41,6 +41,7 @@ if [ -d "$NEXUS_MODULES_DIR" ]; then
             _agent_url="${AGENT_URL:-}"
             _agent_tier="${AGENT_TIER:-3}"
             _agent_category="${AGENT_CATEGORY:-}"
+            _agent_flag="${AGENT_FLAG:-}"
             _agent_method="${AGENT_METHOD:-unknown}"
             _agent_binary="${AGENT_BINARY:-}"
         else
@@ -57,13 +58,18 @@ if [ -d "$NEXUS_MODULES_DIR" ]; then
         export AGENT_URL="$_agent_url"
         export AGENT_TIER="$_agent_tier"
         export AGENT_CATEGORY="$_agent_category"
+        export AGENT_FLAG="$_agent_flag"
         export AGENT_METHOD="$_agent_method"
         export AGENT_BINARY="$_agent_binary"
     done
 fi
 
+# ── Source categories.sh (relies on AGENT_CATEGORY from metadata) ─
+# shellcheck source=config/categories.sh
+source "$NEXUS_ROOT/config/categories.sh"
+
 # Limpiar variables temporales
-unset _agent_dir _agent_name _agent_version _agent_desc _agent_url _agent_tier _agent_category _agent_method _agent_binary
+unset _agent_dir _agent_name _agent_version _agent_desc _agent_url _agent_tier _agent_category _agent_flag _agent_method _agent_binary
 
 # ── Funcion helper: listar agentes registrados ────
 registry_list() {

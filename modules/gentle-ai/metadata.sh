@@ -6,5 +6,6 @@ export AGENT_DESC="CLI de codigo abierto para desarrollo asistido por IA (instal
 export AGENT_URL="https://github.com/gentle-ai/gentle"
 export AGENT_TIER="2"
 export AGENT_CATEGORY="ai"
+export AGENT_FLAG="gentle-ai"
 export AGENT_METHOD="stub"
 export AGENT_BINARY="gentle"

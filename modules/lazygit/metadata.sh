@@ -6,6 +6,7 @@ export AGENT_DESC="UI interactiva para Git en la terminal — status, diff, comm
 export AGENT_URL="https://github.com/jesseduffield/lazygit"
 export AGENT_TIER="1"
 export AGENT_CATEGORY="tools"
+export AGENT_FLAG="lazygit"
 export AGENT_METHOD="pkg"
 export AGENT_PACKAGE="lazygit"
 export AGENT_BINARY="lazygit"

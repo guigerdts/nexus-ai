@@ -6,5 +6,6 @@ export AGENT_DESC="Base de datos NoSQL orientada a documentos (instalacion manua
 export AGENT_URL="https://www.mongodb.com/docs/manual/installation/"
 export AGENT_TIER="1"
 export AGENT_CATEGORY="db"
+export AGENT_FLAG="mongodb"
 export AGENT_METHOD="stub"
 export AGENT_BINARY="mongod"

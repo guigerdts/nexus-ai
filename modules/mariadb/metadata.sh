@@ -6,6 +6,7 @@ export AGENT_DESC="Base de datos SQL — fork de MySQL, compatible, rapida y ope
 export AGENT_URL="https://mariadb.org/"
 export AGENT_TIER="1"
 export AGENT_CATEGORY="db"
+export AGENT_FLAG="mariadb"
 export AGENT_METHOD="pkg"
 export AGENT_PACKAGE="mariadb"
 export AGENT_BINARY="mariadb"

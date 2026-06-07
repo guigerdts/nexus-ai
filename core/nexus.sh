@@ -22,6 +22,9 @@ source "$NEXUS_ROOT/config/env.sh"
 # shellcheck source=config/agents.registry.sh
 source "$NEXUS_ROOT/config/agents.registry.sh"
 
+# shellcheck source=config/categories.sh
+source "$NEXUS_ROOT/config/categories.sh"
+
 # shellcheck source=lib/nexus-log.sh
 source "$NEXUS_ROOT/lib/nexus-log.sh"
 
@@ -42,6 +45,7 @@ show_help() {
     printf "\033[1mComandos disponibles:\033[0m\n"
     printf "  \033[1m%-12s\033[0m %s\n" "install"   "Instalar agentes y herramientas"
     printf "  \033[1m%-12s\033[0m %s\n" "remove"    "Desinstalar agentes"
+    printf "  \033[1m%-12s\033[0m %s\n" "uninstall" "Alias de remove"
     printf "  \033[1m%-12s\033[0m %s\n" "list"      "Listar agentes disponibles"
     printf "  \033[1m%-12s\033[0m %s\n" "status"    "Estado del sistema"
     printf "  \033[1m%-12s\033[0m %s\n" "update"    "Actualizar NEXUS AI"
@@ -72,19 +76,56 @@ show_help() {
 }
 
 # ── list_agents: lista agentes y su estado ─────────
+# Acepta un argumento opcional: categoria para filtrar
+# Sin argumento: muestra resumen de categorias
 list_agents() {
-    if [ ${#AGENTS[@]} -eq 0 ]; then
-        log_info "No hay agentes registrados en $NEXUS_MODULES_DIR"
+    local _filter="${1:-}"
+
+    # ── Sin filtro: mostrar resumen de categorias ──
+    if [ -z "$_filter" ]; then
+        echo ""
+        echo "Categorias disponibles:"
+        for _cat in "${CATEGORY_ORDER[@]}"; do
+            local _agents="${CATEGORIES[$_cat]:-}"
+            [ -z "$_agents" ] && continue
+            local _count=0 _installed=0
+            for _a in $_agents; do
+                _count=$((_count + 1))
+                if [ -f "${NEXUS_ROOT}/logs/installed.txt" ] && grep -Fx "$_a" "${NEXUS_ROOT}/logs/installed.txt" &>/dev/null; then
+                    _installed=$((_installed + 1))
+                fi
+            done
+            printf "  %-12s — %d herramientas (%d instaladas)\n" "$_cat" "$_count" "$_installed"
+        done
+        echo "Usa 'nxai list <categoria>' para ver detalles."
+        unset _cat _agents _count _installed _a
         return 0
     fi
 
-    if [ "$NEXUS_GUM_AVAILABLE" = "true" ]; then
-        # ── Header ──
-        printf '  \033[1m%-15s %-14s %s\033[0m\n' "Nombre" "Estado" "Descripcion"
-        printf '  \033[2m'; printf '%59s' '' | tr ' ' '-'; printf '\033[0m\n'
+    # ── Resolver agentes desde el filtro de categoria ──
+    local _agents_to_show=()
+    if [[ -v CATEGORIES["$_filter"] ]]; then
+        read -ra _agents_to_show <<< "${CATEGORIES[$_filter]}"
+    else
+        log_error "Categoria desconocida: $_filter"
+        echo "Categorias: ${CATEGORY_ORDER[*]}"
+        return 1
+    fi
 
-        for _name in "${AGENT_ORDER[@]}"; do
-            local _dir="${AGENTS[$_name]}"
+    if [ ${#_agents_to_show[@]} -eq 0 ]; then
+        log_info "No hay agentes en la categoria '$_filter'"
+        unset _filter _agents_to_show
+        return 0
+    fi
+
+    # ── Mostrar tabla ──
+    if [ "$NEXUS_GUM_AVAILABLE" = "true" ]; then
+        # ── Header con ANSI ──
+        printf '  \033[1m%-18s %-16s %-12s %s\033[0m\n' "Herramienta" "Flag" "Comando" "Estado"
+        printf '  \033[2m'; printf '%62s' '' | tr ' ' '-'; printf '\033[0m\n'
+
+        for _name in "${_agents_to_show[@]}"; do
+            local _dir="${AGENTS[$_name]:-}"
             local _meta="$_dir/metadata.sh"
 
             if [ -f "$_meta" ]; then
@@ -93,13 +134,11 @@ list_agents() {
             fi
 
             # ── Three-state detection ─────────────────
-            # 1. Manifest check: installed.txt (nxai-tracked)
             local _in_manifest=false
             if [ -f "${NEXUS_ROOT}/logs/installed.txt" ] && grep -Fx "$_name" "${NEXUS_ROOT}/logs/installed.txt" &>/dev/null; then
                 _in_manifest=true
             fi
 
-            # 2. Binary check: command -v or test.sh fallback
             local _in_path=false
             if [ -n "${AGENT_BINARY:-}" ] && command -v "$AGENT_BINARY" &>/dev/null; then
                 _in_path=true
@@ -107,8 +146,6 @@ list_agents() {
                 _in_path=true
             fi
 
-            # Status text and colors — ANSI codes go in printf FORMAT string,
-            # plain text goes as arguments, so alignment is calculated correctly
             local _c_name _c_status _t_status
             if [ "$_in_manifest" = true ] && [ "$_in_path" = true ]; then
                 _c_name='\033[96m'
@@ -121,27 +158,27 @@ list_agents() {
             else
                 _c_name='\033[97m'
                 _c_status='\033[33m'
-                _t_status="NO INSTALADO"
+                _t_status="NO INSTAL."
             fi
 
-            # Truncate description to 35 chars
-            local _desc="${AGENT_DESC:-}"
-            if [ ${#_desc} -gt 35 ]; then
-                _desc="${_desc:0:32}..."
-            fi
+            local _flag="${AGENT_TO_FLAG[$_name]:-}"
+            local _flag_display="-"
+            [ -n "$_flag" ] && _flag_display="--${_flag}"
 
-            # ANSI codes in format string = alignment correct,
-            # plain text args = no width miscalculation
-            printf "  ${_c_name}%-15s\033[0m ${_c_status}%-14s\033[0m %s\n" \
-                "${AGENT_NAME:-$_name}" "$_t_status" "$_desc"
+            local _cmd="${AGENT_BINARY:-}"
+            local _display_name="${AGENT_NAME:-$_name}"
+
+            printf "  ${_c_name}%-18s\033[0m %-16s %-12s ${_c_status}%s\033[0m\n" \
+                "$_display_name" "$_flag_display" "$_cmd" "$_t_status"
         done
     else
-        echo "Agentes registrados:"
-        echo "---"
-        for _name in "${AGENT_ORDER[@]}"; do
-            local _dir="${AGENTS[$_name]}"
+        # ── Tabla plana (sin ANSI) ──
+        printf "  %-18s %-16s %-12s %s\n" "Herramienta" "Flag" "Comando" "Estado"
+        printf -- "  %62s\n" "" | tr ' ' '-'
+
+        for _name in "${_agents_to_show[@]}"; do
+            local _dir="${AGENTS[$_name]:-}"
             local _meta="$_dir/metadata.sh"
-            local _status=""
 
             if [ -f "$_meta" ]; then
                 # shellcheck source=/dev/null
@@ -161,26 +198,62 @@ list_agents() {
                 _in_path=true
             fi
 
+            local _t_status
             if [ "$_in_manifest" = true ] && [ "$_in_path" = true ]; then
-                _status="${NEXUS_COLOR_GREEN}[INSTALADO]${NEXUS_COLOR_RESET}"
+                _t_status="INSTALADO"
             elif [ "$_in_path" = true ]; then
-                _status="${NEXUS_COLOR_CYAN}[EXTERNO]${NEXUS_COLOR_RESET}"
+                _t_status="EXTERNO"
             else
-                _status="${NEXUS_COLOR_YELLOW}[NO INSTALADO]${NEXUS_COLOR_RESET}"
+                _t_status="NO INSTAL."
             fi
 
-            echo -e "  ${AGENT_NAME:-$_name} (Tier ${AGENT_TIER:-?}) $_status"
-            if [ -n "${AGENT_DESC:-}" ]; then
-                echo -e "    -> ${AGENT_DESC}"
-            fi
+            local _flag="${AGENT_TO_FLAG[$_name]:-}"
+            local _flag_display="-"
+            [ -n "$_flag" ] && _flag_display="--${_flag}"
+
+            local _cmd="${AGENT_BINARY:-}"
+            local _display_name="${AGENT_NAME:-$_name}"
+
+            printf "  %-18s %-16s %-12s %s\n" \
+                "$_display_name" "$_flag_display" "$_cmd" "$_t_status"
         done
-        unset _name _dir _meta _status
     fi
+    unset _filter _agents_to_show _name _dir _meta _in_manifest _in_path _c_name _c_status _t_status _flag _flag_display _cmd _display_name
 }
 
 # ── install_agent: instala uno o todos los agentes ─
 install_agent() {
     local target="${1:-}"
+
+    # ── Category mode: install agents from a category ─────────
+    if [[ -v CATEGORIES["$target"] ]]; then
+        local _cat_name="$target"
+        shift
+        local _cat_agents=()
+
+        if [ $# -gt 0 ]; then
+            # Parse flags → agent names via FLAG_TO_AGENT[]
+            for _flag in "$@"; do
+                local _fname="${_flag#--}"
+                local _agent="${FLAG_TO_AGENT[$_fname]:-}"
+                if [ -n "$_agent" ]; then
+                    _cat_agents+=("$_agent")
+                else
+                    log_warn "Flag desconocida: $_flag (categoria: $_cat_name)"
+                fi
+            done
+        else
+            # No flags → install ALL agents in this category
+            read -ra _cat_agents <<< "${CATEGORIES[$_cat_name]}"
+            log_info "Instalando todos los agentes de categoria: $_cat_name"
+        fi
+
+        for _agent in "${_cat_agents[@]}"; do
+            install_agent "$_agent"
+        done
+        unset _flag _fname _agent _cat_agents _cat_name
+        return 0
+    fi
 
     if [ "$target" = "--all" ] || [ -z "$target" ]; then
         log_info "Instalando todos los agentes..."
@@ -565,13 +638,69 @@ manifest_import() {
 
     log_ok "Manifest importado: $imported agregados, $skipped omitidos"
 }
+# ── Global parsing state ───────────────────────────
+RESOLVED_ARGS=()
+CATEGORY_MODE=false
+CATEGORY_NAME=""
+
+# ── resolve_args: detect category mode vs bare name ──
+resolve_args() {
+    local first_arg="${1:-}"
+
+    # If no args or first is a known command → pass through
+    case "${first_arg}" in
+        install|remove|uninstall|list|status|update|guide|dashboard|ui|agent|manifest|help)
+            return 0
+            ;;
+    esac
+
+    # Check if first arg is a category
+    if [[ -v CATEGORIES["$first_arg"] ]]; then
+        CATEGORY_MODE=true
+        CATEGORY_NAME="$first_arg"
+        shift
+        # Now $* = <command> [--flags...]
+        COMMAND="${1:-}"
+        shift 2>/dev/null || true
+        # Remaining args after command + category are tool flags
+        RESOLVED_ARGS=("$@")
+        return 0
+    fi
+
+    # Neither command nor category → pass through (let case dispatch handle it)
+    return 0
+}
+
+# ── parse_category_flags: resolve --tool args to agent names ──
+# Called when RESOLVED_ARGS contains --flag entries
+# Uses FLAG_TO_AGENT[] from categories.sh
+parse_category_flags() {
+    PARSED_AGENTS=()
+    for _flag in "${RESOLVED_ARGS[@]}"; do
+        local _name="${_flag#--}"
+        local _agent="${FLAG_TO_AGENT[$_name]:-}"
+        if [ -n "$_agent" ]; then
+            PARSED_AGENTS+=("$_agent")
+        else
+            log_warn "Flag desconocida: $_flag"
+        fi
+    done
+    unset _flag _name _agent
+}
 
 # ═══════════════════════════════════════════════════
 #  MAIN: Ruteo de subcomandos
 # ═══════════════════════════════════════════════════
 
-COMMAND="${1:-}"
-shift 2>/dev/null || true
+resolve_args "$@"
+if [ "$CATEGORY_MODE" = false ]; then
+    COMMAND="${1:-}"
+    shift 2>/dev/null || true
+else
+    # Rebuild positional args: command + category_name + flags
+    set -- "$COMMAND" "$CATEGORY_NAME" "${RESOLVED_ARGS[@]}"
+    shift 2>/dev/null || true
+fi
 
 case "${COMMAND}" in
     dashboard|ui)
@@ -619,10 +748,15 @@ case "${COMMAND}" in
         check_update_silent
         remove_agent "$@"
         ;;
+    uninstall)
+        show_banner
+        check_update_silent
+        remove_agent "$@"
+        ;;
     list)
         show_banner
         check_update_silent
-        list_agents
+        list_agents "$@"
         ;;
     status)
         show_banner
@@ -660,7 +794,13 @@ case "${COMMAND}" in
                 check_update_verbose
                 ;;
             *)
-                apply_update
+                # If arg is a category → update agents in that category
+                if [[ -v CATEGORIES["${1:-}"] ]]; then
+                    module_update_category "$@"
+                else
+                    # Self-update (backward compat)
+                    apply_update
+                fi
                 ;;
         esac
         ;;

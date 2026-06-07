@@ -173,6 +173,93 @@ install_via_cargo() {
     fi
 }
 
+# ── install_via_binary: instala un binario (con soporte GLIBC en Termux) ──
+# Uso: install_via_binary "tool-name" "download-url" "binary-name"
+# Para Termux nativo:
+#   1. Instala glibc-repo + glibc si NEXUS_ENV=termux
+#   2. Descarga el tarball/zip desde URL
+#   3. Extrae el binario a $NEXUS_ROOT/bin/
+#   4. Crea wrapper script que exporta LD_LIBRARY_PATH si aplica
+# Para proot-ubuntu / linux:
+#   1. Descarga el tarball/zip
+#   2. Extrae a /usr/local/bin/ (o $NEXUS_ROOT/bin/)
+install_via_binary() {
+    local tool_name="$1"
+    local download_url="$2"
+    local binary_name="${3:-$tool_name}"
+    local target_dir="${NEXUS_ROOT}/bin"
+
+    mkdir -p "$target_dir"
+
+    if [ "${NEXUS_ENV:-}" = "termux" ]; then
+        log_info "Entorno Termux detectado — instalando soporte GLIBC..."
+        pkg install -y glibc-repo 2>/dev/null || true
+        pkg install -y glibc 2>/dev/null || true
+    fi
+
+    log_info "Descargando ${tool_name} desde ${download_url}..."
+    local tmp_dir
+    tmp_dir="$(mktemp -d)"
+
+    if echo "$download_url" | grep -qE '\.tar\.gz$|\.tgz$'; then
+        curl -fsSL "$download_url" | tar xzf - -C "$tmp_dir" 2>/dev/null || {
+            log_error "Fallo al descargar/extraer ${tool_name}"
+            rm -rf "$tmp_dir"
+            return 1
+        }
+    else
+        # Asumir binario directo
+        curl -fsSL "$download_url" -o "${tmp_dir}/${binary_name}" 2>/dev/null || {
+            log_error "Fallo al descargar ${tool_name}"
+            rm -rf "$tmp_dir"
+            return 1
+        }
+    fi
+
+    # Encontrar el binario en tmp_dir
+    local found_bin
+    found_bin="$(find "$tmp_dir" -name "${binary_name}" -type f 2>/dev/null | head -1)"
+    if [ -z "$found_bin" ]; then
+        found_bin="$(find "$tmp_dir" -type f -executable 2>/dev/null | head -1)"
+    fi
+
+    if [ -z "$found_bin" ]; then
+        # Si hay un solo archivo no ejecutable, usarlo
+        found_bin="$(find "$tmp_dir" -type f 2>/dev/null | head -1)"
+    fi
+
+    if [ -z "$found_bin" ]; then
+        log_error "No se encontro binario en la descarga de ${tool_name}"
+        rm -rf "$tmp_dir"
+        return 1
+    fi
+
+    # Copiar a target dir
+    chmod +x "$found_bin"
+    cp "$found_bin" "${target_dir}/${binary_name}"
+
+    # En Termux, crear wrapper GLIBC
+    if [ "${NEXUS_ENV:-}" = "termux" ] && [ -f "${PREFIX}/glibc/lib/libgcc_s.so.1" ]; then
+        local wrapper="${PREFIX}/bin/${binary_name}"
+        log_info "Creando wrapper GLIBC para ${binary_name}..."
+        cat > "$wrapper" << 'GLIBC_WRAPPER'
+#!/data/data/com.termux/files/usr/bin/bash
+export LD_LIBRARY_PATH=__GLIBC_LIB__:$LD_LIBRARY_PATH
+exec __BINARY__ "$@"
+GLIBC_WRAPPER
+        # Replace placeholders
+        local glibc_lib="${PREFIX}/glibc/lib"
+        local real_bin="${target_dir}/${binary_name}"
+        sed -i "s|__GLIBC_LIB__|${glibc_lib}|g; s|__BINARY__|${real_bin}|g" "$wrapper"
+        chmod +x "$wrapper"
+        log_ok "Wrapper GLIBC creado en ${wrapper}"
+    fi
+
+    rm -rf "$tmp_dir"
+    log_ok "Binario ${tool_name} instalado en ${target_dir}/${binary_name}"
+    return 0
+}
+
 # ── uninstall_via_pip: pip3 uninstall ──────────────
 uninstall_via_pip() {
     local package="$1"
@@ -244,6 +331,26 @@ uninstall_via_apt() {
     fi
 }
 
+# ── uninstall_via_binary: elimina binario y wrapper ──
+# Uso: uninstall_via_binary "tool-name" "binary-name"
+uninstall_via_binary() {
+    local tool_name="$1"
+    local binary_name="${2:-$tool_name}"
+    local target_dir="${NEXUS_ROOT}/bin"
+    local wrapper="${PREFIX:-/usr/local}/bin/${binary_name}"
+
+    log_info "Desinstalando ${tool_name}..."
+
+    # Eliminar binario
+    rm -f "${target_dir}/${binary_name}" 2>/dev/null || true
+
+    # Eliminar wrapper (Termux GLIBC)
+    rm -f "$wrapper" 2>/dev/null || true
+
+    log_ok "Binario ${tool_name} eliminado"
+    return 0
+}
+
 # ── update_installed_manifest: agrega/elimina de installed.txt ─
 # Uso: update_installed_manifest "agent-name" "install|remove"
 # Manifest en $NEXUS_ROOT/logs/installed.txt — un nombre por linea
@@ -305,4 +412,61 @@ mark_removed() {
 
     # Sincronizar manifest de instalacion
     update_installed_manifest "$agent" "remove"
+}
+
+# ── category_manifest_list: lista agentes instalados ─────────
+# Lee installed.txt (formato plano, un nombre por linea)
+# No incluye informacion de categoria — eso vive en metadata.sh
+category_manifest_list() {
+    local manifest="${NEXUS_ROOT}/logs/installed.txt"
+    if [ -f "$manifest" ]; then
+        cat "$manifest"
+    fi
+}
+
+# ── category_manifest_has: verifica si un agente esta instalado ─
+# Retorna 0 si el agente existe en installed.txt
+category_manifest_has() {
+    local agent="$1"
+    local manifest="${NEXUS_ROOT}/logs/installed.txt"
+    [ -f "$manifest" ] && grep -Fx "$agent" "$manifest" &>/dev/null
+}
+
+# ── agent_get_category: lee AGENT_CATEGORY de metadata.sh ────
+# Lee del metadata.sh del modulo, NO de installed.txt
+agent_get_category() {
+    local name="$1"
+    local meta="${NEXUS_ROOT}/modules/${name}/metadata.sh"
+    if [ -f "$meta" ]; then
+        sed -n 's/^export AGENT_CATEGORY="\(.*\)"/\1/p' "$meta"
+    fi
+}
+
+# ── batch_install_category: instala todos los agentes de una categoria ──
+# Uso: batch_install_category "ai"
+# Instala cada agente en CATEGORIES["ai"] que tenga install.sh
+batch_install_category() {
+    local category="$1"
+    local agents="${CATEGORIES[$category]:-}"
+
+    if [ -z "$agents" ]; then
+        log_error "Categoria '${category}' no encontrada."
+        return 1
+    fi
+
+    log_info "Instalando todos los agentes de la categoria '${category}'..."
+
+    local count=0
+    for _agent in $agents; do
+        local _dir="${NEXUS_MODULES_DIR}/${_agent}"
+        if [ -d "$_dir" ] && [ -f "$_dir/install.sh" ]; then
+            log_info "Instalando ${_agent}..."
+            (source "$_dir/install.sh") && count=$((count + 1))
+        else
+            log_info "${_agent}: pendiente (stub)"
+        fi
+    done
+    unset _agent _dir
+
+    log_ok "Instalados ${count} agentes de la categoria '${category}'."
 }

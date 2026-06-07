@@ -15,7 +15,7 @@ fi
 unset _motd_src _motd_dir
 
 # ── Valores por defecto (si env.sh no existe) ─────
-NEXUS_VERSION="${NEXUS_VERSION:-0.7.0}"
+NEXUS_VERSION="${NEXUS_VERSION:-0.8.0}"
 COLOR_GRAY='\033[1;30m'
 
 # ── Forzar banner completo (usado por install.sh) ──

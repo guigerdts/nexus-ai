@@ -6,5 +6,6 @@ export AGENT_DESC="Ejecuta modelos de lenguaje locales (LLaMA, Mistral, Qwen, et
 export AGENT_URL="https://ollama.com"
 export AGENT_TIER="1"
 export AGENT_CATEGORY="ai"
+export AGENT_FLAG="ollama"
 export AGENT_METHOD="curl"
 export AGENT_BINARY="ollama"

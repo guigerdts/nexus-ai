@@ -34,13 +34,13 @@ Help output MUST use only printf and ANSI escape codes. No Rich, no gum, no exte
 
 ### Requirement: Module targets by category
 
-The "Module Targets:" section MUST list tools grouped by their 8 categories (ai, editor, shell, tools, language, db, ui, automation).
+The "Module Targets:" section MUST list tools grouped by their 9 categories (ai, editor, shell, tools, language, db, node, ui, automation).
 
 #### Scenario: All categories represented
 
 - GIVEN all agent metadata.sh files have AGENT_CATEGORY set
 - WHEN `nxai help` runs
-- THEN each of the 8 categories MUST appear with its tools
+- THEN each of the 9 categories MUST appear with its tools
 - AND categories with zero tools MUST show as empty
 
 ### Requirement: Quick Start examples

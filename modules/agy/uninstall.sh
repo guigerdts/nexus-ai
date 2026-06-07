@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # modules/agy/uninstall.sh
-# Desinstala Agy
+# Desinstala Antigravity CLI (agy)
+# Termux: helper C en PREFIX/bin/agy + binario VA39 + data dir
+# proot/Linux: binario en NEXUS_ROOT/bin/agy
 
 # Source functions
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -12,24 +14,27 @@ source "$SCRIPT_DIR/metadata.sh" 2>/dev/null || true
 
 log_info "Desinstalando ${AGENT_NAME:-agy}..."
 
-# Dispatch by method — map AGENT_METHOD to correct uninstall function
-case "${AGENT_METHOD:-}" in
-    pip)   uninstall_via_pip "${AGENT_PACKAGE:-$AGENT_NAME}" ;;
-    npm)   uninstall_via_npm "${AGENT_PACKAGE:-$AGENT_NAME}" ;;
-    pkg)   uninstall_via_apt "${AGENT_PACKAGE:-$AGENT_NAME}" ;;
-    apt)   uninstall_via_apt "${AGENT_PACKAGE:-$AGENT_NAME}" ;;
-    curl)  uninstall_via_binary "$AGENT_NAME" "$AGENT_BINARY" ;;
-    cargo) uninstall_via_binary "$AGENT_NAME" "$AGENT_BINARY" ;;
-    binary) uninstall_via_binary "$AGENT_NAME" "$AGENT_BINARY" ;;
-    git)   log_info "Agente instalado via git. Elimina el directorio clonado manualmente." ;;
-    stub)  log_info "Agente stub — no requiere desinstalacion." ;;
-    *)     log_warn "Metodo '${AGENT_METHOD:-}' no tiene desinstalador automatico."
-           if [ -n "${AGENT_BINARY:-}" ] && command -v "$AGENT_BINARY" &>/dev/null; then
-               rm -f "$(command -v "$AGENT_BINARY")" 2>/dev/null || true
-           fi
-           ;;
-esac
+_prefix="${PREFIX:-/data/data/com.termux/files/usr}"
+_agy_data="${HOME}/.local/share/nexus-ai/antigravity-cli"
+
+# Remover helper C (Termux) o binario directo (proot/linux)
+for _path in "${_prefix}/bin/agy" "${NEXUS_ROOT}/bin/agy"; do
+    if [ -f "$_path" ]; then
+        rm -f "$_path" 2>/dev/null || true
+        log_info "Eliminado: $_path"
+    fi
+done
+
+# Remover directorio de datos (binario upstream, VA39, tarball, etc.)
+if [ -d "$_agy_data" ]; then
+    rm -rf "$_agy_data" 2>/dev/null || true
+    log_info "Eliminado: $_agy_data"
+fi
+
+# Remover wrapper GLIBC legacy si existe (de instalaciones anteriores)
+_wrapper="${_prefix}/bin/agy_wrapper"
+[ -f "$_wrapper" ] && rm -f "$_wrapper" 2>/dev/null || true
 
 mark_removed "$AGENT_NAME"
-log_ok "Agente '${AGENT_NAME}' desinstalado."
+log_ok "Antigravity CLI desinstalado completamente."
 exit 0

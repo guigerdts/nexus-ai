@@ -1,9 +1,8 @@
-# openclaude — CLI de IA para programacion
+# OpenClaude - CLI de IA para programacion
 
 ## Descripcion
 
-OpenClaude es una CLI de IA para programacion que permite generar,
-analizar y refactorizar codigo desde la terminal.
+OpenClaude abre flujos de trabajo de coding-agent a cualquier LLM — OpenAI, Gemini, DeepSeek, Ollama, y 200+ modelos.
 
 ## Instalacion
 
@@ -11,14 +10,7 @@ analizar y refactorizar codigo desde la terminal.
 nxai install openclaude
 ```
 
-O manualmente:
-
-```bash
-# Descarga el binario desde https://github.com/openclaude-ai/cli
-# y hazlo ejecutable:
-chmod +x openclaude
-mv openclaude ~/.local/bin/
-```
+Instala via npm: `npm install -g @gitlawb/openclaude`
 
 ## Uso
 
@@ -28,11 +20,9 @@ openclaude --help
 
 ## Requisitos
 
-- Linux x86_64 / aarch64
-- Conexion a internet
+- Node.js 18+
+- npm
 
-## Notas para Termux
+## Repositorio
 
-OpenClaude requiere un binario compatible con ARM64.
-Descarga la version adecuada desde https://github.com/openclaude-ai/cli.
-Puede funcionar en proot-Ubuntu si hay compatibilidad.
+https://github.com/Gitlawb/openclaude

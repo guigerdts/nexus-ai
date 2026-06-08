@@ -1,34 +1,30 @@
-# minimax-cli — CLI para la API de MiniMax AI
+# MiniMax CLI - CLI multimodal para la plataforma MiniMax AI
 
 ## Descripcion
 
-CLI para interactuar con la API de MiniMax AI desde la terminal.
+MiniMax CLI es la interfaz de linea de comandos oficial para la plataforma MiniMax AI.
+Soporta texto, imagenes, video, audio, musica y busqueda web desde un solo comando.
 
-**URL**: https://github.com/MiniMax-AI/minimax-cli
-
-**Instalacion manual — no automatizada**
-
-## Instrucciones
-
-### En Termux nativo
+## Instalacion
 
 ```bash
-# Clona el repositorio
-git clone https://github.com/MiniMax-AI/minimax-cli
-cd minimax-cli
-
-# Sigue las instrucciones del README del proyecto
+nxai install minimax-cli
 ```
 
-### En proot-Ubuntu
+Instala via npm: `npm install -g mmx-cli`
+
+## Uso
 
 ```bash
-git clone https://github.com/MiniMax-AI/minimax-cli
-cd minimax-cli
-
-# Sigue las instrucciones del README del proyecto
+mmx --help
 ```
 
-## Documentacion oficial
+## Requisitos
 
-https://github.com/MiniMax-AI/minimax-cli#readme
+- Node.js 18+
+- npm
+- MiniMax Token Plan (https://platform.minimax.io)
+
+## Repositorio
+
+https://github.com/MiniMax-AI/cli

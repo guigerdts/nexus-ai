@@ -1,9 +1,8 @@
-# Pi - Asistente de IA desde terminal (Pi.ai)
+# Pi - Coding Agent CLI
 
 ## Descripcion
 
-Pi es un asistente de IA conversacional creado por Inflection AI.
-Funciona directamente desde la terminal.
+Pi es un coding agent CLI con herramientas read, bash, edit, write y session management.
 
 ## Instalacion
 
@@ -11,28 +10,19 @@ Funciona directamente desde la terminal.
 nxai install pi
 ```
 
-O manualmente:
-
-```bash
-pip3 install --user pi-ai
-```
+Instala via npm: `npm install -g --ignore-scripts @earendil-works/pi-coding-agent`
 
 ## Uso
 
 ```bash
-pi "explica el concepto de recursividad"
+pi --help
 ```
 
 ## Requisitos
 
-- Python 3.8+
-- pip3
+- Node.js 18+
+- npm
 
-## Notas para Termux
+## Repositorio
 
-Pi funciona en Termux nativo. Asegurate de tener Python 3 instalado:
-
-```bash
-pkg install python
-pip3 install --user pi-ai
-```
+https://github.com/earendil-works/pi

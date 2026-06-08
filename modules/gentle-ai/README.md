@@ -3,7 +3,7 @@
 ## Descripcion
 
 Gentle-AI es una CLI de codigo abierto para desarrollo asistido por IA.
-Permite interactuar con modelos de lenguaje desde la terminal.
+Compilada desde fuente via Go.
 
 ## Instalacion
 
@@ -11,26 +11,32 @@ Permite interactuar con modelos de lenguaje desde la terminal.
 nxai install gentle-ai
 ```
 
-O manualmente:
-
-```bash
-git clone https://github.com/gentle-ai/gentle
-cd gentle
-# Sigue las instrucciones del proyecto
-```
+Esto clona el repositorio, compila con Go y copia el binario al PATH.
 
 ## Uso
 
 ```bash
-gentle --help
+gentle-ai --help
 ```
 
 ## Requisitos
 
+- Go >= 1.23
 - Git
 - Conexion a internet
 
-## Notas para Termux
+## Actualizacion
 
-Gentle-AI no tiene instalacion automatizada aun.
-Clona el repositorio y compila segun las instrucciones del proyecto.
+```bash
+nxai update gentle-ai
+```
+
+## Desinstalacion
+
+```bash
+nxai uninstall gentle-ai
+```
+
+## Repositorio
+
+https://github.com/Gentleman-Programming/gentle-ai

@@ -1,34 +1,28 @@
-# qwen-code — CLI de codigo asistido por Qwen AI
+# Qwen Code - CLI de codigo asistido por Qwen AI
 
 ## Descripcion
 
-CLI para desarrollo asistido por Qwen AI (QwenLM) desde la terminal.
+Qwen Code es un asistido de codigo impulsado por Qwen AI.
 
-**URL**: https://github.com/QwenLM/qwen-code
-
-**Instalacion manual — no automatizada**
-
-## Instrucciones
-
-### En Termux nativo
+## Instalacion
 
 ```bash
-# Clona el repositorio
-git clone https://github.com/QwenLM/qwen-code
-cd qwen-code
-
-# Sigue las instrucciones del README del proyecto
+nxai install qwen-code
 ```
 
-### En proot-Ubuntu
+Instala via npm: `npm install -g @qwen-code/qwen-code`
+
+## Uso
 
 ```bash
-git clone https://github.com/QwenLM/qwen-code
-cd qwen-code
-
-# Sigue las instrucciones del README del proyecto
+qwen --help
 ```
 
-## Documentacion oficial
+## Requisitos
 
-https://github.com/QwenLM/qwen-code#readme
+- Node.js 18+
+- npm
+
+## Repositorio
+
+https://github.com/QwenLM/qwen-code

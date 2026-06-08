@@ -87,9 +87,9 @@ show_guide_category() {
                 "fabric"       "Framework de automatizacion con IA"        "nxai install fabric" \
                 "antigravity"  "CLI experimental de IA"                    "(stub)" \
                 "pi"           "Asistente de IA desde terminal"            "(stub)" \
-                "gentle-ai"    "CLI de desarrollo asistido por IA"         "(stub)" \
-                "qwen-code"    "CLI de codigo asistido por Qwen AI"        "(stub)" \
-                "minimax-cli"  "CLI para la API de MiniMax AI"             "(stub)" \
+                "gentle-ai"    "CLI de desarrollo asistido por IA"         "(fuente)" \
+                "qwen-code"    "CLI de codigo asistido por Qwen AI"        "(npm)" \
+                "minimax-cli"  "CLI multimodal para MiniMax AI"            "(mmx-cli)" \
                 "codegraph"    "Analizador de grafos de codigo con IA"     "(stub)" \
                 "openclaude"   "CLI de IA para programacion"               "(stub)" \
                 "mistral-vibe" "CLI para Mistral AI Vibe coding"           "(stub)"

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# modules/qwen-code/install.sh
-# Instala qwen-code via npm
+# modules/openclaw/install.sh
+# Instala openclaw + dependencias extra via npm
 set -euo pipefail
 
 # ── Source install library ─────────────────────────
@@ -15,7 +15,16 @@ if ! command -v npm &>/dev/null; then
     exit 1
 fi
 
-npm install -g "${AGENT_PACKAGE}"
+# Instalar paquete principal
+npm install -g "${AGENT_PACKAGE}@latest"
+
+# Instalar dependencias extra para integraciones
+if [ -n "${OPENCLAW_EXTRA_DEPS:-}" ]; then
+    log_info "Instalando dependencias extra..."
+    for dep in $OPENCLAW_EXTRA_DEPS; do
+        npm install -g "$dep" 2>/dev/null || log_warn "No se pudo instalar $dep (opcional)"
+    done
+fi
 
 if command -v "${AGENT_BINARY}" &>/dev/null; then
     log_ok "${AGENT_NAME} instalado correctamente."

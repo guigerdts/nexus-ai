@@ -42,9 +42,9 @@ nexus-ai/
 │   ├── fabric/             # AI  — automatizacion IA
 │   ├── antigravity/        # AI  — CLI experimental (stub)
 │   ├── pi/                 # AI  — asistente terminal (stub)
-│   ├── gentle-ai/          # AI  — desarrollo asistido (stub)
-│   ├── qwen-code/          # AI  — Qwen AI (stub)
-│   ├── minimax-cli/        # AI  — MiniMax AI (stub)
+│   ├── gentle-ai/          # AI  — desarrollo asistido (compilado desde fuente)
+│   ├── qwen-code/          # AI  — Qwen AI (npm)
+│   ├── minimax-cli/        # AI  — MiniMax AI (npm mmx-cli)
 │   ├── codegraph/          # AI  — analizador grafos (stub)
 │   ├── openclaude/         # AI  — CLI programacion (stub)
 │   ├── mistral-vibe/       # AI  — Mistral Vibe (stub)
@@ -166,9 +166,9 @@ Los modulos se organizan en 9 categorias. Ejecuta `nxai guide` para ver la guia 
 | sgpt | pip | Asistente de terminal GPT (shell-gpt) |
 | fabric | curl | Framework open-source para automatizacion con IA |
 | antigravity | curl | CLI experimental de IA (comparte flag agy) |
-| gentle-ai | stub | CLI de desarrollo asistido por IA |
-| qwen-code | stub | CLI de codigo asistido por Qwen AI |
-| minimax-cli | stub | CLI para la API de MiniMax AI |
+| gentle-ai | git | CLI de desarrollo asistido por IA (compilado desde fuente) |
+| qwen-code | npm | CLI de codigo asistido por Qwen AI |
+| minimax-cli | npm | CLI multimodal para la API de MiniMax AI (mmx-cli) |
 | codegraph | stub | Analizador de grafos de codigo con IA |
 | openclaude | stub | CLI de IA para programacion |
 | mistral-vibe | stub | CLI para Mistral AI Vibe coding |

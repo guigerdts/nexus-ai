@@ -46,6 +46,22 @@ fi
 
 log_ok "Node.js ${NODE_VERSION} — requisito cumplido"
 
+# ── Si ya esta instalado, salir temprano ────────────
+if command -v "${AGENT_BINARY}" &>/dev/null; then
+    log_ok "${AGENT_NAME} ya instalado (binario: ${AGENT_BINARY})."
+    mark_installed "$AGENT_NAME" "$AGENT_VERSION"
+    exit 0
+fi
+
+# ── Limpiar instalacion global previa (npm ENOTEMPTY workaround) ─
+# npm reify falla con exit 217 cuando el directorio global del paquete
+# existe de una instalacion previa. Limpiar antes de instalar.
+NPM_GLOBAL_DIR="$(npm root -g 2>/dev/null)/${AGENT_PACKAGE}"
+if [ -d "$NPM_GLOBAL_DIR" ]; then
+    log_info "Limpiando instalacion previa en ${NPM_GLOBAL_DIR}..."
+    rm -rf "$NPM_GLOBAL_DIR"
+fi
+
 # ── Instalar paquete principal ─────────────────────
 log_info "Instalando openclaw@latest (esto puede tomar varios minutos)..."
 npm install -g "${AGENT_PACKAGE}@latest"

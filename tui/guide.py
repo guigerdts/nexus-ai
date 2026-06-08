@@ -33,9 +33,9 @@ CATEGORIES = {
             ("gentle-ai", "CLI de desarrollo asistido por IA", "(fuente)"),
             ("qwen-code", "CLI de codigo asistido por Qwen AI", "(npm)"),
             ("minimax-cli", "CLI multimodal para MiniMax AI", "(mmx-cli)"),
-            ("codegraph", "Analizador de grafos de codigo con IA", "(stub)"),
+            ("codegraph", "Grafo de codigo pre-indexado para agentes AI", "(npm)"),
             ("openclaude", "CLI de IA para programacion", "(stub)"),
-            ("mistral-vibe", "CLI para Mistral AI Vibe coding", "(stub)"),
+            ("mistral-vibe", "CLI para Mistral AI Vibe coding", "(pip)"),
         ]
     },
     "editor": {

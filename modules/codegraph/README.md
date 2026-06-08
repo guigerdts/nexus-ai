@@ -1,34 +1,30 @@
-# codegraph — Analizador de grafos de codigo con IA
+# CodeGraph — Grafo de codigo pre-indexado para agentes AI
 
 ## Descripcion
 
-Analizador de grafos de codigo fuente asistido por IA.
+CodeGraph construye un grafo semantico de tu codebase — funciones, clases, imports, call chains — y lo expone via 45 herramientas MCP para agentes AI.
 
-**URL**: https://github.com/codegraph-ai/codegraph
-
-**Instalacion manual — no automatizada**
-
-## Instrucciones
-
-### En Termux nativo
+## Instalacion
 
 ```bash
-# Clona el repositorio
-git clone https://github.com/codegraph-ai/codegraph
-cd codegraph
-
-# Sigue las instrucciones del README del proyecto
+nxai install codegraph
 ```
 
-### En proot-Ubuntu
+Instala via npm: `npm install -g @colbymchenry/codegraph`
+
+## Uso
 
 ```bash
-git clone https://github.com/codegraph-ai/codegraph
-cd codegraph
-
-# Sigue las instrucciones del README del proyecto
+codegraph --help
+codegraph install   # Configura agentes
+codegraph init .    # Indexa proyecto actual
 ```
 
-## Documentacion oficial
+## Requisitos
 
-https://github.com/codegraph-ai/codegraph#readme
+- Node.js 18+
+- npm
+
+## Repositorio
+
+https://github.com/codegraph-ai/codegraph

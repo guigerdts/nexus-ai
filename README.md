@@ -45,9 +45,9 @@ nexus-ai/
 │   ├── gentle-ai/          # AI  — desarrollo asistido (compilado desde fuente)
 │   ├── qwen-code/          # AI  — Qwen AI (npm)
 │   ├── minimax-cli/        # AI  — MiniMax AI (npm mmx-cli)
-│   ├── codegraph/          # AI  — analizador grafos (stub)
-│   ├── openclaude/         # AI  — CLI programacion (stub)
-│   ├── mistral-vibe/       # AI  — Mistral Vibe (stub)
+│   ├── codegraph/          # AI  — grafo de codigo pre-indexado (npm)
+│   ├── openclaude/         # AI  — CLI programacion (npm)
+│   ├── mistral-vibe/       # AI  — Mistral Vibe (pip)
 │   ├── neovim/             # editor — Neovim LSP
 │   ├── nvchad/             # editor — NvChad config
 │   ├── zsh/                # shell — Z shell
@@ -169,9 +169,9 @@ Los modulos se organizan en 9 categorias. Ejecuta `nxai guide` para ver la guia 
 | gentle-ai | git | CLI de desarrollo asistido por IA (compilado desde fuente) |
 | qwen-code | npm | CLI de codigo asistido por Qwen AI |
 | minimax-cli | npm | CLI multimodal para la API de MiniMax AI (mmx-cli) |
-| codegraph | stub | Analizador de grafos de codigo con IA |
+| codegraph | npm | Grafo de codigo pre-indexado para agentes AI |
 | openclaude | stub | CLI de IA para programacion |
-| mistral-vibe | stub | CLI para Mistral AI Vibe coding |
+| mistral-vibe | pip | CLI para Mistral AI Vibe coding |
 | pi | stub | Asistente de IA desde terminal |
 
 ### Editores (2)

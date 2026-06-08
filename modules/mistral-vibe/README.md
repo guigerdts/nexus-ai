@@ -1,34 +1,31 @@
-# mistral-vibe — CLI para Mistral AI Vibe coding
+# Mistral Vibe — CLI para Mistral AI Vibe coding
 
 ## Descripcion
 
-CLI para programar con Mistral AI usando Vibe coding desde la terminal.
+Mistral Vibe es un asistente de codigo CLI por Mistral AI. Proporciona una interfaz conversacional para explorar, modificar e interactuar con tu codigo.
 
-**URL**: https://github.com/mistralai/mistral-vibe
-
-**Instalacion manual — no automatizada**
-
-## Instrucciones
-
-### En Termux nativo
+## Instalacion
 
 ```bash
-# Clona el repositorio
-git clone https://github.com/mistralai/mistral-vibe
-cd mistral-vibe
-
-# Sigue las instrucciones del README del proyecto
+nxai install mistral-vibe
 ```
 
-### En proot-Ubuntu
+Instala via pip: `pip install mistral-vibe`
+
+## Uso
 
 ```bash
-git clone https://github.com/mistralai/mistral-vibe
-cd mistral-vibe
-
-# Sigue las instrucciones del README del proyecto
+vibe --help
+vibe              # Inicia modo interactivo
+vibe --prompt "explica este proyecto"
 ```
 
-## Documentacion oficial
+## Requisitos
 
-https://github.com/mistralai/mistral-vibe#readme
+- Python >= 3.12
+- pip3/pip
+- Mistral API Key (https://console.mistral.ai)
+
+## Repositorio
+
+https://github.com/mistralai/mistral-vibe

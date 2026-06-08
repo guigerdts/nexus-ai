@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # NEXUS AI — core/nexus.sh
 # CLI principal: ruteo de subcomandos via case/esac
-# Version: 0.6.0
+# Version: 0.8.0
 #
 # Symlink: bin/nxai -> ../core/nexus.sh
 # Uso: nxai <comando> [opciones]
@@ -81,10 +81,6 @@ show_help() {
 list_agents() {
     local _filter="${1:-}"
 
-    # ── Limpiar variables de metadata que pueden filtrarse del startup ──
-    unset AGENT_DEPRECATED AGENT_SUCCESSOR AGENT_NAME AGENT_VERSION AGENT_DESC
-    unset AGENT_URL AGENT_TIER AGENT_CATEGORY AGENT_FLAG AGENT_METHOD AGENT_BINARY AGENT_PACKAGE
-
     # ── Sin filtro: mostrar resumen de categorias ──
     if [ -z "$_filter" ]; then
         echo ""
@@ -129,6 +125,11 @@ list_agents() {
         printf '  \033[2m'; printf '%62s' '' | tr ' ' '-'; printf '\033[0m\n'
 
         for _name in "${_agents_to_show[@]}"; do
+            # Limpiar variables del modulo anterior para evitar filtraciones
+            unset AGENT_NAME AGENT_VERSION AGENT_DESC AGENT_URL AGENT_TIER
+            unset AGENT_CATEGORY AGENT_FLAG AGENT_METHOD AGENT_BINARY AGENT_PACKAGE
+            unset AGENT_DEPRECATED AGENT_SUCCESSOR
+
             local _dir="${AGENTS[$_name]:-}"
             local _meta="$_dir/metadata.sh"
 
@@ -194,6 +195,11 @@ list_agents() {
         printf -- "  %62s\n" "" | tr ' ' '-'
 
         for _name in "${_agents_to_show[@]}"; do
+            # Limpiar variables del modulo anterior para evitar filtraciones
+            unset AGENT_NAME AGENT_VERSION AGENT_DESC AGENT_URL AGENT_TIER
+            unset AGENT_CATEGORY AGENT_FLAG AGENT_METHOD AGENT_BINARY AGENT_PACKAGE
+            unset AGENT_DEPRECATED AGENT_SUCCESSOR
+
             local _dir="${AGENTS[$_name]:-}"
             local _meta="$_dir/metadata.sh"
 

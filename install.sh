@@ -27,7 +27,7 @@ if [ "$_NEXUS_REMOTE" = true ]; then
         case "$arg" in
             --help|-h)
                 cat <<'EOFH'
-NEXUS AI v0.6.0 — Instalador remoto
+NEXUS AI v0.8.0 — Instalador remoto
 
 Uso: curl -fsSL https://raw.githubusercontent.com/guigerdts/nexus-ai/main/install.sh | bash -s -- [opciones]
 
@@ -60,7 +60,7 @@ EOFH
         fi
     done
 
-    echo "=== NEXUS AI v0.6.0 ==="
+    echo "=== NEXUS AI v0.8.0 ==="
     echo "Descargando en $REMOTE_DIR..."
 
     # Idempotencia: actualizar si ya existe, clonar si no
@@ -210,7 +210,9 @@ install_gum() {
     if [ "$NEXUS_ENV" = "termux" ]; then
         pkg install gum -y
     else
-        local gum_url="https://github.com/charmbracelet/gum/releases/download/v0.17.0/gum_0.17.0_Linux_arm64.tar.gz"
+        local gum_arch="${NEXUS_ARCH:-arm64}"
+        [ "$gum_arch" = "x86_64" ] && gum_arch="x86_64" || gum_arch="arm64"
+        local gum_url="https://github.com/charmbracelet/gum/releases/download/v0.17.0/gum_0.17.0_Linux_${gum_arch}.tar.gz"
         local gum_tmp="/tmp/gum.tar.gz"
         curl -fsSL "$gum_url" -o "$gum_tmp" || { log_warn "No se pudo descargar Gum"; return 0; }
         tar -xzf "$gum_tmp" -C /tmp/ && cp /tmp/gum_*/gum "$NEXUS_ROOT/bin/gum" || { log_warn "No se pudo extraer Gum"; return 0; }

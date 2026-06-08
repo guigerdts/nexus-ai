@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # NEXUS AI — config/agents.registry.sh
 # Registro de agentes: construye un array asociativo desde modules/*/metadata.sh
-# Version: 0.6.0
+# Version: 0.8.0
 #
 # Uso: source config/agents.registry.sh
 # Luego se accede via: ${AGENTS[nombre]} -> ruta del directorio

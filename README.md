@@ -4,6 +4,8 @@ Framework de entorno para Termux/proot-Ubuntu.
 Convierte Android en una workstation profesional para agentes de IA.
 
 **Estado:** v0.8.0 — estable. Dual-environment (Termux nativo + proot-Ubuntu).
+**Sintaxis:** `nxai install <categoria> --<flag>` — ejemplo: `nxai install ai --opencode`
+**Total:** 82 herramientas en 9 categorias.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
@@ -29,7 +31,7 @@ nexus-ai/
 │   ├── nexus-install.sh    # Funciones de instalación (pip, apt, npm, pkg)
 │   ├── nexus-log.sh        # Logging con colores [OK]/[WARN]/[ERROR]
 │   └── nexus-update.sh     # Actualizaciones: check silencioso + apply
-├── modules/                # 49 modulos registrados (9 categorias)
+├── modules/                # 82 modulos registrados (9 categorias)
 │   ├── opencode/           # AI  — CLI multi-modelo
 │   ├── codex/              # AI  — OpenAI Codex CLI
 │   ├── gemini-cli/         # AI  — Google Gemini CLI
@@ -95,7 +97,7 @@ nexus-ai/
 ### Rápida (curl | bash)
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/guigerdts/nexus-ai/main/install.sh)
+curl -fsSL https://raw.githubusercontent.com/guigerdts/nexus-ai/main/install.sh | bash
 ```
 
 ### Manual (git clone)
@@ -111,6 +113,7 @@ cd ~/nexus-ai
 | Flag | Descripción |
 |------|-------------|
 | `--help` | Muestra la ayuda y sale |
+| `--all` | Instalación completa (todos los componentes) |
 | `--no-zsh` | Omite la configuración de Zsh y plugins |
 | `--no-bashrc` | Omite la configuración de Bash (.bashrc) |
 | `--no-starship` | Omite Starship (usa `vcs_info` como fallback) |
@@ -145,32 +148,31 @@ cd ~/nexus-ai
 | thefuck | Corrección automática de comandos |
 | zsh-vi-mode | Modo vi para Zsh |
 
-## Modulos disponibles (49 por categoria)
+## Modulos disponibles (82 herramientas)
 
 Los modulos se organizan en 9 categorias. Ejecuta `nxai guide` para ver la guia completa.
 
-> **Nota**: sgpt aparece listado en IA / Agentes y en Terminal / Shell. Son 49 modulos unicos (los subtotales suman 50 porque sgpt cuenta en ambas).
-
-### IA / Agentes (16)
+### IA / Agentes (17)
 
 | Modulo | Metodo | Descripcion |
 |--------|--------|-------------|
 | opencode | npm | CLI multi-modelo de codigo abierto (150K+ stars) |
-| codex | npm | OpenAI Codex CLI (GPT-5.5) |
-| gemini-cli | npm | CLI oficial de Google Gemini |
-| claude-code | npm | Claude Code CLI de Anthropic |
+| agy | binary | Reemplazo de Gemini CLI (Antigravity) |
+| claude-code | binary | Claude Code CLI de Anthropic |
+| gemini-cli | npm | CLI oficial de Google Gemini (DEPRECATED → agy) |
+| codex | npm | OpenAI Codex CLI (fork ARM64 en Termux) |
 | ollama | curl | Ejecuta LLMs locales (LLaMA, Mistral, Qwen) |
 | engram | binary | Memoria persistente para sesiones de IA |
 | sgpt | pip | Asistente de terminal GPT (shell-gpt) |
-| fabric | pip | Framework open-source para automatizacion con IA |
-| antigravity | stub | CLI experimental de IA |
-| pi | pip | Asistente de IA desde terminal (Pi.ai) |
+| fabric | curl | Framework open-source para automatizacion con IA |
+| antigravity | curl | CLI experimental de IA (comparte flag agy) |
 | gentle-ai | stub | CLI de desarrollo asistido por IA |
 | qwen-code | stub | CLI de codigo asistido por Qwen AI |
 | minimax-cli | stub | CLI para la API de MiniMax AI |
 | codegraph | stub | Analizador de grafos de codigo con IA |
 | openclaude | stub | CLI de IA para programacion |
 | mistral-vibe | stub | CLI para Mistral AI Vibe coding |
+| pi | stub | Asistente de IA desde terminal |
 
 ### Editores (2)
 
@@ -188,7 +190,7 @@ Los modulos se organizan en 9 categorias. Ejecuta `nxai guide` para ver la guia 
 | oh-my-zsh | git | Framework para gestionar Zsh |
 | sgpt | pip | Asistente de terminal GPT (tambien en AI) |
 
-### Herramientas (10)
+### Herramientas (22)
 
 | Modulo | Metodo | Descripcion |
 |--------|--------|-------------|
@@ -202,6 +204,18 @@ Los modulos se organizan en 9 categorias. Ejecuta `nxai guide` para ver la guia 
 | curl | pkg | Cliente HTTP/HTTPS para transferencia |
 | git | pkg | Sistema de control de versiones distribuido |
 | wget | pkg | Descarga de archivos via HTTP/HTTPS/FTP |
+| lsd | stub | ls con iconos y colores |
+| tree | stub | Visualizacion de arbol de directorios |
+| make | stub | Herramienta de build automatizado |
+| bc | stub | Calculadora de precision arbitraria |
+| shfmt | stub | Formateador de shell scripts |
+| tmate | stub | Terminal compartida via SSH |
+| proot | stub | Proot-distro para entornos Linux |
+| imagemagick | stub | Procesamiento de imagenes CLI |
+| cloudflared | stub | Tunel Cloudflare para exposicion web |
+| ncurses | stub | Biblioteca de interfaz de terminal |
+| translate | stub | Traduccion CLI via Google Translate |
+| html2text | stub | Conversion HTML a texto plano |
 
 ### Lenguajes (7)
 
@@ -219,9 +233,9 @@ Los modulos se organizan en 9 categorias. Ejecuta `nxai guide` para ver la guia 
 
 | Modulo | Metodo | Descripcion |
 |--------|--------|-------------|
-| sqlite | pkg | BD SQL embebida zero-config |
 | postgresql | pkg | BD SQL relacional PostgreSQL |
 | mariadb | pkg | BD SQL fork de MySQL |
+| sqlite | pkg | BD SQL embebida zero-config |
 | mongodb | stub | BD NoSQL orientada a documentos |
 
 ### Node.js (3)
@@ -246,21 +260,21 @@ Los modulos se organizan en 9 categorias. Ejecuta `nxai guide` para ver la guia 
 |--------|--------|-------------|
 | n8n | npm | Workflow automation — alternativa a Zapier/Make |
 
-Uso: `nxai install --all` para instalar todos, o `nxai install <modulo>` para uno solo.
+Uso: `nxai install ai --opencode` para instalar un agente por categoria y flag.
 
 ## Uso
 
 ```bash
-nxai help                # Muestra ayuda completa
-nxai status              # Estado del sistema (versión, entorno, agentes)
-nxai list                # Lista agentes con estado de instalación
-nxai install --all       # Instala todos los agentes
-nxai install <agente>    # Instala un agente específico
-nxai remove <agente>     # Desinstala un agente
-nxai agent add <nombre> <url>  # Agrega un agente personalizado
-nxai agent test <nombre> # Prueba si un agente funciona
-nxai update              # Actualiza NEXUS AI a la última versión
-nxai update --check      # Verifica si hay una nueva versión disponible
+nxai help                    # Muestra ayuda completa
+nxai status                  # Estado del sistema (versión, entorno, agentes)
+nxai list                    # Resumen de categorias
+nxai list ai                 # Lista agentes de IA con estado
+nxai install ai --opencode   # Instala opencode en categoria AI
+nxai install tools --all     # Instala todas las herramientas
+nxai remove opencode         # Desinstala opencode
+nxai remove ai --gum         # Desinstala gum de categoria tools
+nxai update                  # Actualiza NEXUS AI a la última versión
+nxai update --check          # Verifica si hay una nueva versión disponible
 ```
 
 ## Desinstalación

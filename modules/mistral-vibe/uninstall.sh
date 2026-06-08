@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # modules/mistral-vibe/uninstall.sh
-# Desinstala Mistral-vibe
+# Desinstala Mistral-vibe (soporta uv tool y pip)
 set -euo pipefail
 
 # Source functions
@@ -13,6 +13,13 @@ source "$SCRIPT_DIR/metadata.sh" 2>/dev/null || true
 
 log_info "Desinstalando ${AGENT_NAME:-mistral-vibe}..."
 
+# Intentar uv tool uninstall primero (metodo preferido)
+if command -v uv &>/dev/null; then
+    log_info "Intentando desinstalar con uv tool..."
+    uv tool uninstall "${AGENT_PACKAGE:-mistral-vibe}" 2>/dev/null || true
+fi
+
+# Fallback: pip uninstall
 uninstall_via_pip "${AGENT_PACKAGE:-mistral-vibe}"
 
 mark_removed "$AGENT_NAME"

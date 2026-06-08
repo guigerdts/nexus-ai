@@ -11,6 +11,11 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/lib/nexus-install.sh
 
 check_dependency "npm" "npm --version" || exit 1
 
+# Remover binario previo para evitar EEXIST
+if command -v codex &>/dev/null; then
+    rm -f "$(command -v codex)" 2>/dev/null || true
+fi
+
 # ── Branch segun entorno ───────────────────────────
 if [ "${NEXUS_ENV:-}" = "termux" ]; then
     # Termux nativo — fork compatibile con ARM64

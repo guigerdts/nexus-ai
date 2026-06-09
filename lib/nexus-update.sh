@@ -87,15 +87,55 @@ _nexus_update_cache_write() {
     echo "$_now $_version" > "$_nexus_update_cache_file" 2>/dev/null || true
 }
 
+# ── _update_check_spawn: background async update check ──
+# Corre curl en background, escribe resultado a $TMPDIR/nexus-update.result.
+# Usa lockfile ($TMPDIR/nexus-update.lock) como mutex atomico (mkdir).
+# TTL de 30s: lockfile mas antiguo se considera stale y se reemplaza.
+_update_check_spawn() {
+    local _lock_dir="${TMPDIR:-/tmp}/nexus-update.lock"
+    local _result_file="${TMPDIR:-/tmp}/nexus-update.result"
+
+    # Intento de lock atomico via mkdir
+    if ! mkdir "$_lock_dir" 2>/dev/null; then
+        # Lock existe — verificar stale (30s TTL)
+        local _lock_ts=0
+        [ -f "$_lock_dir/ts" ] && _lock_ts="$(cat "$_lock_dir/ts" 2>/dev/null || echo 0)"
+        local _now
+        _now=$(date +%s)
+        if [ "$(( _now - _lock_ts ))" -gt 30 ] 2>/dev/null; then
+            rm -rf "$_lock_dir" 2>/dev/null || true
+            mkdir "$_lock_dir" 2>/dev/null || return 1
+        else
+            return 1  # Lock activo — no spawnear
+        fi
+    fi
+
+    # Escribir timestamp en el lockfile
+    date +%s > "$_lock_dir/ts" 2>/dev/null || true
+
+    # Background fetch
+    (
+        local _remote_version
+        _remote_version="$(curl --silent --fail --max-time 3 --connect-timeout 2 \
+            "https://raw.githubusercontent.com/guigerdts/nexus-ai/main/VERSION" 2>/dev/null || true)"
+        echo "$_remote_version" > "$_result_file" 2>/dev/null || true
+        rm -rf "$_lock_dir" 2>/dev/null || true
+    ) &
+    return 0
+}
+
 # ── check_update_silent: verifica silenciosamente si hay nueva version ──
 # Se ejecuta despues del banner. Nunca bloquea, nunca muestra errores.
+# Async: spawna background curl, usa lockfile para evitar concurrencia,
+# usa cache (incluso stale) mientras el background corre.
 check_update_silent() {
-    # Leer cache
+    local _lock_dir="${TMPDIR:-/tmp}/nexus-update.lock"
+    local _result_file="${TMPDIR:-/tmp}/nexus-update.result"
+
+    # Paso 1: leer cache persistente (24h TTL)
     local _cached
     _cached="$(_nexus_update_cache_read)"
-
     if [ -n "$_cached" ]; then
-        # Cache valido — ver si hay actualizacion
         _nexus_version_compare "$NEXUS_VERSION" "$_cached"
         local _cmp=$?
         if [ "$_cmp" -eq 1 ]; then
@@ -104,29 +144,25 @@ check_update_silent() {
         return 0
     fi
 
-    # Cache expirado o ausente — fetch remoto
-    local _remote_version
-    _remote_version="$(curl --silent --fail --max-time 3 --connect-timeout 2 \
-        "https://raw.githubusercontent.com/guigerdts/nexus-ai/main/VERSION" 2>/dev/null || true)"
+    # Paso 2: cache expirado — verificar si ya hay un check corriendo
+    if [ -d "$_lock_dir" ]; then
+        # Check ya en progreso — leer resultado disponible o cache stale
+        local _result=""
+        [ -f "$_result_file" ] && _result="$(cat "$_result_file" 2>/dev/null || true)"
 
-    # Validar que recibimos algo con formato de version
-    if [ -z "$_remote_version" ] || ! echo "$_remote_version" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+'; then
-        return 0  # Silently ignore fetch failures
+        if [ -n "$_result" ]; then
+            _nexus_version_compare "$NEXUS_VERSION" "$_result"
+            local _cmp=$?
+            if [ "$_cmp" -eq 1 ]; then
+                echo "[!] Nueva versión disponible: v$_result"
+            fi
+        fi
+        return 0
     fi
 
-    # Escribir cache
-    _nexus_update_cache_write "$_remote_version"
-
-    # Comparar
-    _nexus_version_compare "$NEXUS_VERSION" "$_remote_version"
-    local _cmp=$?
-    if [ "$_cmp" -eq 1 ]; then
-        echo "[!] Nueva versión disponible: v$_remote_version"
-    fi
-
-    # Log
-    mkdir -p "$_nexus_update_log_dir" 2>/dev/null || true
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] check: local=$NEXUS_VERSION remote=$_remote_version cmp=$_cmp" >> "$_nexus_update_log_file" 2>/dev/null || true
+    # Paso 3: spawnear background check, no esperar
+    _update_check_spawn
+    return 0
 }
 
 # ── check_update_verbose: muestra informacion detallada de version ──
@@ -157,8 +193,19 @@ check_update_verbose() {
 
         if [ -n "$_release_info" ]; then
             local _release_name _release_body
-            _release_name="$(echo "$_release_info" | grep '"tag_name"' | head -1 | cut -d'"' -f4 2>/dev/null || true)"
-            _release_body="$(echo "$_release_info" | grep '"body"' | head -1 | cut -d'"' -f4 2>/dev/null || true)"
+
+            # jq > python3 > grep/cut chain for JSON parsing
+            if command -v jq &>/dev/null; then
+                _release_name="$(echo "$_release_info" | jq -r '.tag_name // empty' 2>/dev/null || true)"
+                _release_body="$(echo "$_release_info" | jq -r '.body // empty' 2>/dev/null || true)"
+            elif command -v python3 &>/dev/null && python3 -c "import sys,json" &>/dev/null 2>&1; then
+                _release_name="$(echo "$_release_info" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('tag_name',''))" 2>/dev/null || true)"
+                _release_body="$(echo "$_release_info" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('body',''))" 2>/dev/null || true)"
+            else
+                # Last resort: grep/cut (fragile with multiline body)
+                _release_name="$(echo "$_release_info" | grep '"tag_name"' | head -1 | cut -d'"' -f4 2>/dev/null || true)"
+                _release_body="$(echo "$_release_info" | grep '"body"' | head -1 | cut -d'"' -f4 2>/dev/null || true)"
+            fi
 
             if [ -n "$_release_name" ]; then
                 echo ""

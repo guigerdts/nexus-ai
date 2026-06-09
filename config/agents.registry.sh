@@ -13,9 +13,44 @@ if [ -z "${NEXUS_MODULES_DIR:-}" ]; then
     return 1 2>/dev/null || exit 1
 fi
 
+# ── Registry cache functions ──────────────────────
+# Cache serializes AGENTS + AGENT_ORDER as valid Bash for fast load.
+# Invalidated when any modules/*/metadata.sh is newer than the cache.
+_registry_cache_generate() {
+    local cache_file="${NEXUS_ROOT}/logs/registry.cache.sh"
+    mkdir -p "$(dirname "$cache_file")" 2>/dev/null || true
+    {
+        echo "# NEXUS AI — Registry cache (generated $(date '+%Y-%m-%d %H:%M:%S'))"
+        echo "# This file is auto-generated. Do not edit."
+        declare -p AGENTS 2>/dev/null
+        declare -p AGENT_ORDER 2>/dev/null
+    } > "$cache_file" 2>/dev/null || true
+}
+
+_registry_cache_load() {
+    local cache_file="${NEXUS_ROOT}/logs/registry.cache.sh"
+    [ -f "$cache_file" ] || return 1
+
+    # Check if any metadata.sh is newer than the cache (stale)
+    if find "$NEXUS_MODULES_DIR" -name 'metadata.sh' -newer "$cache_file" 2>/dev/null | grep -q .; then
+        return 1
+    fi
+
+    source "$cache_file" 2>/dev/null || return 1
+    return 0
+}
+
 # ── Array asociativo: AGENTE -> directorio ─────────
 declare -A AGENTS
 declare -a AGENT_ORDER
+
+# ── Fast path: cargar cache si está fresco ────────
+if _registry_cache_load; then
+    # Cache loaded successfully — skip module iteration
+    # shellcheck source=config/categories.sh
+    source "$NEXUS_ROOT/config/categories.sh"
+    return 0 2>/dev/null || exit 0
+fi
 
 if [ -d "$NEXUS_MODULES_DIR" ]; then
     for _agent_dir in "$NEXUS_MODULES_DIR"/*/; do
@@ -32,6 +67,8 @@ if [ -d "$NEXUS_MODULES_DIR" ]; then
         _agent_binary=""
 
         if [ -f "$_agent_dir/metadata.sh" ]; then
+            # Unset ALL AGENT_* vars to prevent cross-module leakage (BUG1)
+            unset AGENT_NAME AGENT_VERSION AGENT_DESC AGENT_URL AGENT_TIER AGENT_CATEGORY AGENT_FLAG AGENT_METHOD AGENT_BINARY AGENT_PACKAGE AGENT_DEPRECATED AGENT_SUCCESSOR
             # shellcheck source=/dev/null
             source "$_agent_dir/metadata.sh"
 
@@ -64,7 +101,10 @@ if [ -d "$NEXUS_MODULES_DIR" ]; then
     done
 fi
 
-# ── Source categories.sh (relies on AGENT_CATEGORY from metadata) ─
+# ── Generar cache antes de categories.sh ──────────
+_registry_cache_generate
+
+# ── Source categories.sh ──────────────────────────
 # shellcheck source=config/categories.sh
 source "$NEXUS_ROOT/config/categories.sh"
 

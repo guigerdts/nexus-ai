@@ -323,6 +323,7 @@ install_agent() {
             fi
         done
         unset _name _dir
+        _registry_cache_generate
         log_ok "Instalacion completada."
         return 0
     fi
@@ -379,6 +380,7 @@ install_agent() {
             log_warn "$target no tiene install.sh"
         fi
     fi
+    _registry_cache_generate
 }
 
 # ── remove_agent: desinstala un agente ─────────────
@@ -520,6 +522,7 @@ remove_agent() {
         log_ok "Agente '$target' desinstalado."
     fi
     unset _pkg
+    _registry_cache_generate
 }
 
 # ── agent_add: agrega un agente custom ─────────────
@@ -553,6 +556,7 @@ agent_add() {
     fi
 
     log_ok "Agente '$_add_name' agregado correctamente."
+    _registry_cache_generate
     unset _add_name _add_url _add_target_dir
 }
 

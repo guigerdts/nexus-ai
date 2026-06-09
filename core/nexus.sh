@@ -92,11 +92,18 @@ list_agents() {
             local _count=0 _installed=0
             for _a in $_agents; do
                 _count=$((_count + 1))
-                local _a_dir="${AGENTS[$_a]:-}"
-                local _a_binary=""
-                [ -f "$_a_dir/metadata.sh" ] && _a_binary=$(grep '^export AGENT_BINARY=' "$_a_dir/metadata.sh" 2>/dev/null | sed 's/.*AGENT_BINARY="\(.*\)"/\1/')
-                if [ -n "$_a_binary" ] && [ "$_a_binary" != "none" ] && command -v "$_a_binary" &>/dev/null; then
-                    _installed=$((_installed + 1))
+                # En manifest?
+                local _a_in_manifest=false
+                [ -f "${NEXUS_ROOT}/logs/installed.txt" ] && grep -Fx "$_a" "${NEXUS_ROOT}/logs/installed.txt" &>/dev/null && _a_in_manifest=true
+
+                if [ "$_a_in_manifest" = true ]; then
+                    # En PATH? (binary=none confia en manifest)
+                    local _a_dir="${AGENTS[$_a]:-}"
+                    local _a_binary=""
+                    [ -f "$_a_dir/metadata.sh" ] && _a_binary=$(grep '^export AGENT_BINARY=' "$_a_dir/metadata.sh" 2>/dev/null | sed 's/.*AGENT_BINARY="\(.*\)"/\1/')
+                    if [ -z "$_a_binary" ] || [ "$_a_binary" = "none" ] || command -v "$_a_binary" &>/dev/null; then
+                        _installed=$((_installed + 1))
+                    fi
                 fi
             done
             printf "  %-12s — %d herramientas (%d instaladas)\n" "$_cat" "$_count" "$_installed"
@@ -154,8 +161,18 @@ list_agents() {
                     _t_status="DEPRECADO"
                 fi
             else
-                # ── Binary-in-PATH detection ─────────────────
+                # ── Manifest + PATH detection ────────────────
+                local _in_manifest=false
+                [ -f "${NEXUS_ROOT}/logs/installed.txt" ] && grep -Fx "$_name" "${NEXUS_ROOT}/logs/installed.txt" &>/dev/null && _in_manifest=true
+
+                local _in_path=false
                 if [ -n "${AGENT_BINARY:-}" ] && [ "${AGENT_BINARY}" != "none" ] && command -v "$AGENT_BINARY" &>/dev/null; then
+                    _in_path=true
+                elif [ "${AGENT_BINARY:-}" = "none" ] && [ "$_in_manifest" = true ]; then
+                    _in_path=true
+                fi
+
+                if [ "$_in_manifest" = true ] && [ "$_in_path" = true ]; then
                     _c_name='\033[96m'
                     _c_status='\033[32m'
                     _t_status="INSTALADO"
@@ -205,8 +222,18 @@ list_agents() {
                     _t_status="DEPRECADO"
                 fi
             else
-                # ── Binary-in-PATH detection ─────────────────
+                # ── Manifest + PATH detection ────────────────
+                local _in_manifest=false
+                [ -f "${NEXUS_ROOT}/logs/installed.txt" ] && grep -Fx "$_name" "${NEXUS_ROOT}/logs/installed.txt" &>/dev/null && _in_manifest=true
+
+                local _in_path=false
                 if [ -n "${AGENT_BINARY:-}" ] && [ "${AGENT_BINARY}" != "none" ] && command -v "$AGENT_BINARY" &>/dev/null; then
+                    _in_path=true
+                elif [ "${AGENT_BINARY:-}" = "none" ] && [ "$_in_manifest" = true ]; then
+                    _in_path=true
+                fi
+
+                if [ "$_in_manifest" = true ] && [ "$_in_path" = true ]; then
                     _t_status="INSTALADO"
                 else
                     _t_status="NO INSTAL."
@@ -225,7 +252,7 @@ list_agents() {
             unset AGENT_DEPRECATED AGENT_SUCCESSOR
         done
     fi
-    unset _filter _agents_to_show _name _dir _meta _c_name _c_status _t_status _flag _flag_display _cmd _display_name AGENT_DEPRECATED AGENT_SUCCESSOR
+    unset _filter _agents_to_show _name _dir _meta _in_manifest _in_path _c_name _c_status _t_status _flag _flag_display _cmd _display_name AGENT_DEPRECATED AGENT_SUCCESSOR
 }
 
 # ── install_agent: instala uno o todos los agentes ─

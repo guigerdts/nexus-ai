@@ -158,9 +158,14 @@ list_agents() {
                 fi
 
                 local _in_path=false
-                if [ -n "${AGENT_BINARY:-}" ] && command -v "$AGENT_BINARY" &>/dev/null; then
+                # shellcheck disable=SC2250
+                if [ -n "${AGENT_BINARY:-}" ] && [ "${AGENT_BINARY}" != "none" ] && command -v "$AGENT_BINARY" &>/dev/null; then
                     _in_path=true
                 elif [ -f "$_dir/test.sh" ] && bash "$_dir/test.sh" &>/dev/null; then
+                    _in_path=true
+                elif [ "${AGENT_BINARY:-}" = "none" ] && [ "$_in_manifest" = true ]; then
+                    # Intentionally no binary (shell plugin, theme, etc.)
+                    # Trust the manifest when test.sh is absent or just failed
                     _in_path=true
                 fi
 
@@ -225,9 +230,14 @@ list_agents() {
                 fi
 
                 local _in_path=false
-                if [ -n "${AGENT_BINARY:-}" ] && command -v "$AGENT_BINARY" &>/dev/null; then
+                # shellcheck disable=SC2250
+                if [ -n "${AGENT_BINARY:-}" ] && [ "${AGENT_BINARY}" != "none" ] && command -v "$AGENT_BINARY" &>/dev/null; then
                     _in_path=true
                 elif [ -f "$_dir/test.sh" ] && bash "$_dir/test.sh" &>/dev/null; then
+                    _in_path=true
+                elif [ "${AGENT_BINARY:-}" = "none" ] && [ "$_in_manifest" = true ]; then
+                    # Intentionally no binary (shell plugin, theme, etc.)
+                    # Trust the manifest when test.sh is absent or just failed
                     _in_path=true
                 fi
 

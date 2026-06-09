@@ -37,6 +37,20 @@ _registry_cache_load() {
     fi
 
     source "$cache_file" 2>/dev/null || return 1
+
+    # Validate: cached paths must exist on disk.
+    # Handles stale caches from placeholder NEXUS_ROOT or moved installations.
+    if [ ${#AGENTS[@]} -gt 0 ] && [ ${#AGENT_ORDER[@]} -gt 0 ]; then
+        local _first_name="${AGENT_ORDER[0]}"
+        local _first_dir="${AGENTS[$_first_name]:-}"
+        if [ -n "$_first_dir" ] && [ ! -d "$_first_dir" ]; then
+            rm -f "$cache_file" 2>/dev/null || true
+            AGENTS=()
+            AGENT_ORDER=()
+            return 1
+        fi
+    fi
+
     return 0
 }
 

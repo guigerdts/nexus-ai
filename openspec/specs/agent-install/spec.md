@@ -12,22 +12,30 @@ The library MUST provide the following functions for any agent script to call:
 
 | Function | Behavior |
 |----------|----------|
-| `check_dependency(name, cmd)` | Verifies `cmd` exists, prints warning if missing |
-| `install_via_pip(package)` | Installs with `pip3 install --user` |
-| `install_via_npm(package)` | Installs with `npm install -g` |
-| `install_via_curl(url)` | Pipes `curl <url> \| bash` |
-| `install_via_apt(package)` | Installs with `apt install -y` |
-| `install_via_cargo(package)` | Installs with `cargo install` |
-| `mark_installed(agent)` | Logs agent as installed in `agents.log` AND adds to `installed.txt` manifest |
-| `mark_removed(agent)` | Logs agent as removed in `agents.log` AND removes from `installed.txt` manifest |
-| `update_installed_manifest(agent, action)` | Adds/removes agent name from `installed.txt` manifest |
+| `install_via_pip(package)` | Installs with `pip3 install --user`; fallback to venv on PEP 668; last resort `--break-system-packages` with warning |
+| `install_via_binary(tool, url, binary)` | Downloads tarball, extracts binary, creates GLIBC wrapper with safe LD_LIBRARY_PATH |
 
-#### Scenario: Pip install works end-to-end
+#### Scenario: Pip install works end-to-end (unchanged)
 
 - GIVEN `python3` and `pip3` are available
 - WHEN an agent's install.sh calls `install_via_pip "aider-chat"`
 - THEN `pip3 install --user aider-chat` MUST be executed
 - AND `mark_installed "aider"` MUST be called on success
+
+#### Scenario: Pip install with PEP 668 creates venv
+
+- GIVEN `pip3 install --user` fails due to PEP 668 (externally-managed-environment)
+- WHEN `install_via_pip` is called
+- THEN the system MUST create a venv at `$NEXUS_ROOT/venvs/<agent>/`
+- AND install the package inside the venv
+- AND NOT use `--break-system-packages` silently
+
+#### Scenario: Pip install --break-system-packages warns
+
+- GIVEN venv creation also fails (e.g. no python3-venv)
+- WHEN `install_via_pip` falls back to `--break-system-packages`
+- THEN the system MUST emit a warning about system package violation
+- AND proceed only as last resort
 
 #### Scenario: Missing dependency warns but does not crash
 
@@ -111,6 +119,14 @@ The system MUST detect the runtime environment and `NEXUS_TERMUX_ACCESSIBLE` bef
 - GIVEN Termux pip Python 3.13, proot python 3.12
 - WHEN `TERMUX_PIP install --user aider-chat` succeeds
 - THEN `python3 -c "import aider"` MUST resolve to Termux python3
+
+#### Scenario: Binary wrapper LD_LIBRARY_PATH safe
+
+- GIVEN `NEXUS_ENV=termux` and GLIBC libraries exist
+- WHEN `install_via_binary` creates the GLIBC wrapper
+- THEN the wrapper MUST use `export LD_LIBRARY_PATH=__GLIBC_LIB__${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}`
+- AND NOT append a trailing colon when `LD_LIBRARY_PATH` is unset
+- AND NOT interpret CWD as library path (CWE-429 mitigation)
 
 ### Requirement: Agent installer NEXUS_ENV fix
 

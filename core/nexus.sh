@@ -874,11 +874,11 @@ case "${COMMAND}" in
         show_banner
         check_update_silent
         case "${1:-}" in
-            import)
+            import|sync)
                 manifest_import
                 ;;
             *)
-                log_error "Uso: nxai manifest import"
+                log_error "Uso: nxai manifest import|sync"
                 exit 1
                 ;;
         esac

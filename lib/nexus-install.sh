@@ -96,9 +96,18 @@ install_via_pip() {
 # Cuando NEXUS_TERMUX_ACCESSIBLE=true, usa TERMUX_NPM
 # (npm de Termux) para que el paquete quede disponible
 # en el entorno Termux real, no en proot.
+# Uso: install_via_npm <package> [binary_name]
+# Si se provee binary_name y ya existe en PATH, omite la instalacion.
 install_via_npm() {
     local package="$1"
+    local binary="${2:-$1}"
     local npm_cmd="npm"
+
+    # Salida temprana si el binario ya existe
+    if command -v "$binary" &>/dev/null; then
+        log_ok "$binary ya está instalado en $(command -v "$binary"), omitiendo instalación via npm"
+        return 0
+    fi
 
     if [ "${NEXUS_TERMUX_ACCESSIBLE:-false}" = "true" ] && [ -n "${TERMUX_NPM:-}" ]; then
         npm_cmd="$TERMUX_NPM"
@@ -132,8 +141,17 @@ install_via_curl() {
 # Detecta Termux (NEXUS_ENV=termux) y usa pkg en ese caso.
 # Si se ejecuta como root, usa apt siempre porque pkg
 # (Termux) rechaza root.
+# Uso: install_via_apt <package> [binary_name]
+# Si se provee binary_name y ya existe en PATH, omite la instalacion.
 install_via_apt() {
     local package="$1"
+    local binary="${2:-$1}"
+
+    # Salida temprana si el binario ya existe
+    if command -v "$binary" &>/dev/null; then
+        log_ok "$binary ya está instalado en $(command -v "$binary"), omitiendo instalación via apt"
+        return 0
+    fi
 
     if [ "$(id -u)" -eq 0 ]; then
         log_info "Instalando $package via apt (root — pkg no disponible como root)..."

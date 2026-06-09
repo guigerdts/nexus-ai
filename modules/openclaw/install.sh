@@ -64,7 +64,14 @@ fi
 
 # ── Instalar paquete principal ─────────────────────
 log_info "Instalando openclaw@latest (esto puede tomar varios minutos)..."
-npm install -g "${AGENT_PACKAGE}@latest"
+if ! npm install -g "${AGENT_PACKAGE}@latest" 2>/dev/null; then
+    log_warn "Fallo la instalacion completa. Reintentando con --ignore-scripts"
+    log_warn "(tree-sitter no compila en Android/Termux — las features que lo requieran no estaran disponibles)"
+    npm install -g --ignore-scripts "${AGENT_PACKAGE}@latest" || {
+        log_error "No se pudo instalar openclaw ni con --ignore-scripts."
+        exit 1
+    }
+fi
 
 # ── Instalar dependencias extra ────────────────────
 if [ -n "${OPENCLAW_EXTRA_DEPS:-}" ]; then

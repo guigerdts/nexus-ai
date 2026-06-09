@@ -684,19 +684,20 @@ manifest_import() {
 
     for _name in "${AGENT_ORDER[@]}"; do
         local _dir="${AGENTS[$_name]}"
+
+        # Unset previo para evitar contaminacion entre modulos (BUG1)
+        unset AGENT_NAME AGENT_VERSION AGENT_DESC AGENT_URL AGENT_TIER
+        unset AGENT_CATEGORY AGENT_FLAG AGENT_METHOD AGENT_BINARY AGENT_PACKAGE
+        unset AGENT_DEPRECATED AGENT_SUCCESSOR
+
         if [ -f "$_dir/metadata.sh" ]; then
             # shellcheck source=/dev/null
             source "$_dir/metadata.sh"
         fi
 
-        # Saltar stubs — no tienen binario real
-        if [ "${AGENT_METHOD:-}" = "stub" ]; then
-            skipped=$((skipped + 1))
-            continue
-        fi
-
-        # Saltar si no tiene binario definido
-        if [ -z "${AGENT_BINARY:-}" ]; then
+        # Saltar si no tiene binario definido o es "none"
+        # (plugins de shell, temas, etc. sin binario real)
+        if [ -z "${AGENT_BINARY:-}" ] || [ "${AGENT_BINARY}" = "none" ]; then
             skipped=$((skipped + 1))
             continue
         fi

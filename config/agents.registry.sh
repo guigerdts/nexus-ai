@@ -15,12 +15,13 @@ fi
 
 # ── Registry cache functions ──────────────────────
 # Cache serializes AGENTS + AGENT_ORDER as valid Bash for fast load.
-# Invalidated when any modules/*/metadata.sh is newer than the cache.
+# Invalidated when NEXUS_ROOT changes or any metadata.sh is newer.
 _registry_cache_generate() {
     local cache_file="${NEXUS_ROOT}/logs/registry.cache.sh"
     mkdir -p "$(dirname "$cache_file")" 2>/dev/null || true
     {
         echo "# NEXUS AI — Registry cache (generated $(date '+%Y-%m-%d %H:%M:%S'))"
+        echo "# NEXUS_ROOT=${NEXUS_ROOT}"
         echo "# This file is auto-generated. Do not edit."
         declare -p AGENTS 2>/dev/null
         declare -p AGENT_ORDER 2>/dev/null
@@ -31,15 +32,21 @@ _registry_cache_load() {
     local cache_file="${NEXUS_ROOT}/logs/registry.cache.sh"
     [ -f "$cache_file" ] || return 1
 
-    # Check if any metadata.sh is newer than the cache (stale)
+    # Guard 1: NEXUS_ROOT must match (handles placeholder path changes)
+    if ! head -5 "$cache_file" 2>/dev/null | grep -qF "NEXUS_ROOT=${NEXUS_ROOT}"; then
+        rm -f "$cache_file" 2>/dev/null || true
+        return 1
+    fi
+
+    # Guard 2: metadata.sh freshness check
     if find "$NEXUS_MODULES_DIR" -name 'metadata.sh' -newer "$cache_file" 2>/dev/null | grep -q .; then
         return 1
     fi
 
     source "$cache_file" 2>/dev/null || return 1
 
-    # Validate: cached paths must exist on disk.
-    # Handles stale caches from placeholder NEXUS_ROOT or moved installations.
+    # Guard 3: cached paths must exist on disk.
+    # Catches stale caches from placeholder NEXUS_ROOT or moved installations.
     if [ ${#AGENTS[@]} -gt 0 ] && [ ${#AGENT_ORDER[@]} -gt 0 ]; then
         local _first_name="${AGENT_ORDER[0]}"
         local _first_dir="${AGENTS[$_first_name]:-}"

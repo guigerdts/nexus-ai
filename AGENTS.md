@@ -18,3 +18,5 @@
 - UPPER_CASE for exports and globals
 - snake_case for locals
 - Prefix with `_` for script-internal variables
+- `declare` inside a function creates **local** scope — use `declare -gA` / `declare -ga` for data serialized to be sourced later (see `logs/registry.cache.sh`)
+- Never `source` a file with `declare -A` inside a function; either source at outer scope or write `declare -gA` in the sourced file

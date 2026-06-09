@@ -1,6 +1,7 @@
 # ── Logs ─────────────────────────────────────────
 logs/*.log
 logs/*.log.*
+logs/registry.cache.*
 !logs/.gitkeep
 
 # ── Shell plugins (instalados por install.sh) ────

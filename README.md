@@ -17,7 +17,9 @@ Convierte Android en una workstation profesional para agentes de IA.
 nexus-ai/
 ├── config/
 │   ├── env.sh              # Variables de entorno y detección del sistema
-│   └── agents.registry.sh  # Registro de agentes (auto-generado)
+│   ├── agents.registry.sh  # Registro de agentes — escanea módulos en RAM
+│   │                       # y genera cache en logs/registry.cache.sh
+│   └── categories.sh       # Agrupación de módulos por categoría
 ├── shell/
 │   ├── .zshrc              # Configuración de Zsh (template con plugins)
 │   ├── .bashrc             # Configuración de Bash (env + PATH + MOTD)
@@ -82,8 +84,9 @@ nexus-ai/
 │   ├── banner/             # ui — ASCII banner (stub)
 │   ├── n8n/                # automation — workflows
 │   └── ...
-├── logs/                   # Archivos de registro
-│   └── agents.log
+├── logs/                   # Archivos de registro y cache de registry
+│   ├── agents.log
+│   └── registry.cache.sh   # Cache del registro (declare -gA serializado)
 └── install.sh              # Instalador principal (8 pasos)
 ```
 
@@ -296,6 +299,23 @@ nxai update --check          # Verifica si hay una nueva versión disponible
 - **MOTD:** edita `shell/motd.sh` para cambiar tips, colores o arte ASCII
 - **Plugins:** se instalan en `shell/plugins/` — añade o quita desde `shell/.zshrc`
 - **Agentes custom:** `nxai agent add <nombre> <url>` crea un módulo desde un repo Git
+
+## Notas para contributors
+
+### Bash: `declare` dentro de funciones crea variables LOCALES
+
+El error más sutil del código. En bash, `declare -A AGENTS` dentro de una función
+declara `AGENTS` como **local a esa función**. Si sourceás un archivo que contiene
+`declare -A` adentro de una función, el array se llena y se pierde al salir.
+
+**Siempre usar `declare -gA`** (global) cuando serialices datos para ser sourceados
+posteriormente, o hacer el `source` en el scope exterior.
+
+Regla práctica:
+- `declare -A` / `declare -a` → solo para scripts planos, fuera de funciones
+- `declare -gA` / `declare -ga` → para archivos que van a ser sourceados desde
+  cualquier lado (como `logs/registry.cache.sh`)
+- Para verificar: `declare -p NOMBRE` después del source — si está vacío, es scoping.
 
 ## Licencia
 

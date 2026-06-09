@@ -23,11 +23,16 @@ _registry_cache_generate() {
         echo "# NEXUS AI — Registry cache (generated $(date '+%Y-%m-%d %H:%M:%S'))"
         echo "# NEXUS_ROOT=${NEXUS_ROOT}"
         echo "# This file is auto-generated. Do not edit."
-        declare -p AGENTS 2>/dev/null
-        declare -p AGENT_ORDER 2>/dev/null
+        echo "# NOTE: declare -gA / declare -ga ensures correct scope"
+        echo "# even when sourced inside a function."
+        declare -p AGENTS 2>/dev/null | sed 's/declare -A/declare -gA/'
+        declare -p AGENT_ORDER 2>/dev/null | sed 's/declare -a/declare -ga/'
     } > "$cache_file" 2>/dev/null || true
 }
 
+# NOTE: _registry_cache_load does NOT source the cache file.
+# It only validates guards. The actual source happens at the outer
+# scope to avoid 'declare' creating local variables inside this function.
 _registry_cache_load() {
     local cache_file="${NEXUS_ROOT}/logs/registry.cache.sh"
     [ -f "$cache_file" ] || return 1
@@ -43,21 +48,6 @@ _registry_cache_load() {
         return 1
     fi
 
-    source "$cache_file" 2>/dev/null || return 1
-
-    # Guard 3: cached paths must exist on disk.
-    # Catches stale caches from placeholder NEXUS_ROOT or moved installations.
-    if [ ${#AGENTS[@]} -gt 0 ] && [ ${#AGENT_ORDER[@]} -gt 0 ]; then
-        local _first_name="${AGENT_ORDER[0]}"
-        local _first_dir="${AGENTS[$_first_name]:-}"
-        if [ -n "$_first_dir" ] && [ ! -d "$_first_dir" ]; then
-            rm -f "$cache_file" 2>/dev/null || true
-            AGENTS=()
-            AGENT_ORDER=()
-            return 1
-        fi
-    fi
-
     return 0
 }
 
@@ -66,12 +56,28 @@ declare -A AGENTS
 declare -a AGENT_ORDER
 
 # ── Fast path: cargar cache si está fresco ────────
+_cache_file="${NEXUS_ROOT}/logs/registry.cache.sh"
 if _registry_cache_load; then
-    # Cache loaded successfully — skip module iteration
-    # shellcheck source=config/categories.sh
-    source "$NEXUS_ROOT/config/categories.sh"
-    return 0 2>/dev/null || exit 0
+    # Source at OUTER scope (declare inside function creates locals)
+    source "$_cache_file" 2>/dev/null || true
+
+    # Guard 3: cached paths must exist on disk.
+    # Catches stale caches from placeholder NEXUS_ROOT or moved installations.
+    if [ ${#AGENTS[@]} -gt 0 ] && [ ${#AGENT_ORDER[@]} -gt 0 ]; then
+        _first_name="${AGENT_ORDER[0]}"
+        _first_dir="${AGENTS[$_first_name]:-}"
+        if [ -n "$_first_dir" ] && [ ! -d "$_first_dir" ]; then
+            rm -f "$_cache_file" 2>/dev/null || true
+            AGENTS=()
+            AGENT_ORDER=()
+        else
+            unset _cache_file _first_name _first_dir
+            source "$NEXUS_ROOT/config/categories.sh"
+            return 0 2>/dev/null || exit 0
+        fi
+    fi
 fi
+unset _cache_file _first_name _first_dir
 
 if [ -d "$NEXUS_MODULES_DIR" ]; then
     for _agent_dir in "$NEXUS_MODULES_DIR"/*/; do

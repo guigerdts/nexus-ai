@@ -27,33 +27,13 @@ if [ -f "$NEXUS_ROOT/config/env.sh" ]; then
     source "$NEXUS_ROOT/config/env.sh"
 fi
 
-# ── PATH ──────────────────────────────────────────
-export PATH="$NEXUS_ROOT/bin:$PATH"
-
-# ── Termux bind-mount PATH (hybrid mode) ────────
-# Cuando se ejecuta dentro de proot-Ubuntu con bind-mounts
-# a Termux, estos directorios contienen binarios utiles.
-# Cada entrada tiene guard condicional [ -d ] para no
-# contaminar PATH en Linux puro.
-if [ -d "/data/data/com.termux/files/usr/bin" ]; then
-    case ":$PATH:" in
-        *":/data/data/com.termux/files/usr/bin:"*) ;;
-        *) export PATH="/data/data/com.termux/files/usr/bin:$PATH" ;;
-    esac
-fi
-if [ -d "/data/data/com.termux/files/usr/local/bin" ]; then
-    case ":$PATH:" in
-        *":/data/data/com.termux/files/usr/local/bin:"*) ;;
-        *) export PATH="/data/data/com.termux/files/usr/local/bin:$PATH" ;;
-    esac
-fi
-
-# ── ~/.local/bin (uv, fabric, etc.) ────────────────
-if [ -d "$HOME/.local/bin" ]; then
-    case ":$PATH:" in
-        *":$HOME/.local/bin:"*) ;;
-        *) export PATH="$HOME/.local/bin:$PATH" ;;
-    esac
+# ── Cargar config centralizada nexus.env ─────────
+# Si el archivo existe, reemplaza los PATH inline.
+# Si no existe, confia en env.sh que ya agrego los PATH esenciales.
+if [ -f "@NEXUS_ROOT@/config/nexus.env" ]; then
+    source "@NEXUS_ROOT@/config/nexus.env"
+elif [ -n "${NEXUS_ROOT:-}" ] && [ -f "$NEXUS_ROOT/config/nexus.env" ]; then
+    source "$NEXUS_ROOT/config/nexus.env"
 fi
 
 # ═══════════════════════════════════════════════════

@@ -147,4 +147,14 @@ export NEXUS_COLOR_RESET='\033[0m'
 # Backward compat alias
 export NEXUS_COLOR_PRIMARY="${NEXUS_COLOR_CYAN}"
 
+# ============================================
+# Source nexus.env overrides (if exists)
+# ============================================
+# Las variables en nexus.env sobreescriben los defaults.
+# No falla si el archivo no existe (backward compat).
+if [ -f "$NEXUS_ROOT/config/nexus.env" ]; then
+    # shellcheck source=config/nexus.env
+    source "$NEXUS_ROOT/config/nexus.env"
+fi
+
 

@@ -213,12 +213,22 @@ install_gum() {
         local gum_arch="${NEXUS_ARCH:-arm64}"
         [ "$gum_arch" = "x86_64" ] && gum_arch="x86_64" || gum_arch="arm64"
         local gum_url="https://github.com/charmbracelet/gum/releases/download/v0.17.0/gum_0.17.0_Linux_${gum_arch}.tar.gz"
-        local gum_tmp="/tmp/gum.tar.gz"
-        curl -fsSL "$gum_url" -o "$gum_tmp" || { log_warn "No se pudo descargar Gum"; return 0; }
-        tar -xzf "$gum_tmp" -C /tmp/ && cp /tmp/gum_*/gum "$NEXUS_ROOT/bin/gum" || { log_warn "No se pudo extraer Gum"; return 0; }
-        chmod +x "$NEXUS_ROOT/bin/gum"
-        rm -rf "$gum_tmp" /tmp/gum_*
-        log_ok "Gum instalado en $NEXUS_ROOT/bin/gum"
+        local gum_tmpdir
+        gum_tmpdir="$(mktemp -d)" || { log_warn "No se pudo crear tmpdir"; return 0; }
+        local gum_tarball="$gum_tmpdir/gum.tar.gz"
+        curl -fsSL "$gum_url" -o "$gum_tarball" || { log_warn "No se pudo descargar Gum"; rm -rf "$gum_tmpdir"; return 0; }
+        tar -xzf "$gum_tarball" -C "$gum_tmpdir" && {
+            local gum_bin
+            gum_bin="$(find "$gum_tmpdir" -name 'gum' -type f 2>/dev/null | head -1)"
+            if [ -n "$gum_bin" ]; then
+                cp "$gum_bin" "$NEXUS_ROOT/bin/gum"
+                chmod +x "$NEXUS_ROOT/bin/gum"
+                log_ok "Gum instalado en $NEXUS_ROOT/bin/gum"
+            else
+                log_warn "Binario de Gum no encontrado en la extracción"
+            fi
+        } || log_warn "No se pudo extraer Gum"
+        rm -rf "$gum_tmpdir"
     fi
 }
 
@@ -504,83 +514,14 @@ step 8 9 "Configurando CLI NEXUS AI"
 ln -sf "../core/nexus.sh" "$NEXUS_ROOT/bin/nxai"
 ok "Symlink bin/nxai -> ../core/nexus.sh"
 
-# ── PATH absoluto hardcodeado ─────────────────────
-# El template shell/.bashrc usa deteccion dinamica de NEXUS_ROOT,
-# que puede fallar en entornos proot/Termux. Este PATH absoluto
-# es una red de seguridad escrita al momento de instalacion.
-NEXUS_PATH_MARKER="# === NEXUS AI PATH (absoluto) ==="
-
-# Append a .bashrc (si se configuro en Step 6)
-if [ "${INSTALL_BASHRC:-false}" = "true" ] && [ -f "$BASHRC" ]; then
-    if ! grep -qF "$NEXUS_PATH_MARKER" "$BASHRC" 2>/dev/null; then
-        echo "" >> "$BASHRC"
-        echo "$NEXUS_PATH_MARKER" >> "$BASHRC"
-        # ── Termux bind-mount dirs (runtime-checked) ──
-        echo "if [ -d \"/data/data/com.termux/files/usr/bin\" ]; then" >> "$BASHRC"
-        echo "    case \":\$PATH:\" in" >> "$BASHRC"
-        echo "        *\":/data/data/com.termux/files/usr/bin:\"*) ;;" >> "$BASHRC"
-        echo "        *) export PATH=\"/data/data/com.termux/files/usr/bin:\$PATH\" ;;" >> "$BASHRC"
-        echo "    esac" >> "$BASHRC"
-        echo "fi" >> "$BASHRC"
-        echo "if [ -d \"/data/data/com.termux/files/usr/local/bin\" ]; then" >> "$BASHRC"
-        echo "    case \":\$PATH:\" in" >> "$BASHRC"
-        echo "        *\":/data/data/com.termux/files/usr/local/bin:\"*) ;;" >> "$BASHRC"
-        echo "        *) export PATH=\"/data/data/com.termux/files/usr/local/bin:\$PATH\" ;;" >> "$BASHRC"
-        echo "    esac" >> "$BASHRC"
-        echo "fi" >> "$BASHRC"
-        # ── ~/.local/bin (uv, fabric, etc.) ──
-        echo "if [ -d \"\$HOME/.local/bin\" ]; then" >> "$BASHRC"
-        echo "    case \":\$PATH:\" in" >> "$BASHRC"
-        echo "        *\":\$HOME/.local/bin:\"*) ;;" >> "$BASHRC"
-        echo "        *) export PATH=\"\$HOME/.local/bin:\$PATH\" ;;" >> "$BASHRC"
-        echo "    esac" >> "$BASHRC"
-        echo "fi" >> "$BASHRC"
-        # ── NEXUS_ROOT/bin guard ──
-        echo "case \":\$PATH:\" in" >> "$BASHRC"
-        echo "    *\":$NEXUS_ROOT/bin:\"*) ;;" >> "$BASHRC"
-        echo "    *) export PATH=\"$NEXUS_ROOT/bin:\$PATH\" ;;" >> "$BASHRC"
-        echo "esac" >> "$BASHRC"
-        ok "PATH absoluto agregado a ${BASHRC}"
-    else
-        ok "PATH absoluto ya existe en ${BASHRC} — omitiendo"
-    fi
-fi
-
-# Append a .zshrc (si se configuro en Step 5)
-ZSHRC="${ZSHRC:-$HOME/.zshrc}"
-if [ "${INSTALL_ZSH:-false}" = "true" ] && [ -f "$ZSHRC" ]; then
-    if ! grep -qF "$NEXUS_PATH_MARKER" "$ZSHRC" 2>/dev/null; then
-        echo "" >> "$ZSHRC"
-        echo "$NEXUS_PATH_MARKER" >> "$ZSHRC"
-        # ── Termux bind-mount dirs (runtime-checked) ──
-        echo "if [ -d \"/data/data/com.termux/files/usr/bin\" ]; then" >> "$ZSHRC"
-        echo "    case \":\$PATH:\" in" >> "$ZSHRC"
-        echo "        *\":/data/data/com.termux/files/usr/bin:\"*) ;;" >> "$ZSHRC"
-        echo "        *) export PATH=\"/data/data/com.termux/files/usr/bin:\$PATH\" ;;" >> "$ZSHRC"
-        echo "    esac" >> "$ZSHRC"
-        echo "fi" >> "$ZSHRC"
-        echo "if [ -d \"/data/data/com.termux/files/usr/local/bin\" ]; then" >> "$ZSHRC"
-        echo "    case \":\$PATH:\" in" >> "$ZSHRC"
-        echo "        *\":/data/data/com.termux/files/usr/local/bin:\"*) ;;" >> "$ZSHRC"
-        echo "        *) export PATH=\"/data/data/com.termux/files/usr/local/bin:\$PATH\" ;;" >> "$ZSHRC"
-        echo "    esac" >> "$ZSHRC"
-        echo "fi" >> "$ZSHRC"
-        # ── ~/.local/bin (uv, fabric, etc.) ──
-        echo "if [ -d \"\$HOME/.local/bin\" ]; then" >> "$ZSHRC"
-        echo "    case \":\$PATH:\" in" >> "$ZSHRC"
-        echo "        *\":\$HOME/.local/bin:\"*) ;;" >> "$ZSHRC"
-        echo "        *) export PATH=\"\$HOME/.local/bin:\$PATH\" ;;" >> "$ZSHRC"
-        echo "    esac" >> "$ZSHRC"
-        echo "fi" >> "$ZSHRC"
-        # ── NEXUS_ROOT/bin guard ──
-        echo "case \":\$PATH:\" in" >> "$ZSHRC"
-        echo "    *\":$NEXUS_ROOT/bin:\"*) ;;" >> "$ZSHRC"
-        echo "    *) export PATH=\"$NEXUS_ROOT/bin:\$PATH\" ;;" >> "$ZSHRC"
-        echo "esac" >> "$ZSHRC"
-        ok "PATH absoluto agregado a ${ZSHRC}"
-    else
-        ok "PATH absoluto ya existe en ${ZSHRC} — omitiendo"
-    fi
+# ── Escribir nexus.env con PATH absoluto ─────────
+# Centraliza Termux bind-mount, ~/.local/bin y NEXUS_ROOT/bin
+# en un solo archivo. Los RC files lo sourcean via bloque unico.
+if [ -f "$SCRIPT_DIR/config/nexus.env" ]; then
+    sed "s|@NEXUS_ROOT@|$NEXUS_ROOT|g" "$SCRIPT_DIR/config/nexus.env" > "$NEXUS_ROOT/config/nexus.env"
+    ok "nexus.env creado en $NEXUS_ROOT/config/nexus.env"
+else
+    warn "config/nexus.env no encontrado — saltando"
 fi
 
 ok "CLI NEXUS AI configurado. Probá: nxai help"

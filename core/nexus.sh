@@ -53,6 +53,7 @@ show_help() {
     printf "  \033[1m%-12s\033[0m %s\n" "dashboard" "Abrir panel TUI"
     printf "  \033[1m%-12s\033[0m %s\n" "agent"     "Gestionar agentes custom"
     printf "  \033[1m%-12s\033[0m %s\n" "manifest"  "Gestionar manifest de instalaciones"
+    printf "  \033[1m%-12s\033[0m %s\n" "doctor"    "Diagnostico del sistema"
     printf "  \033[1m%-12s\033[0m %s\n" "help"      "Mostrar esta ayuda"
     printf "\n"
     printf "\033[1mInicio rapido:\033[0m\n"
@@ -907,6 +908,12 @@ case "${COMMAND}" in
                 exit 1
                 ;;
         esac
+        ;;
+    doctor)
+        # shellcheck source=lib/nexus-doctor.sh
+        source "$NEXUS_ROOT/lib/nexus-doctor.sh"
+        show_banner
+        doctor_run
         ;;
     help|--help|"")
         show_banner

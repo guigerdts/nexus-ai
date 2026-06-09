@@ -7,7 +7,7 @@ BINARY="${AGENT_BINARY:-pi}"
 
 if command -v "$BINARY" &>/dev/null; then
     echo "PASS: pi encontrado en PATH ($(command -v "$BINARY"))"
-    "$BINARY" --version 2>/dev/null | head -3 || true
+    timeout 3 "$BINARY" --version 2>/dev/null | head -3 || true
     exit 0
 else
     echo "FAIL: pi no encontrado en PATH"

@@ -7,7 +7,7 @@ BINARY="${AGENT_BINARY:-openclaw}"
 
 if command -v "$BINARY" &>/dev/null; then
     echo "PASS: openclaw encontrado en PATH ($(command -v "$BINARY"))"
-    "$BINARY" --version 2>/dev/null | head -3 || true
+    timeout 3 "$BINARY" --version 2>/dev/null | head -3 || true
     exit 0
 else
     echo "FAIL: openclaw no encontrado en PATH"

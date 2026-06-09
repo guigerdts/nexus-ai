@@ -2,11 +2,11 @@
 # modules/mongodb/test.sh
 set -euo pipefail
 BINARY="mongod"
-if [ -z "$BINARY" ] || command -v "$BINARY" &>/dev/null; then
-    echo "PASS: mongodb (stub — verificacion manual)"
+if command -v "$BINARY" &>/dev/null && timeout 2 "$BINARY" --version &>/dev/null 2>&1; then
+    echo "PASS: mongodb ($("$BINARY" --version 2>&1 | head -1))"
     exit 0
 else
-    echo "FAIL: mongodb no encontrado en PATH"
-    echo "INFO: mongodb requiere instalacion manual"
+    echo "FAIL: mongodb no funciona correctamente"
+    echo "INFO: ejecuta 'mongod --version' para ver el error"
     exit 1
 fi

@@ -97,7 +97,6 @@ list_agents() {
                 [ -f "${NEXUS_ROOT}/logs/installed.txt" ] && grep -Fx "$_a" "${NEXUS_ROOT}/logs/installed.txt" &>/dev/null && _a_in_manifest=true
 
                 if [ "$_a_in_manifest" = true ]; then
-                    # En PATH? (binary=none confia en manifest)
                     local _a_dir="${AGENTS[$_a]:-}"
                     local _a_binary=""
                     [ -f "$_a_dir/metadata.sh" ] && _a_binary=$(grep '^export AGENT_BINARY=' "$_a_dir/metadata.sh" 2>/dev/null | sed 's/.*AGENT_BINARY="\(.*\)"/\1/')
@@ -166,7 +165,10 @@ list_agents() {
                 [ -f "${NEXUS_ROOT}/logs/installed.txt" ] && grep -Fx "$_name" "${NEXUS_ROOT}/logs/installed.txt" &>/dev/null && _in_manifest=true
 
                 local _in_path=false
-                if [ -n "${AGENT_BINARY:-}" ] && [ "${AGENT_BINARY}" != "none" ] && command -v "$AGENT_BINARY" &>/dev/null; then
+                # Si existe test.sh, es autoritativo — solo el decide
+                if [ -f "$_dir/test.sh" ]; then
+                    timeout 10 bash "$_dir/test.sh" &>/dev/null && _in_path=true
+                elif [ -n "${AGENT_BINARY:-}" ] && [ "${AGENT_BINARY}" != "none" ] && command -v "$AGENT_BINARY" &>/dev/null; then
                     _in_path=true
                 elif [ "${AGENT_BINARY:-}" = "none" ] && [ "$_in_manifest" = true ]; then
                     _in_path=true
@@ -227,7 +229,10 @@ list_agents() {
                 [ -f "${NEXUS_ROOT}/logs/installed.txt" ] && grep -Fx "$_name" "${NEXUS_ROOT}/logs/installed.txt" &>/dev/null && _in_manifest=true
 
                 local _in_path=false
-                if [ -n "${AGENT_BINARY:-}" ] && [ "${AGENT_BINARY}" != "none" ] && command -v "$AGENT_BINARY" &>/dev/null; then
+                # Si existe test.sh, es autoritativo — solo el decide
+                if [ -f "$_dir/test.sh" ]; then
+                    timeout 10 bash "$_dir/test.sh" &>/dev/null && _in_path=true
+                elif [ -n "${AGENT_BINARY:-}" ] && [ "${AGENT_BINARY}" != "none" ] && command -v "$AGENT_BINARY" &>/dev/null; then
                     _in_path=true
                 elif [ "${AGENT_BINARY:-}" = "none" ] && [ "$_in_manifest" = true ]; then
                     _in_path=true

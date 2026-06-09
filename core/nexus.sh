@@ -913,7 +913,7 @@ case "${COMMAND}" in
         # shellcheck source=lib/nexus-doctor.sh
         source "$NEXUS_ROOT/lib/nexus-doctor.sh"
         show_banner
-        doctor_run
+        doctor_main
         ;;
     help|--help|"")
         show_banner

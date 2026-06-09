@@ -202,9 +202,10 @@ check_update_verbose() {
                 _release_name="$(echo "$_release_info" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('tag_name',''))" 2>/dev/null || true)"
                 _release_body="$(echo "$_release_info" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('body',''))" 2>/dev/null || true)"
             else
-                # Last resort: grep/cut (fragile with multiline body)
-                _release_name="$(echo "$_release_info" | grep '"tag_name"' | head -1 | cut -d'"' -f4 2>/dev/null || true)"
-                _release_body="$(echo "$_release_info" | grep '"body"' | head -1 | cut -d'"' -f4 2>/dev/null || true)"
+                # Last resort: sed extraction (handles single-line and multi-line JSON)
+                # Limitation: breaks if body text contains escaped quotes (needs jq/python3)
+                _release_name="$(echo "$_release_info" | sed -n 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -1 2>/dev/null || true)"
+                _release_body="$(echo "$_release_info" | sed -n 's/.*"body"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -1 2>/dev/null || true)"
             fi
 
             if [ -n "$_release_name" ]; then

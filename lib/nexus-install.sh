@@ -49,6 +49,10 @@ check_dependency() {
 install_via_pip() {
     local package="$1"
     local pip_cmd=""
+    local _pkg_safe
+
+    # Sanitizar nombre para usar como directorio venv
+    _pkg_safe="$(echo "$package" | sed 's/[^a-zA-Z0-9._-]/_/g')"
 
     # Cuando NEXUS_TERMUX_ACCESSIBLE=true, preferir pip de Termux
     if [ "${NEXUS_TERMUX_ACCESSIBLE:-false}" = "true" ]; then
@@ -72,11 +76,36 @@ install_via_pip() {
         return 0
     fi
 
-    # Intento 2: --break-system-packages + --no-build-isolation
-    # --no-build-isolation evita pip-build-env con setuptools
-    # del sistema incompatible con Python 3.12+
-    log_info "Fallo --user, reintentando con --break-system-packages..."
+    # PEP 668 handling: fallo de --user (externally-managed-environment)
+    log_info "Fallo --user, intentando entorno aislado (PEP 668)..."
+
+    # Opcion A: VIRTUAL_ENV activo → instalar alli sin flags extra
+    if [ -n "${VIRTUAL_ENV:-}" ]; then
+        log_info "VIRTUAL_ENV detectado en $VIRTUAL_ENV, instalando allí..."
+        if $pip_cmd install --no-build-isolation "$package"; then
+            log_ok "Instalado en VIRTUAL_ENV: $VIRTUAL_ENV"
+            return 0
+        fi
+        log_info "Fallo instalación en VIRTUAL_ENV, continuando..."
+    fi
+
+    # Opcion B: crear venv propio en NEXUS_ROOT/venvs/<package>/
+    local _venv_dir="${NEXUS_ROOT}/venvs/${_pkg_safe}"
+    if command -v python3 &>/dev/null && python3 -m venv "$_venv_dir" 2>/dev/null; then
+        log_info "Creando venv en $_venv_dir..."
+        if "$_venv_dir/bin/pip" install --no-build-isolation "$package"; then
+            log_warn "Package '$package' instalado en venv aislado: $_venv_dir"
+            log_info "Agrega $_venv_dir/bin a tu PATH si necesitas acceso global."
+            return 0
+        fi
+        log_info "Fallo instalación en venv, continuando..."
+    fi
+
+    # Ultimo recurso: --break-system-packages con advertencia
+    log_info "Fallo PEP 668. Reintentando con --break-system-packages (último recurso)..."
+    log_warn "ADVERTENCIA: --break-system-packages anula protecciones PEP 668 del sistema."
     if $pip_cmd install --break-system-packages --no-build-isolation "$package"; then
+        log_warn "Package '$package' instalado con --break-system-packages (entorno del sistema no aislado)."
         return 0
     fi
 
@@ -262,7 +291,7 @@ install_via_binary() {
         log_info "Creando wrapper GLIBC para ${binary_name}..."
         cat > "$wrapper" << 'GLIBC_WRAPPER'
 #!/data/data/com.termux/files/usr/bin/bash
-export LD_LIBRARY_PATH=__GLIBC_LIB__:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=__GLIBC_LIB__${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
 exec __BINARY__ "$@"
 GLIBC_WRAPPER
         # Replace placeholders
@@ -281,6 +310,20 @@ GLIBC_WRAPPER
 # ── uninstall_via_pip: pip3 uninstall ──────────────
 uninstall_via_pip() {
     local package="$1"
+    local _pkg_safe
+    local _venv_dir
+
+    _pkg_safe="$(echo "$package" | sed 's/[^a-zA-Z0-9._-]/_/g')"
+    _venv_dir="${NEXUS_ROOT}/venvs/${_pkg_safe}"
+
+    # Check venv primero
+    if [ -d "$_venv_dir" ] && [ -f "$_venv_dir/bin/pip" ]; then
+        log_info "Encontrado venv en $_venv_dir, desinstalando desde allí..."
+        "$_venv_dir/bin/pip" uninstall -y "$package" 2>/dev/null || true
+        rm -rf "$_venv_dir" 2>/dev/null || true
+        log_ok "Venv $_venv_dir eliminado."
+        return 0
+    fi
 
     log_info "Desinstalando $package via pip..."
     if command -v pip3 &>/dev/null; then

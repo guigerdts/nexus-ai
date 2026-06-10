@@ -150,6 +150,10 @@ registry_list() {
         local _dir="${AGENTS[$_name]}"
         local _meta="$_dir/metadata.sh"
         if [ -f "$_meta" ]; then
+            # Limpiar variables del modulo anterior para evitar filtraciones
+            unset AGENT_NAME AGENT_VERSION AGENT_DESC AGENT_URL AGENT_TIER
+            unset AGENT_CATEGORY AGENT_FLAG AGENT_METHOD AGENT_BINARY AGENT_PACKAGE
+            unset AGENT_DEPRECATED AGENT_SUCCESSOR
             # shellcheck source=/dev/null
             source "$_meta"
             echo "${AGENT_NAME:-$_name} | ${AGENT_TIER:-3} | ${AGENT_CATEGORY:-} | ${AGENT_METHOD:-unknown} | ${AGENT_DESC:-}"

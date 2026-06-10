@@ -43,7 +43,12 @@ export NEXUS_LANG="es"
 # Detección de Rich (Python TUI)
 # ============================================
 _python_site=$(python3 -c "import site; print(site.getsitepackages()[0])" 2>/dev/null || true)
-[ -n "$_python_site" ] && export PYTHONPATH="$_python_site:${PYTHONPATH:-}"
+if [ -n "$_python_site" ]; then
+    case ":$PYTHONPATH:" in
+        *:"$_python_site":*) ;;
+        *) export PYTHONPATH="$_python_site:${PYTHONPATH:-}" ;;
+    esac
+fi
 unset _python_site
 
 if python3 -c "import rich" 2>/dev/null; then

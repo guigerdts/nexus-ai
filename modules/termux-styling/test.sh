@@ -2,7 +2,7 @@
 # modules/termux-styling/test.sh
 set -euo pipefail
 BINARY="termux-styling"
-if [ -z "$BINARY" ] || command -v "$BINARY" &>/dev/null; then
+if command -v "$BINARY" &>/dev/null; then
     echo "PASS: termux-styling (stub — verificacion manual)"
     exit 0
 else

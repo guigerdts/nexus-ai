@@ -159,7 +159,7 @@ install_via_curl() {
 
     log_info "Instalando desde $url..."
     if command -v curl &>/dev/null; then
-        bash <(curl -fsSL "$url")
+        curl -fsSL "$url" | bash || return $?
     else
         log_error "curl no disponible."
         return 1
@@ -428,7 +428,8 @@ update_installed_manifest() {
             grep -Fx "$agent" "$manifest" 2>/dev/null || echo "$agent" >> "$manifest"
             ;;
         remove)
-            sed -i "/^${agent}$/d" "$manifest" 2>/dev/null || true
+            grep -vxF "$agent" "$manifest" > "${manifest}.tmp" 2>/dev/null || true
+            mv "${manifest}.tmp" "$manifest" 2>/dev/null || true
             ;;
     esac
 }

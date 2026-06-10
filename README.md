@@ -357,7 +357,31 @@ porque el `&&` se une al echo, no al `||`.
 Siempre agrupar con `{ }`:
 
 ```bash
-command -v claude-code &>/dev/null || { echo "[INFO] no instalado"; exit 1; }
+command -v claude &>/dev/null || { echo "[INFO] no instalado"; exit 1; }
+```
+
+### test.sh debe buscar el binario real, no el nombre del módulo
+
+`test.sh` ahora es **autoritativo** para la detección (si existe, decide si el
+módulo está instalado). Por eso debe buscar el nombre del **binario real**
+(`AGENT_BINARY` en `metadata.sh`), no el nombre del módulo.
+
+Nunca hardcodear el nombre del módulo:
+
+```bash
+# ❌ Mal — busca el nombre del modulo, no el binario
+command -v claude-code &>/dev/null
+
+# ✅ Bien — coincide con AGENT_BINARY en metadata.sh
+command -v claude &>/dev/null
+```
+
+Mejor aún, usar la variable `BINARY` al inicio (como hacen la mayoría de los
+módulos) para que coincida automáticamente:
+
+```bash
+BINARY="${AGENT_BINARY:-nombre-por-defecto}"
+command -v "$BINARY" &>/dev/null || exit 1
 ```
 
 ### Manifest check obligatorio en system_status

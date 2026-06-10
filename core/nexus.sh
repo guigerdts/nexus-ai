@@ -631,13 +631,23 @@ system_status() {
     for _name in "${AGENT_ORDER[@]}"; do
         local _dir="${AGENTS[$_name]}"
         if [ -f "$_dir/metadata.sh" ]; then
+            # Limpiar variables del modulo anterior para evitar filtraciones
+            unset AGENT_NAME AGENT_VERSION AGENT_DESC AGENT_URL AGENT_TIER
+            unset AGENT_CATEGORY AGENT_FLAG AGENT_METHOD AGENT_BINARY AGENT_PACKAGE
+            unset AGENT_DEPRECATED AGENT_SUCCESSOR
             # shellcheck source=/dev/null
             source "$_dir/metadata.sh"
         fi
         if [ -n "${AGENT_BINARY:-}" ] && command -v "$AGENT_BINARY" &>/dev/null; then
+            if grep -qxF "$_name" "$NEXUS_ROOT/logs/installed.txt" &>/dev/null; then
+                installed_count=$((installed_count + 1))
+            fi
+        elif [ "${AGENT_BINARY:-}" = "none" ] && grep -qxF "$_name" "$NEXUS_ROOT/logs/installed.txt" &>/dev/null; then
             installed_count=$((installed_count + 1))
-        elif [ -f "$_dir/test.sh" ] && bash "$_dir/test.sh" &>/dev/null 2>&1; then
-            installed_count=$((installed_count + 1))
+        elif [ -f "$_dir/test.sh" ] && timeout 30 bash "$_dir/test.sh" &>/dev/null 2>&1; then
+            if grep -qxF "$_name" "$NEXUS_ROOT/logs/installed.txt" &>/dev/null; then
+                installed_count=$((installed_count + 1))
+            fi
         fi
     done
     unset _name _dir

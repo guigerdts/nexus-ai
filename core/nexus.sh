@@ -100,7 +100,7 @@ list_agents() {
                     local _a_dir="${AGENTS[$_a]:-}"
                     local _a_binary=""
                     [ -f "$_a_dir/metadata.sh" ] && _a_binary=$(grep '^export AGENT_BINARY=' "$_a_dir/metadata.sh" 2>/dev/null | sed 's/.*AGENT_BINARY="\(.*\)"/\1/')
-                    if [ -z "$_a_binary" ] || [ "$_a_binary" = "none" ] || command -v "$_a_binary" &>/dev/null; then
+                    if [ -n "$_a_binary" ] && { [ "$_a_binary" = "none" ] || command -v "$_a_binary" &>/dev/null; }; then
                         _installed=$((_installed + 1))
                     fi
                 fi
@@ -638,16 +638,16 @@ system_status() {
             # shellcheck source=/dev/null
             source "$_dir/metadata.sh"
         fi
-        if [ -n "${AGENT_BINARY:-}" ] && command -v "$AGENT_BINARY" &>/dev/null; then
+        if [ -f "$_dir/test.sh" ] && timeout 30 bash "$_dir/test.sh" &>/dev/null 2>&1; then
+            if grep -qxF "$_name" "$NEXUS_ROOT/logs/installed.txt" &>/dev/null; then
+                installed_count=$((installed_count + 1))
+            fi
+        elif [ -n "${AGENT_BINARY:-}" ] && [ "${AGENT_BINARY}" != "none" ] && command -v "$AGENT_BINARY" &>/dev/null; then
             if grep -qxF "$_name" "$NEXUS_ROOT/logs/installed.txt" &>/dev/null; then
                 installed_count=$((installed_count + 1))
             fi
         elif [ "${AGENT_BINARY:-}" = "none" ] && grep -qxF "$_name" "$NEXUS_ROOT/logs/installed.txt" &>/dev/null; then
             installed_count=$((installed_count + 1))
-        elif [ -f "$_dir/test.sh" ] && timeout 30 bash "$_dir/test.sh" &>/dev/null 2>&1; then
-            if grep -qxF "$_name" "$NEXUS_ROOT/logs/installed.txt" &>/dev/null; then
-                installed_count=$((installed_count + 1))
-            fi
         fi
     done
     unset _name _dir

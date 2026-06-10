@@ -317,6 +317,62 @@ Regla práctica:
   cualquier lado (como `logs/registry.cache.sh`)
 - Para verificar: `declare -p NOMBRE` después del source — si está vacío, es scoping.
 
+### Contaminación cruzada entre módulos (AGENT_* vars)
+
+`system_status()` y `registry_list()` recorren módulos en un loop, sourceando
+`metadata.sh` de cada uno. Si `metadata.sh` define variables como `AGENT_BINARY`,
+`AGENT_NAME`, etc., el módulo **anterior** contamina la detección del siguiente.
+
+**Siempre limpiar las vars del módulo anterior antes de sourcear el siguiente:**
+
+```bash
+unset AGENT_NAME AGENT_VERSION AGENT_DESC AGENT_URL AGENT_TIER
+unset AGENT_CATEGORY AGENT_FLAG AGENT_METHOD AGENT_BINARY AGENT_PACKAGE
+unset AGENT_DEPRECATED AGENT_SUCCESSOR
+source "$_dir/metadata.sh"
+```
+
+### Process substitution traga errores de curl
+
+`bash <(curl -fsSL "$url") || return $?` **no propaga errores de curl**. Cuando
+curl falla dentro de `<( )`, bash recibe stdin vacío y sale con código 0. El
+`|| return $?` jamás se ejecuta.
+
+Usar pipe en lugar de process substitution:
+
+```bash
+# ✅ Correcto — propaga errores con set -o pipefail
+curl -fsSL "$url" | bash || return $?
+
+# ❌ Incorrecto — bash <(curl ...) traga errores
+bash <(curl -fsSL "$url") || return $?
+```
+
+### Precedencia de operadores en test.sh
+
+Los test.sh usan `||` y `&&` sin llaves, y bash las evalúa con precedencia
+izquierda-a-derecha. `command -v foo || echo "no" && exit 0` **siempre sale 0**
+porque el `&&` se une al echo, no al `||`.
+
+Siempre agrupar con `{ }`:
+
+```bash
+command -v claude-code &>/dev/null || { echo "[INFO] no instalado"; exit 1; }
+```
+
+### Manifest check obligatorio en system_status
+
+`system_status()` requiere que el agente esté en el manifest (`installed.txt`)
+**además** de tener el binario en PATH o que su test.sh pase. Esto lo alinea con
+`list_agents()`. Un módulo con `AGENT_BINARY="none"` (shell plugins, stubs) necesita
+un caso explícito:
+
+```bash
+elif [ "${AGENT_BINARY:-}" = "none" ] && grep -qxF "$_name" "$NEXUS_ROOT/logs/installed.txt"; then
+    installed_count=$((installed_count + 1))
+fi
+```
+
 ## Licencia
 
 MIT — GUIGERDTS

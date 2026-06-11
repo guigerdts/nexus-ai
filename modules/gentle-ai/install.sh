@@ -66,9 +66,9 @@ if [ -f "$GUARD_FILE" ] && ! grep -q '"android"' "$GUARD_FILE"; then
 fi
 
 DETECT_FILE="$REPO_DIR/internal/system/detect.go"
-if [ -f "$DETECT_FILE" ] && ! grep -q '"android"' "$DETECT_FILE"; then
+if [ -f "$DETECT_FILE" ] && ! grep -q 'case "android"' "$DETECT_FILE"; then
     log_info "Aplicando parche Android a detect.go..."
-    sed -i 's/case "windows":/case "android":\n\t\tprofile.OS = "linux"\n\t\tprofile.PackageManager = "apt"\n\t\tprofile.Supported = true\n\tcase "windows":/' "$DETECT_FILE"
+    awk '/case "windows":/{print "\tcase \"android\":"; print "\t\tprofile.OS = \"linux\""; print "\t\tprofile.PackageManager = \"apt\""; print "\t\tprofile.Supported = true"; print "\t\treturn profile"}1' "$DETECT_FILE" > "$TMPDIR/detect_fix.go" && mv "$TMPDIR/detect_fix.go" "$DETECT_FILE"
     log_ok "Parche detect.go aplicado"
 fi
 

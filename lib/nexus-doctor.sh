@@ -196,6 +196,11 @@ doctor_check_manifest() {
 
 # ── doctor_main: funcion principal ─────────────────
 doctor_main() {
+    # Reset contadores globales para ejecuciones multiples
+    _DOCTOR_PASSED=0
+    _DOCTOR_WARNED=0
+    _DOCTOR_FAILED=0
+
     echo ""
     echo -e "${_DOCTOR_COLOR_CYAN}╔══════════════════════════════════════════════╗${_DOCTOR_COLOR_RESET}"
     echo -e "${_DOCTOR_COLOR_CYAN}║     NEXUS AI — Diagnostico del Sistema      ║${_DOCTOR_COLOR_RESET}"
@@ -215,10 +220,6 @@ doctor_main() {
     doctor_check_disk_space
     doctor_check_versions
     doctor_check_manifest
-
-    # Wrapper para compatibilidad con quien llame doctor_run
-    # shellcheck disable=SC2317
-    doctor_run() { doctor_main "$@"; }
 
     # Resumen final
     echo ""

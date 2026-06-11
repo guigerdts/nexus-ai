@@ -174,6 +174,10 @@ registry_get() {
     fi
 
     if [ -f "$dir/metadata.sh" ]; then
+        # Unset previo para evitar contaminacion entre modulos
+        unset AGENT_NAME AGENT_VERSION AGENT_DESC AGENT_URL AGENT_TIER
+        unset AGENT_CATEGORY AGENT_FLAG AGENT_METHOD AGENT_BINARY AGENT_PACKAGE
+        unset AGENT_DEPRECATED AGENT_SUCCESSOR
         # shellcheck source=/dev/null
         source "$dir/metadata.sh"
         echo "$AGENT_NAME|$AGENT_VERSION|$AGENT_DESC|$AGENT_URL|$AGENT_TIER|$AGENT_CATEGORY|$AGENT_METHOD|$AGENT_BINARY"

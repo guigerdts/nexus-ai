@@ -44,7 +44,7 @@ export NEXUS_LANG="es"
 # ============================================
 _python_site=$(python3 -c "import site; print(site.getsitepackages()[0])" 2>/dev/null || true)
 if [ -n "$_python_site" ]; then
-    case ":$PYTHONPATH:" in
+    case ":${PYTHONPATH:-}:" in
         *:"$_python_site":*) ;;
         *) export PYTHONPATH="$_python_site:${PYTHONPATH:-}" ;;
     esac
@@ -90,7 +90,7 @@ fi
 # híbrido (también llamado "hybrid mode") se pueden usar pkg y pip
 # de Termux dentro de proot, evitando compilación desde source.
 export NEXUS_TERMUX_ACCESSIBLE="false"
-if [ "${NEXUS_ENV:-}" = "proot-ubuntu" ] && [ -x "/data/data/com.termux/files/usr/bin" ]; then
+if [ "${NEXUS_ENV:-}" = "proot-ubuntu" ] && [ -d "/data/data/com.termux/files/usr/bin" ] && [ -x "/data/data/com.termux/files/usr/bin" ]; then
     export NEXUS_TERMUX_ACCESSIBLE="true"
     export TERMUX_BIN="/data/data/com.termux/files/usr/bin"
     export TERMUX_PREFIX="/data/data/com.termux/files/usr"
@@ -135,7 +135,6 @@ esac
 # ============================================
 # Directorios derivados
 # ============================================
-export NEXUS_AGENTS_DIR="$NEXUS_ROOT/modules"
 export NEXUS_MODULES_DIR="$NEXUS_ROOT/modules"
 export NEXUS_REGISTRY="$NEXUS_ROOT/config/agents.registry.sh"
 export NEXUS_LOG_FILE="$NEXUS_ROOT/logs/nexus.log"

@@ -11,7 +11,7 @@ log_info "Desinstalando codex..."
 
 # Desinstalar ambos paquetes por si acaso
 for _pkg in "@mmmbuto/codex-cli-termux" "@openai/codex"; do
-    if npm list -g "$_pkg" &>/dev/null 2>&1; then
+    if npm list -g "$_pkg" &>/dev/null; then
         uninstall_via_npm "$_pkg"
     fi
 done

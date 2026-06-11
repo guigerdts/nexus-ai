@@ -1,3 +1,7 @@
+# ── Build artifacts ─────────────────────────────
+@NEXUS_ROOT@/
+config/nexus.env
+
 # ── Logs ─────────────────────────────────────────
 logs/*.log
 logs/*.log.*

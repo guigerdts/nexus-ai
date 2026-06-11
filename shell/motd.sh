@@ -50,7 +50,7 @@ separator() {
 
 # ── Contar agentes instalados ────────────────────
 count_agents() {
-    local agents_dir="${NEXUS_AGENTS_DIR:-${NEXUS_ROOT}/modules}"
+    local agents_dir="${NEXUS_MODULES_DIR:-${NEXUS_ROOT}/modules}"
     if [ -d "$agents_dir" ]; then
         # Usar find en vez de ls + glob para evitar exit code ≠ 0
         # con set -euo pipefail cuando el directorio está vacío

@@ -28,11 +28,8 @@ if [ -f "$NEXUS_ROOT/config/env.sh" ]; then
 fi
 
 # ── Cargar config centralizada nexus.env ─────────
-# Si el archivo existe, reemplaza los PATH inline.
-# Si no existe, confia en env.sh que ya agrego los PATH esenciales.
-if [ -f "@NEXUS_ROOT@/config/nexus.env" ]; then
-    source "@NEXUS_ROOT@/config/nexus.env"
-elif [ -n "${NEXUS_ROOT:-}" ] && [ -f "$NEXUS_ROOT/config/nexus.env" ]; then
+# confia en env.sh que ya agrego los PATH esenciales.
+if [ -n "${NEXUS_ROOT:-}" ] && [ -f "$NEXUS_ROOT/config/nexus.env" ]; then
     source "$NEXUS_ROOT/config/nexus.env"
 fi
 

@@ -198,7 +198,7 @@ check_update_verbose() {
             if command -v jq &>/dev/null; then
                 _release_name="$(echo "$_release_info" | jq -r '.tag_name // empty' 2>/dev/null || true)"
                 _release_body="$(echo "$_release_info" | jq -r '.body // empty' 2>/dev/null || true)"
-            elif command -v python3 &>/dev/null && python3 -c "import sys,json" &>/dev/null 2>&1; then
+            elif command -v python3 &>/dev/null && python3 -c "import sys,json" &>/dev/null; then
                 _release_name="$(echo "$_release_info" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('tag_name',''))" 2>/dev/null || true)"
                 _release_body="$(echo "$_release_info" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('body',''))" 2>/dev/null || true)"
             else

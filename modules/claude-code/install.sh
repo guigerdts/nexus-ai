@@ -76,6 +76,7 @@ if [ "${NEXUS_ENV:-}" = "termux" ]; then
     # ════════════════════════════════════════════════════
 
     log_info "OPCION 1 — Instalacion nativa Termux con glibc..."
+    OPCION2_FALLBACK=false
 
     # PASO 1: Instalar dependencias
     log_info "PASO 1/3 — Instalando dependencias (glibc + herramientas)..."
@@ -93,10 +94,10 @@ if [ "${NEXUS_ENV:-}" = "termux" ]; then
         _claude_download || {
             log_warn "Fallo descarga del binario"
             log_info "Saltando a OPCION 2 (proot-Ubuntu)..."
-            OPCION2_FALLBACK=1
+            OPCION2_FALLBACK=true
         }
 
-        if [ -z "${OPCION2_FALLBACK:-}" ] && [ -f "${CLAUDE_DATA_DIR}/claude" ]; then
+        if [ "$OPCION2_FALLBACK" = false ] && [ -f "${CLAUDE_DATA_DIR}/claude" ]; then
             # PASO 3: Compilar helper C
             log_info "PASO 3/3 — Compilando helper C con clang..."
             _prefix="${PREFIX:-/data/data/com.termux/files/usr}"
@@ -145,10 +146,10 @@ C_CODE
                 log_error "Fallo compilacion del helper C"
                 rm -f "${TMPDIR:-/tmp}/claude_helper.c"
                 log_info "Saltando a OPCION 2 (proot-Ubuntu)..."
-                OPCION2_FALLBACK=1
+                OPCION2_FALLBACK=true
             }
 
-            if [ -z "${OPCION2_FALLBACK:-}" ]; then
+            if [ "$OPCION2_FALLBACK" = false ]; then
                 chmod +x "${_prefix}/bin/claude"
                 rm -f "${TMPDIR:-/tmp}/claude_helper.c"
                 log_ok "Helper C compilado: ${_prefix}/bin/claude"
@@ -157,11 +158,11 @@ C_CODE
     else
         log_warn "Dependencias glibc no disponibles en Termux"
         log_info "Saltando a OPCION 2 (proot-Ubuntu)..."
-        OPCION2_FALLBACK=1
+        OPCION2_FALLBACK=true
     fi
 
     # ── OPCION 2 — Fallback a proot-Ubuntu ─────────
-    if [ -n "${OPCION2_FALLBACK:-}" ]; then
+    if [ "$OPCION2_FALLBACK" = true ]; then
         log_info "OPCION 2 — Instalando via proot-Ubuntu..."
 
         if command -v proot-distro &>/dev/null; then

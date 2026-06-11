@@ -304,6 +304,13 @@ GLIBC_WRAPPER
 
     rm -rf "$tmp_dir"
     log_ok "Binario ${tool_name} instalado en ${target_dir}/${binary_name}"
+
+    # Verificar que NEXUS_ROOT/bin este en PATH
+    case ":$PATH:" in
+        *":$NEXUS_ROOT/bin:"*) ;;
+        *) export PATH="$NEXUS_ROOT/bin:$PATH"
+           log_info "Agregado $NEXUS_ROOT/bin al PATH" ;;
+    esac
     return 0
 }
 
@@ -421,15 +428,15 @@ update_installed_manifest() {
     local action="$2"
     local manifest="${NEXUS_ROOT}/logs/installed.txt"
 
-    mkdir -p "$(dirname "$manifest")"
+    mkdir -p "$(dirname "$manifest")" >/dev/null 2>&1
 
     case "$action" in
         install)
-            grep -Fx "$agent" "$manifest" 2>/dev/null || echo "$agent" >> "$manifest"
+            grep -Fx "$agent" "$manifest" >/dev/null 2>&1 || echo "$agent" >> "$manifest"
             ;;
         remove)
             grep -vxF "$agent" "$manifest" > "${manifest}.tmp" 2>/dev/null || true
-            mv "${manifest}.tmp" "$manifest" 2>/dev/null || true
+            mv "${manifest}.tmp" "$manifest" >/dev/null 2>&1 || true
             ;;
     esac
 }
@@ -444,12 +451,12 @@ mark_installed() {
     local timestamp
     timestamp="$(date '+%Y-%m-%d %H:%M:%S')"
 
-    mkdir -p "$(dirname "$log_file")"
+    mkdir -p "$(dirname "$log_file")" >/dev/null 2>&1
 
     # Idempotente: si existe entrada previa, reemplazarla
-    if [ -f "$log_file" ] && grep -q "| ${agent} |" "$log_file" 2>/dev/null; then
+    if [ -f "$log_file" ] && grep -q "| ${agent} |" "$log_file" >/dev/null 2>&1; then
         grep -v "| ${agent} |" "$log_file" > "${log_file}.tmp" 2>/dev/null || true
-        mv -f "${log_file}.tmp" "$log_file" 2>/dev/null || true
+        mv -f "${log_file}.tmp" "$log_file" >/dev/null 2>&1 || true
     fi
 
     echo "${timestamp} | INSTALLED | ${agent} | ${version}" >> "$log_file"
@@ -467,7 +474,7 @@ mark_removed() {
     local timestamp
     timestamp="$(date '+%Y-%m-%d %H:%M:%S')"
 
-    mkdir -p "$(dirname "$log_file")"
+    mkdir -p "$(dirname "$log_file")" >/dev/null 2>&1
     echo "${timestamp} | REMOVED | ${agent}" >> "$log_file"
 
     log_ok "Eliminacion registrada: $agent"

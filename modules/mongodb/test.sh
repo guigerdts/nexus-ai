@@ -2,7 +2,7 @@
 # modules/mongodb/test.sh
 set -euo pipefail
 BINARY="mongod"
-if command -v "$BINARY" &>/dev/null && timeout 2 "$BINARY" --version &>/dev/null 2>&1; then
+if command -v "$BINARY" &>/dev/null && timeout 2 "$BINARY" --version &>/dev/null; then
     echo "PASS: mongodb ($("$BINARY" --version 2>&1 | head -1))"
     exit 0
 else

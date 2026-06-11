@@ -638,7 +638,7 @@ system_status() {
             # shellcheck source=/dev/null
             source "$_dir/metadata.sh"
         fi
-        if [ -f "$_dir/test.sh" ] && timeout 30 bash "$_dir/test.sh" &>/dev/null 2>&1; then
+        if [ -f "$_dir/test.sh" ] && timeout 30 bash "$_dir/test.sh" &>/dev/null; then
             if grep -qxF "$_name" "$NEXUS_ROOT/logs/installed.txt" &>/dev/null; then
                 installed_count=$((installed_count + 1))
             fi
@@ -750,6 +750,11 @@ resolve_args() {
         shift 2>/dev/null || true
         # Remaining args after command + category are tool flags
         RESOLVED_ARGS=("$@")
+
+        # Category mode: if no explicit command, default to install
+        if [ "$CATEGORY_MODE" = true ] && [ -z "$COMMAND" ]; then
+            COMMAND="install"
+        fi
         return 0
     fi
 

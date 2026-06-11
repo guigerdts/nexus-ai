@@ -12,7 +12,11 @@ source "$_NEXUS_INSTALL_DIR/lib/nexus-install.sh"
 _fabric_bin_dir="$HOME/.local/bin"
 _fabric_bin="$_fabric_bin_dir/fabric"
 _fabric_repo="danielmiessler/fabric"
-_fabric_asset="fabric_Linux_arm64.tar.gz"
+if [ "${NEXUS_ARCH:-arm64}" = "x86_64" ]; then
+    _fabric_asset="fabric_Linux_x86_64.tar.gz"
+else
+    _fabric_asset="fabric_Linux_arm64.tar.gz"
+fi
 
 mkdir -p "$_fabric_bin_dir"
 

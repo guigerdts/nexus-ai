@@ -10,7 +10,7 @@
 # ── CATEGORIES: category -> space-separated agent names ──────
 declare -A CATEGORIES
 # Nota: gemini-cli al final — DEPRECATED, sunset 18/6/2026. Reemplazo: agy
-CATEGORIES["ai"]="opencode agy claude-code mistral-vibe openclaude openclaw ollama codex engram codegraph pi minimax-cli gentle-ai qwen-code sgpt fabric gemini-cli"
+CATEGORIES["ai"]="opencode agy antigravity claude-code mistral-vibe openclaude openclaw ollama codex engram codegraph pi minimax-cli gentle-ai qwen-code sgpt fabric gemini-cli"
 CATEGORIES["editor"]="neovim nvchad"
 CATEGORIES["tools"]="gh wget curl bat lsd fzf jq tree make shfmt imagemagick tmate cloudflared bc ncurses translate html2text proot lazygit eza gum git"
 CATEGORIES["node"]="typescript nestjs prettier live-server localtunnel vercel markserv psqlformat ncu ngrok nodemon pm2"
@@ -139,7 +139,7 @@ declare -A AGENT_TO_FLAG
 AGENT_TO_FLAG["opencode"]="opencode"
 AGENT_TO_FLAG["gemini-cli"]="gemini-cli"
 AGENT_TO_FLAG["agy"]="agy"
-AGENT_TO_FLAG["antigravity"]="agy"
+AGENT_TO_FLAG["antigravity"]="antigravity"
 AGENT_TO_FLAG["claude-code"]="claude-code"
 AGENT_TO_FLAG["mistral-vibe"]="mistral-vibe"
 AGENT_TO_FLAG["openclaude"]="openclaude"

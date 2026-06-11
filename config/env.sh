@@ -74,7 +74,7 @@ elif [ -n "${PROOT:-}" ]; then
 elif grep -q "proot" /proc/self/mountinfo 2>/dev/null; then
     # proot-distro: /proc/self/mountinfo contiene marcadores proot
     export NEXUS_ENV="proot-ubuntu"
-elif [ -d "/data/data/com.termux/files/usr/var/lib/proot-distro" ] 2>/dev/null; then
+elif [ -d "/data/data/com.termux/files/usr/var/lib/proot-distro" ]; then
     # Directorio de datos de proot-distro visible via bind mounts
     export NEXUS_ENV="proot-ubuntu"
 else

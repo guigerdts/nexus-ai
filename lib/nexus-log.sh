@@ -75,17 +75,21 @@ log_info() {
 
 # ── show_banner: muestra el banner de NEXUS AI ────
 show_banner() {
-    echo -e "\n\033[96m _   _ ________   ___    _  _____            _____"
-    echo -e "| \ | |  ____\ \ / / |  | |/ ____|     /\   |_   _|"
-    echo -e "|  \| | |__   \ V /| |  | | (___      /  \    | |"
-    echo -e "| . \` | |__   > < | |  | |\___ \    / /\ \   | |"
-    echo -e "| |\  | |____ / . \| |__| |____) |  / ____ \ _| |_"
-    echo -e "|_| \_|______/_/ \_\\\\____/|_____/  /_/    \_\_____|"
-    if [ "$NEXUS_GUM_AVAILABLE" = "true" ]; then
-        echo "by GUIGERDTS" | gum style --foreground 245 2>/dev/null
+    if [ -t 1 ]; then
+        echo -e "\n\033[96m _   _ ________   ___    _  _____            _____"
+        echo -e "| \ | |  ____\ \ / / |  | |/ ____|     /\   |_   _|"
+        echo -e "|  \| | |__   \ V /| |  | | (___      /  \    | |"
+        echo -e "| . \` | |__   > < | |  | |\___ \    / /\ \   | |"
+        echo -e "| |\  | |____ / . \| |__| |____) |  / ____ \ _| |_"
+        echo -e "|_| \_|______/_/ \_\\\\____/|_____/  /_/    \_\_____|"
+        if [ "$NEXUS_GUM_AVAILABLE" = "true" ]; then
+            echo "by GUIGERDTS" | gum style --foreground 245 2>/dev/null
+        else
+            echo -e "\033[1;37mby GUIGERDTS\033[0m"
+        fi
+        echo -e "\033[0m"
     else
-        echo -e "\033[1;37mby GUIGERDTS\033[0m"
+        echo "NEXUS AI v${NEXUS_VERSION:-0.8.0}"
     fi
-    echo -e "\033[0m"
 }
 

@@ -19,7 +19,11 @@ def _get_version(cmd: list[str]) -> str:
             cmd, capture_output=True, text=True, timeout=5
         )
         return result.stdout.strip().split("\n")[0]
-    except (FileNotFoundError, subprocess.TimeoutExpired, PermissionError):
+    except FileNotFoundError:
+        return "N/A"
+    except subprocess.TimeoutExpired:
+        return "timeout"
+    except PermissionError:
         return "N/A"
 
 

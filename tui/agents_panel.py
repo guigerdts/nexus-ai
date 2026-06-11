@@ -12,6 +12,22 @@ import re
 import shutil
 
 
+def _which(binary: str) -> bool:
+    """Check if binary exists in PATH, same as shell's command -v.
+
+    Usa os.environ.get('PATH') explícitamente para incluir paths
+    de Termux y otros entornos que shutil.which puede no resolver.
+    """
+    path_dirs = os.environ.get("PATH", "").split(":")
+    for d in path_dirs:
+        if not d:
+            continue
+        candidate = os.path.join(d, binary)
+        if os.path.isfile(candidate) and os.access(candidate, os.X_OK):
+            return True
+    return False
+
+
 def load_agents(nexus_root: str) -> list[dict]:
     """Load agent metadata from modules/*/metadata.sh.
 
@@ -63,10 +79,11 @@ def load_agents(nexus_root: str) -> list[dict]:
             elif var == "AGENT_PACKAGE":
                 data["package"] = val
 
-        # Check installation status
+        # Check installation status via explicit PATH search (compatible con
+        # command -v del CLI, incluye Termux y entornos con PATH dinámico)
         binary = data.get("binary", "")
         if binary:
-            data["installed"] = shutil.which(binary) is not None
+            data["installed"] = _which(binary)
 
         agents.append(data)
 

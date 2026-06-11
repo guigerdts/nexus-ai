@@ -274,12 +274,15 @@ def interactive_menu():
                     nxai_bin = os.path.join(nexus_root, "bin", "nxai")
                     if not nexus_root or not os.path.isfile(nxai_bin):
                         console.print(f"\n[red]✗ NEXUS_ROOT no encontrado o nxai no disponible en {nxai_bin}[/red]")
+                        tool_table = None  # force refresh
                         continue
                     subprocess.run([nxai_bin, "install", name], timeout=300)
                     if shutil.which(name) is not None:
                         console.print(f"\n[green]✓ {name} instalado correctamente[/green]")
                     else:
                         console.print(f"\n[red]✗ {name} NO se instalo — verifica con 'which {name}'[/red]")
+                    # Refrescar la tabla para mostrar estado actualizado
+                    tool_table = None
                 except subprocess.TimeoutExpired:
                     console.print(f"\n[red]✗ Timeout: {name} no se instalo en 5 minutos[/red]")
             else:

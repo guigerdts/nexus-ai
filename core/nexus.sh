@@ -58,8 +58,9 @@ show_help() {
     printf "\n"
     printf "\033[1mInicio rapido:\033[0m\n"
     printf "  \033[1;36mnxai guide\033[0m              Ver guia completa\n"
-    printf "  \033[1;36mnxai install --all\033[0m      Instalar todos los agentes\n"
-    printf "  \033[1;36mnxai list\033[0m               Ver agentes disponibles\n"
+    printf "  \033[1;36mnxai install ai\033[0m         Instalar todos los agentes de IA\n"
+    printf "  \033[1;36mnxai install ai --opencode\033[0m  Instalar solo opencode de la categoria AI\n"
+    printf "  \033[1;36mnxai list ai\033[0m             Ver agentes disponibles en IA\n"
     printf "  \033[1;36mnxai dashboard\033[0m          Abrir panel visual\n"
     printf "\n"
     printf "\033[1mModulos por categoria (\033[1;36mnxai install\033[0m \033[1m<modulo>\033[0m\033[1m):\033[0m\n"
@@ -94,6 +95,9 @@ list_agents() {
                 _count=$((_count + 1))
                 # En manifest?
                 local _a_in_manifest=false
+                # Intencional: sin local en la reasignacion — bash da error si se usa
+                # local fuera de la sentencia de declaracion inicial. La variable ya
+                # esta declarada local arriba, la reasignacion actualiza el mismo scope.
                 [ -f "${NEXUS_ROOT}/logs/installed.txt" ] && grep -Fx "$_a" "${NEXUS_ROOT}/logs/installed.txt" &>/dev/null && _a_in_manifest=true
 
                 if [ "$_a_in_manifest" = true ]; then
@@ -441,8 +445,6 @@ remove_agent() {
         source "$_dir/metadata.sh"
     fi
 
-    local _pkg="${AGENT_PACKAGE:-$AGENT_NAME}"
-
     # Gum confirm (mandatory when interactive + gum available)
     if [ "$NEXUS_GUM_AVAILABLE" = "true" ] && [ -t 0 ]; then
         gum confirm "Eliminar ${target}?" || { log_info "Eliminacion cancelada"; return 0; }
@@ -490,6 +492,7 @@ remove_agent() {
             gum style --foreground 196 "✗ Error al desinstalar '${target}'" 2>/dev/null
         fi
     else
+        local _pkg="${AGENT_PACKAGE:-$AGENT_NAME}"
         case "${AGENT_METHOD:-}" in
             pip)
                 uninstall_via_pip "$_pkg"

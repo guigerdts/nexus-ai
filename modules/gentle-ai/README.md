@@ -25,6 +25,13 @@ gentle-ai --help
 - Git
 - Conexion a internet
 
+## Termux / Android
+
+El instalador aplica un parche automatico para compatibilidad con Termux
+(Android). Modifica los archivos `guard.go` y `detect.go` del repo clonado
+para que `runtime.GOOS == "android"` sea tratado como un sistema soportado
+(perfil Linux con `apt` como gestor de paquetes).
+
 ## Actualizacion
 
 ```bash

@@ -57,6 +57,21 @@ else
     git clone "$REPO_URL" "$REPO_DIR"
 fi
 
+# ── Parche Android/Termux ───────────────────────────
+GUARD_FILE="$REPO_DIR/internal/system/guard.go"
+if [ -f "$GUARD_FILE" ] && ! grep -q '"android"' "$GUARD_FILE"; then
+    log_info "Aplicando parche Android a guard.go..."
+    sed -i 's/return goos == "darwin" || goos == "linux" || goos == "windows"/return goos == "darwin" || goos == "linux" || goos == "windows" || goos == "android"/' "$GUARD_FILE"
+    log_ok "Parche guard.go aplicado"
+fi
+
+DETECT_FILE="$REPO_DIR/internal/system/detect.go"
+if [ -f "$DETECT_FILE" ] && ! grep -q '"android"' "$DETECT_FILE"; then
+    log_info "Aplicando parche Android a detect.go..."
+    sed -i 's/case "windows":/case "android":\n\t\tprofile.OS = "linux"\n\t\tprofile.PackageManager = "apt"\n\t\tprofile.Supported = true\n\tcase "windows":/' "$DETECT_FILE"
+    log_ok "Parche detect.go aplicado"
+fi
+
 # ── Compilar ───────────────────────────────────────
 log_info "Compilando gentle-ai..."
 cd "$REPO_DIR"

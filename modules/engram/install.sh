@@ -1,38 +1,80 @@
 #!/usr/bin/env bash
 # modules/engram/install.sh
+# Instala engram desde fuente: clona repo + compila con Go
 set -euo pipefail
 
 # ── Source install library ─────────────────────────
 # shellcheck source=../../lib/nexus-install.sh
-source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/lib/nexus-install.sh"
+NEXUS_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+source "$NEXUS_ROOT/lib/nexus-install.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/metadata.sh"
 
-# ── Verificar si engram ya esta en PATH ────────────
-if command -v engram &>/dev/null; then
-    version="$(engram --version 2>/dev/null || echo "0.0.0")"
-    mark_installed "engram" "$version"
-    log_ok "engram ya esta instalado ($version)"
-    exit 0
+# ── Dependencias ───────────────────────────────────
+log_info "Verificando dependencias para engram..."
+
+GO_VERSION=""
+if command -v go &>/dev/null; then
+    GO_VERSION="$(go version 2>/dev/null | sed -n 's/.*go\([0-9]*\.[0-9]*\).*/\1/p')"
 fi
 
-# ── Instalacion manual ─────────────────────────────
-cat <<'EOF'
-╔══════════════════════════════════════════════════════════════╗
-║  engram — Memoria persistente para sesiones de IA           ║
-║                                                              ║
-║  engram no se encuentra en el PATH.                          ║
-║                                                              ║
-║  Para instalar engram CLI:                                   ║
-║                                                              ║
-║  1. Visita https://opencode.ai para instrucciones            ║
-║                                                              ║
-║  2. O busca engram CLI en:                                   ║
-║       https://github.com/opencode-ai/engram                  ║
-║                                                              ║
-║  3. Una vez instalado, asegurate de que este en el PATH      ║
-║                                                              ║
-║  Una vez instalado, ejecuta:  nxai status                   ║
-╚══════════════════════════════════════════════════════════════╝
-EOF
+if [ -z "$GO_VERSION" ] || [ "$(printf '%s\n' "1.23" "$GO_VERSION" | sort -V | head -1)" != "1.23" ]; then
+    log_warn "Go >= 1.23 requerido. Detectado: ${GO_VERSION:-ninguno}"
+    if [ "${NEXUS_TERMUX_ACCESSIBLE:-false}" = "true" ] || [ "${NEXUS_ENV:-}" = "termux" ]; then
+        log_info "Instalando golang via pkg..."
+        pkg install -y golang 2>/dev/null || apt install -y golang 2>/dev/null || {
+            log_error "No se pudo instalar golang. Instalalo manualmente: pkg install golang"
+            exit 1
+        }
+    else
+        log_error "Go >= 1.23 no encontrado. Instala Go primero."
+        exit 1
+    fi
+fi
+log_ok "Go ${GO_VERSION} detectado"
 
-log_warn "engram requiere instalacion manual"
+if ! command -v git &>/dev/null; then
+    log_info "Instalando git..."
+    if [ "${NEXUS_TERMUX_ACCESSIBLE:-false}" = "true" ] || [ "${NEXUS_ENV:-}" = "termux" ]; then
+        pkg install -y git 2>/dev/null || apt install -y git 2>/dev/null
+    else
+        apt install -y git 2>/dev/null || {
+            log_error "No se pudo instalar git"
+            exit 1
+        }
+    fi
+fi
+
+# ── Clonar/actualizar repositorio ──────────────────
+REPO_DIR="${AGENT_REPO_DIR:-$NEXUS_ROOT/engram}"
+REPO_URL="https://github.com/Gentleman-Programming/engram.git"
+
+if [ -d "$REPO_DIR/.git" ]; then
+    log_info "Actualizando repositorio existente en ${REPO_DIR}..."
+    git -C "$REPO_DIR" fetch origin && git -C "$REPO_DIR" reset --hard origin/main
+else
+    log_info "Clonando repositorio desde ${REPO_URL}..."
+    rm -rf "$REPO_DIR" 2>/dev/null || true
+    git clone "$REPO_URL" "$REPO_DIR"
+fi
+
+# ── Compilar ───────────────────────────────────────
+log_info "Compilando engram..."
+export GOPATH="${HOME}/.local/go"
+export GOCACHE="${HOME}/.cache/go"
+export GOMODCACHE="${GOPATH}/pkg/mod"
+mkdir -p "$GOPATH" "$GOCACHE" "$GOMODCACHE"
+cd "$REPO_DIR"
+go mod download
+CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o engram ./cmd/engram/
+
+# ── Instalar binario ───────────────────────────────
+INSTALL_DIR="${PREFIX:-/usr/local}/bin"
+mkdir -p "$INSTALL_DIR"
+cp engram "$INSTALL_DIR/engram"
+chmod +x "$INSTALL_DIR/engram"
+
+log_ok "engram compilado e instalado en ${INSTALL_DIR}/engram"
+
+# ── Registrar ───────────────────────────────────────
+mark_installed "$AGENT_NAME" "source"
 exit 0

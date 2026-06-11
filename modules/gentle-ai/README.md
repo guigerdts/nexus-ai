@@ -27,10 +27,20 @@ gentle-ai --help
 
 ## Termux / Android
 
-El instalador aplica un parche automatico para compatibilidad con Termux
-(Android). Modifica los archivos `guard.go` y `detect.go` del repo clonado
-para que `runtime.GOOS == "android"` sea tratado como un sistema soportado
-(perfil Linux con `apt` como gestor de paquetes).
+El instalador compila y ejecuta `termux-patches.go`, un programa Go que
+parchea automaticamente 5 archivos del repositorio clonado para que
+`runtime.GOOS == "android"` sea tratado como un sistema soportado.
+Parches aplicados:
+
+| Archivo | Que hace |
+|---|---|
+| `internal/system/detect.go` | Agrega android a `IsSupportedOS()`, `resolvePlatformProfile` y `osReleaseContent` |
+| `internal/system/guard.go` | Actualiza mensaje de error para incluir Android |
+| `internal/update/upgrade/download.go` | Redirige android → linux al auto-actualizarse |
+| `internal/tui/model.go` | Usa `termux-open-url` para abrir enlaces |
+| `internal/components/engram/download.go` | Redirige android → linux al descargar engram |
+
+El patcher es idempotente: si el parche ya fue aplicado, lo omite.
 
 ## Actualizacion
 

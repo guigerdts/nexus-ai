@@ -4,6 +4,7 @@
 
 Engram es un sistema de memoria persistente para sesiones de IA,
 que permite mantener contexto a traves de sesiones y compactaciones.
+Compilado desde fuente via Go.
 
 ## Instalacion
 
@@ -11,11 +12,7 @@ que permite mantener contexto a traves de sesiones y compactaciones.
 nxai install engram
 ```
 
-O manualmente, descarga el CLI desde opencode.ai:
-
-```bash
-# Instrucciones en: https://opencode.ai
-```
+Esto clona el repositorio, compila con Go y copia el binario al PATH.
 
 ## Uso
 
@@ -25,14 +22,22 @@ engram --help
 
 ## Requisitos
 
+- Go >= 1.23
+- Git
 - Conexion a internet
-- Cliente HTTP
 
-## Notas para Termux
-
-Engram esta integrado en el entorno opencode. Si usas proot-Ubuntu,
-instala engram siguiendo las instrucciones oficiales:
+## Actualizacion
 
 ```bash
-# Visita https://opencode.ai para mas informacion
+nxai update engram
 ```
+
+## Desinstalacion
+
+```bash
+nxai uninstall engram
+```
+
+## Repositorio
+
+https://github.com/Gentleman-Programming/engram

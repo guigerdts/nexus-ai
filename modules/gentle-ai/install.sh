@@ -50,7 +50,7 @@ REPO_URL="https://github.com/Gentleman-Programming/gentle-ai.git"
 
 if [ -d "$REPO_DIR/.git" ]; then
     log_info "Actualizando repositorio existente en ${REPO_DIR}..."
-    git -C "$REPO_DIR" pull --ff-only
+    git -C "$REPO_DIR" fetch origin && git -C "$REPO_DIR" reset --hard origin/main
 else
     log_info "Clonando repositorio desde ${REPO_URL}..."
     rm -rf "$REPO_DIR" 2>/dev/null || true
@@ -58,19 +58,26 @@ else
 fi
 
 # ── Parche Android/Termux ───────────────────────────
-GUARD_FILE="$REPO_DIR/internal/system/guard.go"
-if [ -f "$GUARD_FILE" ] && ! grep -q '"android"' "$GUARD_FILE"; then
-    log_info "Aplicando parche Android a guard.go..."
-    sed -i 's/return goos == "darwin" || goos == "linux" || goos == "windows"/return goos == "darwin" || goos == "linux" || goos == "windows" || goos == "android"/' "$GUARD_FILE"
-    log_ok "Parche guard.go aplicado"
+PATCHER_SRC="$NEXUS_ROOT/modules/gentle-ai/termux-patches.go"
+PATCHER_BIN="$NEXUS_ROOT/bin/termux-patcher-gentle-ai"
+mkdir -p "$NEXUS_ROOT/bin"
+if [ ! -f "$PATCHER_BIN" ] || [ "$PATCHER_SRC" -nt "$PATCHER_BIN" ]; then
+    log_info "Compilando patcher de Termux..."
+    if ! go build -o "$PATCHER_BIN" "$PATCHER_SRC"; then
+        log_error "No se pudo compilar el patcher"
+        exit 1
+    fi
 fi
 
-DETECT_FILE="$REPO_DIR/internal/system/detect.go"
-if [ -f "$DETECT_FILE" ] && ! grep -q 'case "android"' "$DETECT_FILE"; then
-    log_info "Aplicando parche Android a detect.go..."
-    awk '/case "windows":/{print "\tcase \"android\":"; print "\t\tprofile.OS = \"linux\""; print "\t\tprofile.PackageManager = \"apt\""; print "\t\tprofile.Supported = true"; print "\t\treturn profile"}1' "$DETECT_FILE" > "$TMPDIR/detect_fix.go" && mv "$TMPDIR/detect_fix.go" "$DETECT_FILE"
-    log_ok "Parche detect.go aplicado"
+log_info "Aplicando parches Termux a gentle-ai..."
+patch_output=$("$PATCHER_BIN" "$REPO_DIR" 2>&1)
+patch_rc=$?
+echo "$patch_output" | while IFS= read -r line; do log_info "$line"; done
+if [ $patch_rc -ne 0 ]; then
+    log_error "Falló el patcher de Termux"
+    exit 1
 fi
+log_ok "Parches Termux aplicados"
 
 # ── Compilar ───────────────────────────────────────
 log_info "Compilando gentle-ai..."

@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # modules/engram/update.sh
-# Actualiza engram a la version mas reciente
+# Actualiza engram: git pull + recompila
+set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/../../lib/nexus-install.sh" 2>/dev/null || {
@@ -11,14 +12,15 @@ source "$SCRIPT_DIR/metadata.sh" 2>/dev/null || true
 
 log_info "Verificando actualizacion para ${AGENT_NAME:-engram}..."
 
-# Re-install via the same method as install.sh
+# Re-ejecutar install.sh (maneja git fetch + rebuild)
 if [ -f "$SCRIPT_DIR/install.sh" ]; then
     (source "$SCRIPT_DIR/install.sh") && {
-        mark_installed "$AGENT_NAME"
+        mark_installed "$AGENT_NAME" "source"
         log_ok "${AGENT_NAME} actualizado correctamente."
     }
 else
-    log_warn "${AGENT_NAME} no tiene install.sh — no se puede actualizar."
+    log_error "install.sh no encontrado"
+    exit 1
 fi
 
 exit 0

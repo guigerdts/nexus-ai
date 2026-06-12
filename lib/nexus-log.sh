@@ -151,16 +151,16 @@ show_system_bars() {
     _disk_bar=$(_build_bar "$_disk_usage" "$_bar_len")
 
     if [ "$NEXUS_GUM_AVAILABLE" = "true" ] && [ -t 1 ]; then
-        local _cols _bw _inner _i _pad
+        local _cols _bw _inner _i
         _cols=$(tput cols 2>/dev/null || echo 80)
-        _bw=$(( _cols - 2 ))
-        [ "$_bw" -lt 50 ] && _bw=50
-        [ "$_bw" -gt 66 ] && _bw=66
-        _inner=$(( _bw - 4 ))   # espacio entre │ y │ (sin espacios laterales)
+        _bw=$(( _cols - 2 ))      # ancho total del cuadro (╭ a ╮)
+        [ "$_bw" -lt 52 ] && _bw=52
+        [ "$_bw" -gt 68 ] && _bw=68
+        _inner=$(( _bw - 2 ))      # espacio entre │ y │
 
         # ── Borde superior ──
         printf '\033[38;5;51m╭'
-        for ((_i=0; _i<_bw; _i++)); do printf '─'; done
+        for ((_i=0; _i<_inner; _i++)); do printf '─'; done
         printf '╮\033[0m\n'
 
         # ── Linea en blanco ──
@@ -188,7 +188,7 @@ show_system_bars() {
 
         # ── Borde inferior ──
         printf '\033[38;5;51m╰'
-        for ((_i=0; _i<_bw; _i++)); do printf '─'; done
+        for ((_i=0; _i<_inner; _i++)); do printf '─'; done
         printf '╯\033[0m\n'
     else
         echo ""

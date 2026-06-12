@@ -4,32 +4,39 @@
 # Version: 0.8.0
 
 # ── Colores ANSI ──
-_CYAN="\033[96m"
-_YELLOW="\033[33m"
-_GRAY="\033[2m\033[90m"
-_RESET="\033[0m"
+_CYAN=$'\033[96m'
+_YELLOW=$'\033[33m'
+_GRAY=$'\033[2m\033[90m'
+_RESET=$'\033[0m'
 _SEP="══════════════════════════════"
 
 # ── _print_category: renderiza una categoria ──
-# Uso: _print_category "Titulo" herramientas[] tiene_uninstall
+# Uso: _print_category "Titulo" tiene_uninstall herramientas...
 _print_category() {
     local _title="$1"
     shift
     local _has_uninstall="$1"
     shift
-    local _name _desc _cmd
 
-    # Header cian
-    echo ""
-    echo -e "${_CYAN}${_SEP}${_RESET}"
-    echo -e "${_CYAN}  ${_title}${_RESET}"
-    echo -e "${_CYAN}${_SEP}${_RESET}"
+    # Terminal width calculation (same as core/nexus.sh)
+    local _cols _bw _inner _i
+    _cols=$(tput cols 2>/dev/null || echo 80)
+    _bw=$(( _cols - 2 ))
+    [ "$_bw" -lt 78 ] && _bw=78
+    [ "$_bw" -gt 86 ] && _bw=86
+    _inner=$(( _bw - 2 ))
 
-    # Columnas
-    printf "%-16s %-35s %s\n" "Herramienta" "Descripcion" "Instalar"
-    printf "%-16s %-35s %s\n" "----------------" "-----------------------------------" "--------"
+    # Build category content into an array (preserves newlines)
+    local -a _lines=()
+    _lines+=("")
+    _lines+=("${_CYAN}${_SEP}${_RESET}")
+    _lines+=("${_CYAN}  ${_title}${_RESET}")
+    _lines+=("${_CYAN}${_SEP}${_RESET}")
+    _lines+=("$(printf "%-16s %-35s %s" "Herramienta" "Descripcion" "Instalar")")
+    _lines+=("$(printf "%-16s %-35s %s" "----------------" "-----------------------------------" "--------")")
 
     # Herramientas
+    local _name _desc _cmd
     while [ $# -gt 0 ]; do
         _name="$1"
         _desc="$2"
@@ -37,26 +44,80 @@ _print_category() {
         shift 3
 
         if [ "$_cmd" = "(stub)" ]; then
-            printf "%-16s %-35s ${_GRAY}%s${_RESET}\n" "$_name" "$_desc" "$_cmd"
+            _lines+=("$(printf "%-16s %-35s ${_GRAY}%s${_RESET}" "$_name" "$_desc" "$_cmd")")
         else
-            printf "%-16s %-35s ${_YELLOW}%s${_RESET}\n" "$_name" "$_desc" "$_cmd"
+            _lines+=("$(printf "%-16s %-35s ${_YELLOW}%s${_RESET}" "$_name" "$_desc" "$_cmd")")
         fi
     done
 
     # Desinstalar
     if [ "$_has_uninstall" = "yes" ]; then
-        echo -e "${_GRAY}Desinstalar: nxai remove <herramienta>${_RESET}"
+        _lines+=("${_GRAY}Desinstalar: nxai remove <herramienta>${_RESET}")
     fi
-    echo ""
+    _lines+=("")
+
+    # Draw top border: ╭─╮
+    printf '\033[38;5;201m╭'
+    for ((_i=0; _i<_inner; _i++)); do printf '─'; done
+    printf '╮\033[0m\n'
+
+    # Content lines with padding
+    local _line _plain _visible _pad
+    for _line in "${_lines[@]}"; do
+        _plain=$(sed $'s/\x1b\[[0-9;]*[a-zA-Z]//g' <<< "$_line")
+        _visible=${#_plain}
+        _pad=$(( _inner - _visible ))
+        [ "$_pad" -lt 0 ] && _pad=0
+        printf '\033[38;5;201m│\033[0m%s%*s\033[38;5;201m│\033[0m\n' "$_line" "$_pad" ''
+    done
+
+    # Draw bottom border: ╰─╯
+    printf '\033[38;5;201m╰'
+    for ((_i=0; _i<_inner; _i++)); do printf '─'; done
+    printf '╯\033[0m\n'
 }
 
 # ── show_guide: muestra todas las categorias ──
 show_guide() {
+    # Compute terminal width for figlet measurement (same as core/nexus.sh)
+    local _cols _bw _inner
+    _cols=$(tput cols 2>/dev/null || echo 80)
+    _bw=$(( _cols - 2 ))
+    [ "$_bw" -lt 78 ] && _bw=78
+    [ "$_bw" -gt 86 ] && _bw=86
+    _inner=$(( _bw - 2 ))
+
     echo ""
-    echo -e "${_CYAN}════════════════════════════════════════${_RESET}"
-    echo -e "${_CYAN}  Guia NEXUS AI por Categorias${_RESET}"
-    echo -e "${_CYAN}════════════════════════════════════════${_RESET}"
-    echo ""
+
+    # Dynamic figlet title with font chain and fallback
+    local _figlet_printed=false
+    if command -v figlet >/dev/null 2>&1; then
+        local _figlet_output _max_width _font
+        for _font in "small" "mini" ""; do
+            if [ -n "$_font" ]; then
+                _figlet_output=$(figlet -f "$_font" "NEXUS AI GUIA" 2>/dev/null)
+            else
+                _figlet_output=$(figlet "NEXUS AI GUIA" 2>/dev/null)
+            fi
+            [ -z "$_figlet_output" ] && continue
+            _max_width=$(echo "$_figlet_output" | wc -L)
+            if [ "$_max_width" -le "$_inner" ]; then
+                printf '\033[96m%s\033[0m\n' "$_figlet_output"
+                printf '\033[96mPOR CATEGORIAS\033[0m\n\n'
+                _figlet_printed=true
+                break
+            fi
+        done
+    fi
+
+    # Fallback: figlet not available or no font fit
+    if [ "$_figlet_printed" != "true" ]; then
+        printf '\n'
+        printf '\033[96m════════════════════════════════════════\033[0m\n'
+        printf '\033[96m  NEXUS AI GUIA POR CATEGORIAS\033[0m\n'
+        printf '\033[96m════════════════════════════════════════\033[0m\n'
+        printf '\n'
+    fi
 
     show_guide_category "ai"
     show_guide_category "editor"

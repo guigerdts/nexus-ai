@@ -27,7 +27,7 @@ if [ "$_NEXUS_REMOTE" = true ]; then
         case "$arg" in
             --help|-h)
                 cat <<'EOFH'
-NEXUS AI v0.8.0 — Instalador remoto
+NEXUS AI v0.8.1 — Instalador remoto
 
 Uso: curl -fsSL https://raw.githubusercontent.com/guigerdts/nexus-ai/main/install.sh | bash -s -- [opciones]
 
@@ -60,7 +60,7 @@ EOFH
         fi
     done
 
-    echo "=== NEXUS AI v0.8.0 ==="
+    echo "=== NEXUS AI v0.8.1 ==="
     echo "Descargando en $REMOTE_DIR..."
 
     # Idempotencia: actualizar si ya existe, clonar si no

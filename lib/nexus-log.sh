@@ -151,16 +151,45 @@ show_system_bars() {
     _disk_bar=$(_build_bar "$_disk_usage" "$_bar_len")
 
     if [ "$NEXUS_GUM_AVAILABLE" = "true" ] && [ -t 1 ]; then
-        local _cols
+        local _cols _bw _inner _i _pad
         _cols=$(tput cols 2>/dev/null || echo 80)
-        {
-            printf '\n'
-            printf '  \033[1mSistema\033[0m\n'
-            printf '\n'
-            printf '  RAM:  %s %d%%\n' "$_ram_bar" "$_ram_usage"
-            printf '  DISK: %s %d%%\n' "$_disk_bar" "$_disk_usage"
-            printf '\n'
-        } | gum style --border rounded --border-foreground 51 --padding "0 0" 2>/dev/null
+        _bw=$(( _cols - 2 ))
+        [ "$_bw" -lt 50 ] && _bw=50
+        [ "$_bw" -gt 66 ] && _bw=66
+        _inner=$(( _bw - 4 ))   # espacio entre │ y │ (sin espacios laterales)
+
+        # ── Borde superior ──
+        printf '\033[38;5;51m╭'
+        for ((_i=0; _i<_bw; _i++)); do printf '─'; done
+        printf '╮\033[0m\n'
+
+        # ── Linea en blanco ──
+        printf '\033[38;5;51m│\033[0m%*s\033[38;5;51m│\033[0m\n' "$_inner" ''
+
+        # ── Titulo ──
+        printf '\033[38;5;51m│\033[0m  \033[1mSistema\033[0m%*s\033[38;5;51m│\033[0m\n' \
+            $((_inner - 9)) ''
+
+        # ── Linea en blanco ──
+        printf '\033[38;5;51m│\033[0m%*s\033[38;5;51m│\033[0m\n' "$_inner" ''
+
+        # ── RAM ──
+        printf '\033[38;5;51m│\033[0m  RAM:  %s %d%%%*s\033[38;5;51m│\033[0m\n' \
+            "$_ram_bar" "$_ram_usage" \
+            $((_inner - 8 - _bar_len - 1 - ${#_ram_usage} - 1)) ''
+
+        # ── DISK ──
+        printf '\033[38;5;51m│\033[0m  DISK: %s %d%%%*s\033[38;5;51m│\033[0m\n' \
+            "$_disk_bar" "$_disk_usage" \
+            $((_inner - 8 - _bar_len - 1 - ${#_disk_usage} - 1)) ''
+
+        # ── Linea en blanco ──
+        printf '\033[38;5;51m│\033[0m%*s\033[38;5;51m│\033[0m\n' "$_inner" ''
+
+        # ── Borde inferior ──
+        printf '\033[38;5;51m╰'
+        for ((_i=0; _i<_bw; _i++)); do printf '─'; done
+        printf '╯\033[0m\n'
     else
         echo ""
         printf '\033[1mSistema\033[0m\n'

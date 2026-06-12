@@ -36,7 +36,7 @@ unset _nexus_script_dir
 # ============================================
 # Versión e idioma
 # ============================================
-export NEXUS_VERSION="0.8.0"
+export NEXUS_VERSION="0.8.1"
 export NEXUS_LANG="es"
 
 # ============================================

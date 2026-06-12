@@ -39,11 +39,19 @@ source "$NEXUS_ROOT/lib/nexus-guide.sh"
 
 # ── show_help: muestra uso del CLI ─────────────────
 show_help() {
-    if [ "$NEXUS_GUM_AVAILABLE" = "true" ] && [ -t 1 ]; then
-        local _divider="" _i
-        for ((_i=0; _i<72; _i++)); do _divider+="─"; done
+    if [ -t 1 ]; then
+        local _cols _bw _inner _i _content _line _plain _visible _pad _divider
+        _cols=$(tput cols 2>/dev/null || echo 80)
+        _bw=$(( _cols - 2 ))
+        [ "$_bw" -lt 78 ] && _bw=78
+        [ "$_bw" -gt 86 ] && _bw=86
+        _inner=$(( _bw - 2 ))
 
-        {
+        # Divider ─: _inner - 2 (prefixed by "  " in content)
+        _divider=""
+        for ((_i=0; _i<_inner-2; _i++)); do _divider+="─"; done
+
+        _content=$(
             printf "\n"
             printf "\033[1mUso:\033[0m \033[1;36mnxai\033[0m \033[1m<comando>\033[0m [opciones]\n"
             printf "\n"
@@ -86,7 +94,26 @@ show_help() {
             printf "  \033[1m%-12s\033[0m typescript, pm2, nodemon\n" "node"
             printf "  \033[1m%-12s\033[0m termux-styling, nerd-fonts, banner\n" "ui"
             printf "  \033[1m%-12s\033[0m n8n\n" "automation"
-        } | gum style --border rounded --border-foreground 201 2>/dev/null
+        )
+
+        # ── Borde superior ╭─╮ ──
+        printf '\033[38;5;201m╭'
+        for ((_i=0; _i<_inner; _i++)); do printf '─'; done
+        printf '╮\033[0m\n'
+
+        # ── Lineas de contenido con padding individual ──
+        while IFS= read -r _line; do
+            _plain=$(sed $'s/\x1b\[[0-9;]*[a-zA-Z]//g' <<< "$_line")
+            _visible=${#_plain}
+            _pad=$(( _inner - _visible ))
+            [ "$_pad" -lt 0 ] && _pad=0
+            printf '\033[38;5;201m│\033[0m%s%*s\033[38;5;201m│\033[0m\n' "$_line" "$_pad" ''
+        done <<< "$_content"
+
+        # ── Borde inferior ╰─╯ ──
+        printf '\033[38;5;201m╰'
+        for ((_i=0; _i<_inner; _i++)); do printf '─'; done
+        printf '╯\033[0m\n'
     else
         printf "\n"
         printf "\033[1mUso:\033[0m \033[1;36mnxai\033[0m \033[1m<comando>\033[0m [opciones]\n"

@@ -27,8 +27,16 @@ NEXUS_MOTD_MODE="${NEXUS_MOTD_MODE:-auto}"
 # Usa figlet_render del helper compartido. Mantiene compatibilidad
 # con Termux/proot ARM64 donde los bloques Unicode no renderizan bien.
 ascii_art_block() {
-    # Source figlet_render if not loaded (motd.sh runs independently from core/nexus.sh)
-    declare -f figlet_render >/dev/null || source "$(dirname "${BASH_SOURCE[0]}")/../lib/nexus-figlet.sh"
+    # Source figlet_render if not loaded (motd.sh runs independently)
+    # Usa NEXUS_ROOT (seteado en .zshrc/.bashrc antes de sourcear motd.sh)
+    # Fallback: relative path para casos sin NEXUS_ROOT
+    if ! declare -f figlet_render >/dev/null; then
+        if [ -n "${NEXUS_ROOT:-}" ]; then
+            source "$NEXUS_ROOT/lib/nexus-figlet.sh"
+        else
+            source "$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)/../lib/nexus-figlet.sh"
+        fi
+    fi
     
     echo -e "${NEXUS_COLOR_PRIMARY}"
     figlet_render "NEXUS AI" 96 "small" "mini" "" 40 60

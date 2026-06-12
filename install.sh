@@ -268,7 +268,7 @@ case "$NEXUS_ENV" in
         ;;
 esac
 
-DEPS=(bash zsh curl git)
+DEPS=(bash zsh curl git figlet)
 
 if [ "$NEXUS_ENV" = "linux" ]; then
     warn "Entorno no Termux detectado. Se usará apt (puede no funcionar en todas las distribuciones)."

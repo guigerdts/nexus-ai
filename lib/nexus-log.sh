@@ -73,6 +73,19 @@ log_info() {
     fi
 }
 
+# ── log_fatal: error critico con banner figlet ────
+# Uso: log_fatal "mensaje de error"
+# Imprime "ERROR" en figlet rojo + mensaje, luego exit 1
+# Reservado exclusivamente para fallos catastróficos (no para warnings)
+log_fatal() {
+    local _msg="$*"
+    if [ -t 1 ]; then
+        declare -f figlet_render >/dev/null && figlet_render "ERROR" 91 "" "" "" 30 50
+    fi
+    echo -e "\033[1;91m[FATAL]\033[0m $_msg" >&2
+    exit 1
+}
+
 # ── show_banner: muestra el banner de NEXUS AI ────
 show_banner() {
     if [ -t 1 ]; then

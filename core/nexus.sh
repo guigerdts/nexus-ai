@@ -37,6 +37,9 @@ source "$NEXUS_ROOT/lib/nexus-update.sh"
 # shellcheck source=lib/nexus-guide.sh
 source "$NEXUS_ROOT/lib/nexus-guide.sh"
 
+# shellcheck source=lib/nexus-figlet.sh
+source "$NEXUS_ROOT/lib/nexus-figlet.sh"
+
 # ── show_help: muestra uso del CLI ─────────────────
 show_help() {
     if [ -t 1 ]; then
@@ -351,6 +354,7 @@ install_agent() {
         local _cat_name="$target"
         shift
         local _cat_agents=()
+        local NEXUS_BATCH_INSTALL=true
 
         if [ $# -gt 0 ]; then
             # Parse flags → agent names via FLAG_TO_AGENT[]
@@ -372,11 +376,19 @@ install_agent() {
         for _agent in "${_cat_agents[@]}"; do
             install_agent "$_agent"
         done
+        # ── Celebration: figlet for batch installs ──
+        if [ -t 1 ] && [ "$(tput cols 2>/dev/null || echo 80)" -ge 80 ]; then
+            figlet_render "COMPLETADO" 92 "" "" "" 30 60
+            log_ok "Instalacion completada."
+        else
+            log_ok "Instalacion completada."
+        fi
         unset _flag _fname _agent _cat_agents _cat_name
         return 0
     fi
 
     if [ "$target" = "--all" ] || [ -z "$target" ]; then
+        local NEXUS_BATCH_INSTALL=true
         log_info "Instalando todos los agentes..."
         for _name in "${AGENT_ORDER[@]}"; do
             local _dir="${AGENTS[$_name]}"
@@ -411,7 +423,13 @@ install_agent() {
         done
         unset _name _dir
         _registry_cache_generate
-        log_ok "Instalacion completada."
+        # ── Celebration: figlet for batch installs ──
+        if [ -t 1 ] && [ "$(tput cols 2>/dev/null || echo 80)" -ge 80 ]; then
+            figlet_render "COMPLETADO" 92 "" "" "" 30 60
+            log_ok "Instalacion completada."
+        else
+            log_ok "Instalacion completada."
+        fi
         return 0
     fi
 
@@ -458,16 +476,21 @@ install_agent() {
         else
             log_warn "$target no tiene install.sh"
         fi
-    else
-        if [ -f "$_dir/install.sh" ]; then
-            log_info "Instalando $target..."
-            # shellcheck source=/dev/null
-            (source "$_dir/install.sh")
         else
-            log_warn "$target no tiene install.sh"
+            if [ -f "$_dir/install.sh" ]; then
+                log_info "Instalando $target..."
+                # shellcheck source=/dev/null
+                (source "$_dir/install.sh")
+            else
+                log_warn "$target no tiene install.sh"
+            fi
         fi
-    fi
     _registry_cache_generate
+    # ── Celebration: figlet for single interactive installs ──
+    if [ -t 1 ] && [ "$(tput cols 2>/dev/null || echo 80)" -ge 80 ] && [ -z "${NEXUS_BATCH_INSTALL:-}" ]; then
+        figlet_render "$target" 92 "" "" "" 30 60
+        log_ok "${target} instalado correctamente"
+    fi
 }
 
 # ── remove_agent: desinstala un agente ─────────────
@@ -933,6 +956,7 @@ case "${COMMAND}" in
     status)
         show_banner
         check_update_silent
+        figlet_render "STATUS"
         system_status
         ;;
     agent)

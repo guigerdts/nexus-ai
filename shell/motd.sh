@@ -23,18 +23,15 @@ COLOR_GRAY='\033[1;30m'
 # siempre muestra el ASCII art grande.
 NEXUS_MOTD_MODE="${NEXUS_MOTD_MODE:-auto}"
 
-# ── Arte ASCII bloque (figlet -f big) ──
-# Usa solo caracteres ASCII estándar para compatibilidad con
-# Termux/proot ARM64 donde los bloques Unicode no renderizan bien.
+# ── Arte ASCII bloque (figlet) ──
+# Usa figlet_render del helper compartido. Mantiene compatibilidad
+# con Termux/proot ARM64 donde los bloques Unicode no renderizan bien.
 ascii_art_block() {
+    # Source figlet_render if not loaded (motd.sh runs independently from core/nexus.sh)
+    declare -f figlet_render >/dev/null || source "$(dirname "${BASH_SOURCE[0]}")/../lib/nexus-figlet.sh"
+    
     echo -e "${NEXUS_COLOR_PRIMARY}"
-    echo ' _   _ ________   ___    _  _____            _____ '
-    echo '| \ | |  ____\ \ / / |  | |/ ____|     /\   |_   _|'
-    echo '|  \| | |__   \ V /| |  | | (___      /  \    | |  '
-    echo '| . ` | |__   > < | |  | |\___ \    / /\ \   | |  '
-    echo '| |\  | |____ / . \| |__| |____) |  / ____ \ _| |_ '
-    echo '|_| \_|______/_/ \_\\____/|_____/  /_/    \_\_____|'
-    echo ""
+    figlet_render "NEXUS AI" 96 "small" "mini" "" 40 60
     echo -e "${COLOR_GRAY}Framework de Entorno para AI Agents${NEXUS_COLOR_RESET}"
 }
 

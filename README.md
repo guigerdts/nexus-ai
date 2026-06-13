@@ -3,9 +3,9 @@
 Framework de entorno para Termux/proot-Ubuntu.
 Convierte Android en una workstation profesional para agentes de IA.
 
-**Estado:** v0.8.0 — estable. Dual-environment (Termux nativo + proot-Ubuntu).
+**Estado:** v0.8.2 — estable. Dual-environment (Termux nativo + proot-Ubuntu).
 **Sintaxis:** `nxai install <categoria> --<flag>` — ejemplo: `nxai install ai --opencode`
-**Total:** 82 herramientas en 9 categorias.
+**Total:** 83 herramientas en 9 categorias.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
@@ -32,8 +32,15 @@ nexus-ai/
 ├── lib/
 │   ├── nexus-install.sh    # Funciones de instalación (pip, apt, npm, pkg)
 │   ├── nexus-log.sh        # Logging con colores [OK]/[WARN]/[ERROR]
-│   └── nexus-update.sh     # Actualizaciones: check silencioso + apply
-├── modules/                # 82 modulos registrados (9 categorias)
+│   ├── nexus-update.sh     # Actualizaciones: check silencioso + apply
+│   ├── nexus-src.sh        # Import system con declare -A
+│   ├── nexus-ui.sh         # UI toolkit: spinner, progress, table, box
+│   ├── nexus-c-helper.sh   # Compilación de binarios GLIBC (heredoc C)
+│   ├── nexus-proot.sh      # Wrappers para proot-distro
+│   └── nexus-pg.sh         # Gestor PostgreSQL (detect, init, start, stop)
+├── templates/              # Scaffolding de proyectos
+│   └── express/            # Template Express.js
+├── modules/                # 83 modulos registrados (9 categorias)
 │   ├── opencode/           # AI  — CLI multi-modelo
 │   ├── codex/              # AI  — OpenAI Codex CLI
 │   ├── gemini-cli/         # AI  — Google Gemini CLI
@@ -151,7 +158,7 @@ cd ~/nexus-ai
 | thefuck | Corrección automática de comandos |
 | zsh-vi-mode | Modo vi para Zsh |
 
-## Modulos disponibles (82 herramientas)
+## Modulos disponibles (83 herramientas)
 
 Los modulos se organizan en 9 categorias. Ejecuta `nxai guide` para ver la guia completa.
 
@@ -276,6 +283,8 @@ nxai install ai --opencode   # Instala opencode en categoria AI
 nxai install tools --all     # Instala todas las herramientas
 nxai remove opencode         # Desinstala opencode
 nxai remove ai --gum         # Desinstala gum de categoria tools
+nxai create express app      # Crea un proyecto Express desde scaffolding
+nxai create nextjs app       # Scaffolding con npx (nextjs, vite, nestjs)
 nxai update                  # Actualiza NEXUS AI a la última versión
 nxai update --check          # Verifica si hay una nueva versión disponible
 ```

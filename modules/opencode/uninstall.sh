@@ -1,35 +1,38 @@
 #!/usr/bin/env bash
 # modules/opencode/uninstall.sh
-# Desinstala Opencode
+# Desinstala OpenCode — limpia binario descargado y helper C
+set -euo pipefail
 
-# Source functions
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$SCRIPT_DIR/../../lib/nexus-install.sh" 2>/dev/null || {
-    echo "[ERROR] nexus-install.sh no encontrado"
-    exit 1
-}
-source "$SCRIPT_DIR/metadata.sh" 2>/dev/null || true
+# ── Source install library ─────────────────────────
+# shellcheck source=../../lib/nexus-install.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/lib/nexus-install.sh"
 
-log_info "Desinstalando ${AGENT_NAME:-opencode}..."
+log_info "Desinstalando opencode..."
 
-# Dispatch by method — map AGENT_METHOD to correct uninstall function
-case "${AGENT_METHOD:-}" in
-    pip)   uninstall_via_pip "${AGENT_PACKAGE:-$AGENT_NAME}" ;;
-    npm)   uninstall_via_npm "${AGENT_PACKAGE:-$AGENT_NAME}" ;;
-    pkg)   uninstall_via_apt "${AGENT_PACKAGE:-$AGENT_NAME}" ;;
-    apt)   uninstall_via_apt "${AGENT_PACKAGE:-$AGENT_NAME}" ;;
-    curl)  uninstall_via_binary "$AGENT_NAME" "$AGENT_BINARY" ;;
-    cargo) uninstall_via_binary "$AGENT_NAME" "$AGENT_BINARY" ;;
-    binary) uninstall_via_binary "$AGENT_NAME" "$AGENT_BINARY" ;;
-    git)   log_info "Agente instalado via git. Elimina el directorio clonado manualmente." ;;
-    stub)  log_info "Agente stub — no requiere desinstalacion." ;;
-    *)     log_warn "Metodo '${AGENT_METHOD:-}' no tiene desinstalador automatico."
-           if [ -n "${AGENT_BINARY:-}" ] && command -v "$AGENT_BINARY" &>/dev/null; then
-               rm -f "$(command -v "$AGENT_BINARY")" 2>/dev/null || true
-           fi
-           ;;
-esac
+# 1. Helper C en PREFIX/bin/opencode (Termux nativo)
+if [ -n "${PREFIX:-}" ] && [ -f "${PREFIX}/bin/opencode" ]; then
+    rm -f "${PREFIX}/bin/opencode"
+    log_info "Eliminado: ${PREFIX}/bin/opencode"
+fi
 
-mark_removed "$AGENT_NAME"
-log_ok "Agente '${AGENT_NAME}' desinstalado."
+# 2. Binario en /usr/local/bin/opencode (Linux / proot)
+if [ -f /usr/local/bin/opencode ]; then
+    rm -f /usr/local/bin/opencode
+    log_info "Eliminado: /usr/local/bin/opencode"
+fi
+
+# 3. Data dir con binario descargado
+OPENCODE_DATA_DIR="${HOME}/.local/share/nexus-ai/opencode"
+if [ -d "$OPENCODE_DATA_DIR" ]; then
+    rm -rf "$OPENCODE_DATA_DIR"
+    log_info "Eliminado: ${OPENCODE_DATA_DIR}"
+fi
+
+# 4. Limpiar cualquier binario residual en PATH
+if command -v opencode &>/dev/null; then
+    rm -f "$(command -v opencode)" 2>/dev/null || true
+fi
+
+mark_removed "opencode"
+log_ok "opencode desinstalado."
 exit 0

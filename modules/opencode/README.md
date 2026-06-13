@@ -1,9 +1,12 @@
-# Opencode - CLI multi-modelo de codigo abierto
+# OpenCode - CLI multi-modelo de codigo abierto
 
 ## Descripcion
 
 CLI multi-modelo con soporte para Claude, GPT, Gemini y mas.
 Integra multiples proveedores de IA en una sola interfaz de terminal.
+
+**Nota:** El repositorio original fue archivado. La comunidad migro a forks como
+[MiMo Code](https://github.com/XiaomiMiMo/MiMo-Code).
 
 ## Instalacion
 
@@ -11,28 +14,18 @@ Integra multiples proveedores de IA en una sola interfaz de terminal.
 nxai install opencode
 ```
 
-O manualmente:
-
-```bash
-npm install -g @opencode-ai/cli
-```
-
 ## Uso
 
 ```bash
+cd <proyecto>
 opencode
 ```
 
 ## Requisitos
 
-- Node.js 18+
-- npm
+- curl (para descarga del binario)
+- En Termux: glibc + clang (se instalan automaticamente)
 
-## Notas para Termux
+## Enlaces
 
-Opencode funciona en Termux nativo. Instala Node.js primero:
-
-```bash
-pkg install nodejs
-npm install -g @opencode-ai/cli
-```
+- GitHub: https://github.com/opencode-ai/opencode

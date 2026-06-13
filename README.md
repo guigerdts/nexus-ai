@@ -41,7 +41,7 @@ nexus-ai/
 ├── templates/              # Scaffolding de proyectos
 │   └── express/            # Template Express.js
 ├── modules/                # 84 modulos registrados (9 categorias)
-│   ├── opencode/           # AI  — CLI multi-modelo
+│   ├── opencode/           # AI  — CLI multi-modelo (binary, repo archivado)
 │   ├── mimo-code/          # AI  — MiMo AI Code (fork OpenCode)
 │   ├── codex/              # AI  — OpenAI Codex CLI
 │   ├── gemini-cli/         # AI  — Google Gemini CLI
@@ -167,7 +167,7 @@ Los modulos se organizan en 9 categorias. Ejecuta `nxai guide` para ver la guia 
 
 | Modulo | Metodo | Descripcion |
 |--------|--------|-------------|
-| opencode | npm | CLI multi-modelo de codigo abierto (150K+ stars) |
+| opencode | binary | CLI multi-modelo de codigo abierto (150K+ stars, repo archivado) |
 | mimo-code | binary | CLI de codigo asistido por MiMo AI (Xiaomi) — fork de OpenCode con memoria persistente |
 | agy | binary | Reemplazo de Gemini CLI (Antigravity) |
 | claude-code | binary | Claude Code CLI de Anthropic |

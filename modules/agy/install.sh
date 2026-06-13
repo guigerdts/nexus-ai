@@ -9,6 +9,9 @@ set -euo pipefail
 # shellcheck source=../../lib/nexus-install.sh
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/lib/nexus-install.sh"
 
+# Redirect all stdout to stderr so gum spin doesn't hide output
+exec 3>&1 1>&2
+
 # ── Constantes ─────────────────────────────────────
 MANIFEST_BASE="https://antigravity-cli-auto-updater-974169037036.us-central1.run.app"
 AGY_DATA_DIR="${HOME}/.local/share/nexus-ai/antigravity-cli"
@@ -237,6 +240,9 @@ else
         chmod +x "${NEXUS_ROOT}/bin/agy"
     }
 fi
+
+# ── Restore stdout ─────────────────────────────────
+exec 1>&3 3>&-
 
 # ── Verificacion final ──────────────────────────────
 if command -v agy &>/dev/null; then

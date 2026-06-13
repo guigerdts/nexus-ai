@@ -9,6 +9,9 @@ set -euo pipefail
 # shellcheck source=../../lib/nexus-install.sh
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/lib/nexus-install.sh"
 
+# Redirect all stdout to stderr so gum spin doesn't hide output
+exec 3>&1 1>&2
+
 # ── Constantes ─────────────────────────────────────
 CLAUDE_DATA_DIR="${HOME}/.local/share/nexus-ai/claude"
 CLAUDE_TAG=""    # set por _claude_latest_version
@@ -80,8 +83,8 @@ if [ "${NEXUS_ENV:-}" = "termux" ]; then
 
     # PASO 1: Instalar dependencias
     log_info "PASO 1/3 — Instalando dependencias (glibc + herramientas)..."
-    pkg install -y glibc-repo 2>/dev/null || true
-    pkg install -y glibc clang curl -y 2>/dev/null || {
+    pkg install -y glibc-repo 2>&1 || echo "[WARN] glibc-repo ya instalado o no disponible" >&2
+    pkg install -y glibc clang curl 2>&1 || {
         log_warn "Fallo al instalar dependencias via pkg"
         log_info "Saltando a OPCION 2 (proot-Ubuntu)..."
         # falla a OPCION 2 abajo
@@ -165,6 +168,9 @@ else
         exit 1
     }
 fi
+
+# ── Restore stdout ─────────────────────────────────
+exec 1>&3 3>&-
 
 # ── Verificacion final ──────────────────────────────
 if command -v claude &>/dev/null; then

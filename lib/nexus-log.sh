@@ -135,33 +135,22 @@ show_system_bars() {
     _disk_usage=$(df "$HOME" 2>/dev/null | awk 'NR==2 {print $5}' | tr -d '%')
     _disk_usage=${_disk_usage:-0}
 
-    # ── _build_bar: dibuja una barra horizontal ─────
-    _build_bar() {
-        local _pct=$1 _blen=$2
-        local _fill_color _filled _empty _i
-        local _fc=$(( _pct * _blen / 100 ))
-        [ "$_fc" -gt "$_blen" ] && _fc=$_blen
-
-        if [ "$_pct" -lt 60 ]; then
-            _fill_color=46
-        elif [ "$_pct" -le 85 ]; then
-            _fill_color=226
-        else
-            _fill_color=196
-        fi
-
-        _filled=""
-        for ((_i=0; _i<_fc; _i++)); do _filled+="█"; done
-        _empty=""
-        for ((_i=_fc; _i<_blen; _i++)); do _empty+="░"; done
-
-        printf '\033[38;5;%dm%s\033[38;5;238m%s\033[0m' \
-            "$_fill_color" "$_filled" "$_empty"
-    }
+    # Delegar a _ui_build_bar (lib/nexus-ui.sh)
+    # Si la lib no esta cargada (motd standalone), usar fallback inline
+    if ! command -v _ui_build_bar &>/dev/null && [ -f "${NEXUS_ROOT:-}/lib/nexus-ui.sh" ]; then
+        # shellcheck source=lib/nexus-ui.sh
+        source "${NEXUS_ROOT}/lib/nexus-ui.sh" 2>/dev/null || true
+    fi
 
     local _ram_bar _disk_bar
-    _ram_bar=$(_build_bar "$_ram_usage" "$_bar_len")
-    _disk_bar=$(_build_bar "$_disk_usage" "$_bar_len")
+    if command -v _ui_build_bar &>/dev/null; then
+        _ram_bar=$(_ui_build_bar "$_ram_usage" 100 "$_bar_len")
+        _disk_bar=$(_ui_build_bar "$_disk_usage" 100 "$_bar_len")
+    else
+        # Fallback simple sin color thresholds
+        _ram_bar="$_ram_usage%"
+        _disk_bar="$_disk_usage%"
+    fi
 
     if [ "$NEXUS_GUM_AVAILABLE" = "true" ] && [ -t 1 ]; then
         local _cols _bw _inner _i

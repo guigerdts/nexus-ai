@@ -128,6 +128,7 @@ show_guide() {
     show_guide_category "node"
     show_guide_category "ui"
     show_guide_category "automation"
+    show_guide_category "scaffolding"
 }
 
 # ── show_guide_category: muestra una categoria ──
@@ -213,9 +214,16 @@ show_guide_category() {
             _print_category "Automatizacion" "yes" \
                 "n8n" "Workflow automation — alternativa a Zapier"        "nxai install n8n"
             ;;
+        scaffolding)
+            _print_category "Scaffolding de Proyectos" "no" \
+                "nextjs"   "Next.js app con App Router"                    "nxai create nextjs <name>" \
+                "vite"     "Vite + React/Vue/Svelte starter"               "nxai create vite <name>" \
+                "express"  "Express.js API server (local template)"        "nxai create express <name>" \
+                "nestjs"   "NestJS framework application"                  "nxai create nestjs <name>"
+            ;;
         *)
             echo -e "${_YELLOW}Categoria desconocida: ${_cat}${_RESET}"
-            echo "Categorias disponibles: ai, editor, shell, tools, language, db, node, ui, automation"
+            echo "Categorias disponibles: ai, editor, shell, tools, language, db, node, ui, automation, scaffolding"
             return 1
             ;;
     esac

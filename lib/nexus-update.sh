@@ -11,6 +11,7 @@ _nexus_update_cache_file="${TMPDIR:-/tmp}/nexus-version-check"
 _nexus_update_cache_ttl=86400  # 24 horas en segundos
 _nexus_update_log_dir="$NEXUS_ROOT/logs"
 _nexus_update_log_file="$_nexus_update_log_dir/update-check.log"
+_nexus_update_marker_file="$NEXUS_ROOT/logs/update-available.txt"
 
 # ── _nexus_version_compare: compara dos versiones semver ──
 # Uso: _nexus_version_compare "local" "remote"
@@ -87,6 +88,34 @@ _nexus_update_cache_write() {
     echo "$_now $_version" > "$_nexus_update_cache_file" 2>/dev/null || true
 }
 
+# ── _nexus_update_marker_write: escribe marker file con version ──
+# Uso: _nexus_update_marker_write "v0.8.0"
+_nexus_update_marker_write() {
+    local _version="${1:-}"
+    if [ -n "$_version" ]; then
+        echo "$_version" > "$_nexus_update_marker_file" 2>/dev/null || true
+    fi
+}
+
+# ── _nexus_update_marker_remove: elimina marker file si existe ──
+_nexus_update_marker_remove() {
+    rm -f "$_nexus_update_marker_file" 2>/dev/null || true
+}
+
+# ── nexus_update_marker_read: lee marker file ────────────────
+# Returns: version string en stdout, exit 0 si existe, exit 1 si no
+nexus_update_marker_read() {
+    if [ -f "$_nexus_update_marker_file" ]; then
+        local _content
+        _content="$(cat "$_nexus_update_marker_file" 2>/dev/null || true)"
+        if [ -n "$_content" ]; then
+            echo "$_content"
+            return 0
+        fi
+    fi
+    return 1
+}
+
 # ── _update_check_spawn: background async update check ──
 # Corre curl en background, escribe resultado a $TMPDIR/nexus-update.result.
 # Usa lockfile ($TMPDIR/nexus-update.lock) como mutex atomico (mkdir).
@@ -119,6 +148,25 @@ _update_check_spawn() {
         _remote_version="$(curl --silent --fail --max-time 3 --connect-timeout 2 \
             "https://raw.githubusercontent.com/guigerdts/nexus-ai/main/VERSION" 2>/dev/null || true)"
         echo "$_remote_version" > "$_result_file" 2>/dev/null || true
+
+        # Update marker file based on result (runs in background)
+        if [ -n "$_remote_version" ] && echo "$_remote_version" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            # Source env to get NEXUS_VERSION for comparison
+            # shellcheck source=config/env.sh
+            source "$NEXUS_ROOT/config/env.sh" 2>/dev/null || true
+            _local="${NEXUS_VERSION#v}"
+            _remote="${_remote_version#v}"
+            if [ "$_local" != "$_remote" ]; then
+                _sorted="$(printf '%s\n%s\n' "$_local" "$_remote" | sort -V 2>/dev/null | head -1)"
+                if [ "$_sorted" = "$_local" ]; then
+                    echo "v$_remote_version" > "$NEXUS_ROOT/logs/update-available.txt" 2>/dev/null || true
+                else
+                    rm -f "$NEXUS_ROOT/logs/update-available.txt" 2>/dev/null || true
+                fi
+            else
+                rm -f "$NEXUS_ROOT/logs/update-available.txt" 2>/dev/null || true
+            fi
+        fi
         rm -rf "$_lock_dir" 2>/dev/null || true
     ) &
     return 0
@@ -128,6 +176,7 @@ _update_check_spawn() {
 # Se ejecuta despues del banner. Nunca bloquea, nunca muestra errores.
 # Async: spawna background curl, usa lockfile para evitar concurrencia,
 # usa cache (incluso stale) mientras el background corre.
+# Tambien escribe/elimina marker file en logs/update-available.txt
 check_update_silent() {
     local _lock_dir="${TMPDIR:-/tmp}/nexus-update.lock"
     local _result_file="${TMPDIR:-/tmp}/nexus-update.result"
@@ -140,6 +189,9 @@ check_update_silent() {
         local _cmp=$?
         if [ "$_cmp" -eq 1 ]; then
             echo "[!] Nueva versión disponible: v$_cached"
+            _nexus_update_marker_write "v$_cached"
+        else
+            _nexus_update_marker_remove
         fi
         return 0
     fi
@@ -155,6 +207,9 @@ check_update_silent() {
             local _cmp=$?
             if [ "$_cmp" -eq 1 ]; then
                 echo "[!] Nueva versión disponible: v$_result"
+                _nexus_update_marker_write "v$_result"
+            else
+                _nexus_update_marker_remove
             fi
         fi
         return 0

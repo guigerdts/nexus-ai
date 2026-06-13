@@ -2,8 +2,9 @@
 """System monitor — collect RAM, disk, env, and version info.
 
 Usage:
-    from tui.system_monitor import collect
+    from tui.system_monitor import collect, check_update
     data = collect("/path/to/nexus_root")
+    update_version = check_update("/path/to/nexus_root")
 """
 
 import os
@@ -25,6 +26,24 @@ def _get_version(cmd: list[str]) -> str:
         return "timeout"
     except PermissionError:
         return "N/A"
+
+
+def check_update(nexus_root: str) -> str | None:
+    """Check for update marker file.
+
+    Reads logs/update-available.txt and returns version string if present,
+    None otherwise. Silently handles missing/unreadable files.
+    """
+    marker_path = os.path.join(nexus_root, "logs", "update-available.txt")
+    try:
+        if os.path.isfile(marker_path):
+            with open(marker_path, "r") as f:
+                version = f.read().strip()
+                if version:
+                    return version
+    except (OSError, PermissionError):
+        pass
+    return None
 
 
 def collect(nexus_root: str) -> dict:
@@ -68,6 +87,9 @@ def collect(nexus_root: str) -> dict:
     zsh_ver = _get_version(["zsh", "--version"])
     git_ver = _get_version(["git", "--version"])
 
+    # ── Update check ────────────────────────────────
+    update_version = check_update(nexus_root)
+
     return {
         "ram_total": mem_total,
         "ram_used": mem_used,
@@ -80,4 +102,5 @@ def collect(nexus_root: str) -> dict:
         "python_version": python_ver,
         "zsh_version": zsh_ver,
         "git_version": git_ver,
+        "update_version": update_version,
     }

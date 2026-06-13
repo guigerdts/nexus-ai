@@ -26,7 +26,7 @@ if _nexus_root and _nexus_root not in sys.path:
 
 from tui.agents_panel import load_agents
 from tui.history import read_entries
-from tui.system_monitor import collect
+from tui.system_monitor import collect, check_update
 
 
 # ── Inline CSS ──────────────────────────────────────
@@ -119,15 +119,23 @@ class MonitorPanel(Static):
     BORDER_TITLE = "Monitor del Sistema"
 
     def populate(self, data: dict) -> None:
-        self.update(
-            f"RAM:       {data['ram_used']} MB / {data['ram_total']} MB\n"
-            f"Disco:     {data['disk_used']} GB / {data['disk_total']} GB\n"
-            f"Entorno:   {data['env']}\n"
-            f"Arquitectura: {data['arch']}\n"
-            f"Python:    {data['python_version']}\n"
-            f"Zsh:       {data['zsh_version']}\n"
-            f"Git:       {data['git_version']}"
-        )
+        lines = []
+        # Update notification at the top if available
+        update_version = data.get("update_version")
+        if update_version:
+            lines.append(f"[bold yellow]Actualizacion disponible: {update_version}[/bold yellow]")
+            lines.append("")  # blank line for separation
+
+        lines.extend([
+            f"RAM:       {data['ram_used']} MB / {data['ram_total']} MB",
+            f"Disco:     {data['disk_used']} GB / {data['disk_total']} GB",
+            f"Entorno:   {data['env']}",
+            f"Arquitectura: {data['arch']}",
+            f"Python:    {data['python_version']}",
+            f"Zsh:       {data['zsh_version']}",
+            f"Git:       {data['git_version']}",
+        ])
+        self.update("\n".join(lines))
 
 
 # ── History Panel ───────────────────────────────────

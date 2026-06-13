@@ -95,6 +95,19 @@ random_tip() {
     echo -e "${NEXUS_COLOR_PRIMARY}>>>${NEXUS_COLOR_RESET} ${TIPS[$idx]}"
 }
 
+# ── Update notification: read marker file ───────────
+# Reads logs/update-available.txt and shows notification if version present
+check_update_notification() {
+    local _marker_file="${NEXUS_ROOT:-}/logs/update-available.txt"
+    if [ -f "$_marker_file" ]; then
+        local _version
+        _version="$(cat "$_marker_file" 2>/dev/null || true)"
+        if [ -n "$_version" ]; then
+            echo -e "${NEXUS_COLOR_YELLOW}>> Actualizacion disponible: $_version <<${NEXUS_COLOR_RESET}"
+        fi
+    fi
+}
+
 # ═══════════════════════════════════════════════════
 #  MAIN
 # ═══════════════════════════════════════════════════
@@ -126,6 +139,9 @@ echo ""
 
 # ── Tip aleatorio ─────────────────────────────────
 random_tip
+
+# ── Update notification ───────────────────────────
+check_update_notification
 
 separator
 

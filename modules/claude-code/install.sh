@@ -98,61 +98,20 @@ if [ "${NEXUS_ENV:-}" = "termux" ]; then
         }
 
         if [ "$OPCION2_FALLBACK" = false ] && [ -f "${CLAUDE_DATA_DIR}/claude" ]; then
-            # PASO 3: Compilar helper C
-            log_info "PASO 3/3 — Compilando helper C con clang..."
-            _prefix="${PREFIX:-/data/data/com.termux/files/usr}"
-            _loader="${_prefix}/glibc/lib/ld-linux-aarch64.so.1"
-            _lib_path="${_prefix}/glibc/lib"
-            _cert_path="${_prefix}/etc/tls/cert.pem"
-            _real_bin="${CLAUDE_DATA_DIR}/claude"
+            # PASO 3: Compilar helper C via shared lib
+            log_info "PASO 3/3 — Compilando helper C..."
 
-            cat > "${TMPDIR:-/tmp}/claude_helper.c" << C_CODE
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
-#include <libgen.h>
-#include <limits.h>
-#include <stdio.h>
-int main(int argc, char** argv) {
-    unsetenv("LD_PRELOAD");
-    unsetenv("LD_LIBRARY_PATH");
-    setenv("GODEBUG", "netdns=cgo", 1);
-    setenv("SSL_CERT_FILE",
-        "${_cert_path}", 1);
-    char* loader =
-        "${_loader}";
-    char real_bin[] =
-        "${_real_bin}";
-    char lib_path[] =
-        "${_lib_path}";
-    char** new_argv = malloc((argc + 4) * sizeof(char*));
-    if (!new_argv) return 1;
-    new_argv[0] = loader;
-    new_argv[1] = "--library-path";
-    new_argv[2] = lib_path;
-    new_argv[3] = real_bin;
-    for (int i = 1; i < argc; i++) {
-        new_argv[i + 3] = argv[i];
-    }
-    new_argv[argc + 3] = NULL;
-    execv(loader, new_argv);
-    perror("execv");
-    free(new_argv);
-    return 1;
-}
-C_CODE
+            # Source shared C helper lib
+            NEXUS_ROOT="${NEXUS_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
+            # shellcheck source=../../lib/nexus-c-helper.sh
+            source "${NEXUS_ROOT}/lib/nexus-c-helper.sh"
 
-            clang -O2 -o "${_prefix}/bin/claude" "${TMPDIR:-/tmp}/claude_helper.c" || {
+            if nexus_c_build "${CLAUDE_DATA_DIR}/claude" "claude"; then
+                log_ok "Helper C compilado: ${PREFIX:-/data/data/com.termux/files/usr}/bin/claude"
+            else
                 log_error "Fallo compilacion del helper C"
-                rm -f "${TMPDIR:-/tmp}/claude_helper.c"
                 log_info "Saltando a OPCION 2 (proot-Ubuntu)..."
                 OPCION2_FALLBACK=true
-            }
-
-            if [ "$OPCION2_FALLBACK" = false ]; then
-                chmod +x "${_prefix}/bin/claude"
-                rm -f "${TMPDIR:-/tmp}/claude_helper.c"
-                log_ok "Helper C compilado: ${_prefix}/bin/claude"
             fi
         fi
     else

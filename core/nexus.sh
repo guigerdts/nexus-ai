@@ -15,30 +15,66 @@ set -euo pipefail
 NEXUS_ROOT="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)/.."
 export NEXUS_ROOT
 
-# ── Source de modulos esenciales ──────────────────
-# shellcheck source=config/env.sh
-source "$NEXUS_ROOT/config/env.sh"
+# ── Import system: centralized sourcing with guards ──
+# shellcheck source=lib/nexus-src.sh
+source "$NEXUS_ROOT/lib/nexus-src.sh"
 
+# Load essential modules via nexus_require (guarded, deduplicated)
+nexus_require env
+nexus_require log
+nexus_require install
+nexus_require figlet
+nexus_require update
+nexus_require guide
+
+# Config registries (not in module map - direct source)
 # shellcheck source=config/agents.registry.sh
 source "$NEXUS_ROOT/config/agents.registry.sh"
-
 # shellcheck source=config/categories.sh
 source "$NEXUS_ROOT/config/categories.sh"
 
-# shellcheck source=lib/nexus-log.sh
-source "$NEXUS_ROOT/lib/nexus-log.sh"
+# ── create_project: scaffolding de proyectos ────────
+create_project() {
+    local _type="${1:-}"
+    local _name="${2:-}"
 
-# shellcheck source=lib/nexus-install.sh
-source "$NEXUS_ROOT/lib/nexus-install.sh"
+    [ -z "$_type" ] || [ -z "$_name" ] && {
+        log_error "Uso: nxai create <type> <name>"
+        echo "Tipos disponibles: nextjs, vite, express, nestjs"
+        return 1
+    }
 
-# shellcheck source=lib/nexus-update.sh
-source "$NEXUS_ROOT/lib/nexus-update.sh"
+    # Verify npx is available for remote templates
+    case "$_type" in
+        nextjs|vite|nestjs)
+            command -v npx &>/dev/null || {
+                log_error "npx no encontrado. Instala Node.js primero."
+                return 1
+            }
+            ;;
+    esac
 
-# shellcheck source=lib/nexus-guide.sh
-source "$NEXUS_ROOT/lib/nexus-guide.sh"
-
-# shellcheck source=lib/nexus-figlet.sh
-source "$NEXUS_ROOT/lib/nexus-figlet.sh"
+    case "$_type" in
+        nextjs)  npx create-next-app@latest "$_name" ;;
+        vite)    npx create-vite@latest "$_name" ;;
+        nestjs)  npx @nestjs/cli new "$_name" ;;
+        express)
+            if [ -d "$NEXUS_ROOT/templates/express" ]; then
+                cp -r "$NEXUS_ROOT/templates/express" "$_name"
+                log_ok "Proyecto Express creado en ./$_name"
+                echo "  Instala dependencias: cd $_name && npm install"
+                echo "  Inicia: npm start"
+            else
+                npx create-express-app "$_name"
+            fi
+            ;;
+        *)
+            log_error "Tipo desconocido: $_type"
+            echo "Tipos disponibles: nextjs, vite, express, nestjs"
+            return 1
+            ;;
+    esac
+}
 
 # ── show_help: muestra uso del CLI ─────────────────
 show_help() {
@@ -69,6 +105,7 @@ show_help() {
             printf "  \033[1m%-12s\033[0m %s\n" "update"    "Actualizar NEXUS AI"
             printf "  \033[1m%-12s\033[0m %s\n" "guide"     "Guia de uso por categorias"
             printf "  \033[1m%-12s\033[0m %s\n" "dashboard" "Abrir panel TUI"
+            printf "  \033[1m%-12s\033[0m %s\n" "create"    "Crear proyecto desde template (nextjs, vite, express, nestjs)"
             printf "  \033[1m%-12s\033[0m %s\n" "agent"     "Gestionar agentes custom"
             printf "  \033[1m%-12s\033[0m %s\n" "manifest"  "Gestionar manifest de instalaciones"
             printf "  \033[1m%-12s\033[0m %s\n" "doctor"    "Diagnostico del sistema"
@@ -130,6 +167,7 @@ show_help() {
         printf "  \033[1m%-12s\033[0m %s\n" "update"    "Actualizar NEXUS AI"
         printf "  \033[1m%-12s\033[0m %s\n" "guide"     "Guia de uso por categorias"
         printf "  \033[1m%-12s\033[0m %s\n" "dashboard" "Abrir panel TUI"
+        printf "  \033[1m%-12s\033[0m %s\n" "create"    "Crear proyecto desde template (nextjs, vite, express, nestjs)"
         printf "  \033[1m%-12s\033[0m %s\n" "agent"     "Gestionar agentes custom"
         printf "  \033[1m%-12s\033[0m %s\n" "manifest"  "Gestionar manifest de instalaciones"
         printf "  \033[1m%-12s\033[0m %s\n" "doctor"    "Diagnostico del sistema"
@@ -839,7 +877,7 @@ resolve_args() {
 
     # If no args or first is a known command → pass through
     case "${first_arg}" in
-        install|remove|uninstall|list|status|update|guide|dashboard|ui|agent|manifest|help)
+        install|remove|uninstall|list|status|update|guide|dashboard|ui|agent|manifest|help|create)
             return 0
             ;;
     esac
@@ -933,6 +971,11 @@ case "${COMMAND}" in
 
         exec python3 "$NEXUS_ROOT/tui/dashboard.py" "$@"
         ;;
+    create)
+        show_banner
+        check_update_silent
+        create_project "$@"
+        ;;
     install)
         show_banner
         check_update_silent
@@ -1020,7 +1063,7 @@ case "${COMMAND}" in
             --interactive|-i)
                 show_guide_rich --interactive
                 ;;
-            ai|editor|shell|tools|language|db|node|ui|automation)
+            ai|editor|shell|tools|language|db|node|ui|automation|scaffolding)
                 show_guide_category "$1"
                 ;;
             "")
@@ -1029,7 +1072,7 @@ case "${COMMAND}" in
             *)
                 echo "Categoria desconocida: $1"
                 echo "Uso: nxai guide [categoria|--interactive]"
-                echo "Categorias: ai, editor, shell, tools, language, db, node, ui, automation"
+                echo "Categorias: ai, editor, shell, tools, language, db, node, ui, automation, scaffolding"
                 exit 1
                 ;;
         esac

@@ -66,3 +66,19 @@ show_milliseconds = true
 [character]
 success_symbol = "[➜](cyan bold)"
 error_symbol   = "[✗](red bold)"
+
+# ── Optional: NEXUS AI update indicator ─────────────
+# Uncomment to enable. Shows ⬆ when logs/update-available.txt exists.
+# Requires NEXUS_ROOT to be set in environment.
+#
+# [custom.nexus-update]
+# command = """
+#   if [ -n "$NEXUS_ROOT" ] && [ -f "$NEXUS_ROOT/logs/update-available.txt" ]; then
+#       cat "$NEXUS_ROOT/logs/update-available.txt"
+#   fi
+# """
+# when = "test -n \"$NEXUS_ROOT\" && test -f \"$NEXUS_ROOT/logs/update-available.txt\""
+# format = "[$symbol](bold yellow) "
+# symbol = "⬆"
+# style = "yellow"
+# description = "NEXUS AI update available"

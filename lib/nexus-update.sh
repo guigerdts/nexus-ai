@@ -279,32 +279,131 @@ check_update_verbose() {
     fi
 }
 
+# ── _update_git_pull: intenta actualizar via Git con recovery ──
+# Returns 0 si ok, 1 si falló todo
+_update_git_pull() {
+    local _git_dir="$1"
+
+    # ├─ Paso 1: ff-only (caso limpio)
+    if git -C "$_git_dir" pull --ff-only origin main 2>/dev/null; then
+        return 0
+    fi
+
+    # ├─ Paso 2: stash + rebase (cambios locales o divergencia)
+    local _stashed=false
+    if ! git -C "$_git_dir" diff --quiet 2>/dev/null; then
+        echo "  ▶ Guardando cambios locales temporalmente..."
+        git -C "$_git_dir" stash push -m "nxai-update-auto-stash" 2>/dev/null || true
+        _stashed=true
+    fi
+
+    if git -C "$_git_dir" pull --rebase origin main 2>/dev/null; then
+        $_stashed && echo "  ▶ Restaurando cambios locales..."
+        $_stashed && git -C "$_git_dir" stash pop 2>/dev/null || true
+        return 0
+    fi
+
+    # ├─ Paso 3: rebase falló — restaurar stash si aplica
+    $_stashed && git -C "$_git_dir" stash pop 2>/dev/null || true
+    return 1
+}
+
+# ── _update_show_result: muestra estado post-actualizacion ──
+_update_show_result() {
+    local _new_version
+    # Re-source env para obtener la nueva version
+    # shellcheck source=config/env.sh
+    source "$NEXUS_ROOT/config/env.sh" 2>/dev/null || true
+    _new_version="${NEXUS_VERSION:-desconocida}"
+
+    echo "[OK] NEXUS AI actualizado a v$_new_version"
+
+    # Limpiar marker y cache
+    rm -f "$_nexus_update_cache_file" "$_nexus_update_marker_file" 2>/dev/null || true
+}
+
+# ── _update_via_git_menu: muestra opciones si git pull falla ──
+_update_via_git_menu() {
+    local _git_dir="$1"
+    echo ""
+    echo "  No se pudo actualizar automáticamente."
+    echo "  Opciones:"
+    echo "    1) Reintentar (git pull --rebase)"
+    echo "    2) Forzar a la última versión remota (git reset --hard)"
+    echo "    3) Ver diferencias (git log)"
+    echo "    4) Cancelar"
+    echo ""
+    printf "  Elegí una opción (1-4): "
+    read -r _choice
+
+    case "$_choice" in
+        1)
+            if git -C "$_git_dir" pull --rebase origin main 2>/dev/null; then
+                _update_show_result
+                return 0
+            fi
+            echo "[ERROR] Sigue fallando. Revisá manualmente: cd $_git_dir && git status"
+            return 1
+            ;;
+        2)
+            echo "  ⚠ VAS A PERDER cambios locales no commiteados."
+            printf "  ¿Estás seguro? (s/N): "
+            read -r _confirm
+            if [ "$_confirm" = "s" ] || [ "$_confirm" = "S" ]; then
+                git -C "$_git_dir" reset --hard "@{upstream}" 2>/dev/null || true
+                _update_show_result
+                return 0
+            fi
+            return 1
+            ;;
+        3)
+            echo ""
+            echo "  Commits locales no publicados:"
+            git -C "$_git_dir" log "@{upstream}..HEAD" --oneline 2>/dev/null || true
+            echo ""
+            echo "  Commits remotos no aplicados:"
+            git -C "$_git_dir" log "HEAD..@{upstream}" --oneline 2>/dev/null || true
+            echo ""
+            _update_via_git_menu "$_git_dir"
+            ;;
+        4)
+            echo "  Cancelado."
+            return 1
+            ;;
+        *)
+            echo "  Opción inválida."
+            _update_via_git_menu "$_git_dir"
+            ;;
+    esac
+}
+
 # ── apply_update: aplica la actualizacion ──
 # Se ejecuta con nxai update (sin flags)
 apply_update() {
     echo "Actualizando NEXUS AI..."
 
-    if [ -d "$NEXUS_ROOT/.git" ]; then
-        echo "  Repositorio Git detectado. Ejecutando git pull --ff-only..."
-        if git -C "$NEXUS_ROOT" pull --ff-only origin main 2>/dev/null; then
-            echo "[OK] Actualización completada."
-            # Limpiar cache para forzar re-check en el proximo comando
-            rm -f "$_nexus_update_cache_file" 2>/dev/null || true
-        else
-            echo "[ERROR] Falló la actualización via Git."
-            echo "        Intenta manualmente: cd $NEXUS_ROOT && git pull"
-            return 1
-        fi
-    else
+    if [ ! -d "$NEXUS_ROOT/.git" ]; then
         echo "  Sin repositorio Git. Descargando instalador..."
         if curl -fsSL "https://raw.githubusercontent.com/guigerdts/nexus-ai/main/install.sh" | bash -s -- --no-zsh --no-starship; then
-            echo "[OK] Actualización completada."
-            rm -f "$_nexus_update_cache_file" 2>/dev/null || true
+            _update_show_result
+            return 0
         else
-            echo "[ERROR] Falló la actualización."
+            echo "[ERROR] Falló la descarga del instalador."
             return 1
         fi
     fi
+
+    echo "  Repositorio Git detectado."
+
+    # ├─ Paso 1: intentar pull automático
+    if _update_git_pull "$NEXUS_ROOT"; then
+        _update_show_result
+        return 0
+    fi
+
+    # ├─ Paso 2: falló — ofrecer menú interactivo
+    echo "  El repositorio local divergió del remoto."
+    _update_via_git_menu "$NEXUS_ROOT"
 }
 
 # ── module_update: actualiza un modulo especifico ──

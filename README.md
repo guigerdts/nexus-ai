@@ -5,7 +5,7 @@ Convierte Android en una workstation profesional para agentes de IA.
 
 **Estado:** v0.8.2 — estable. Dual-environment (Termux nativo + proot-Ubuntu).
 **Sintaxis:** `nxai install <categoria> --<flag>` — ejemplo: `nxai install ai --opencode`
-**Total:** 83 herramientas en 9 categorias.
+**Total:** 84 herramientas en 9 categorias.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
@@ -40,8 +40,9 @@ nexus-ai/
 │   └── nexus-pg.sh         # Gestor PostgreSQL (detect, init, start, stop)
 ├── templates/              # Scaffolding de proyectos
 │   └── express/            # Template Express.js
-├── modules/                # 83 modulos registrados (9 categorias)
+├── modules/                # 84 modulos registrados (9 categorias)
 │   ├── opencode/           # AI  — CLI multi-modelo
+│   ├── mimo-code/          # AI  — MiMo AI Code (fork OpenCode)
 │   ├── codex/              # AI  — OpenAI Codex CLI
 │   ├── gemini-cli/         # AI  — Google Gemini CLI
 │   ├── claude-code/        # AI  — Claude Code CLI
@@ -162,11 +163,12 @@ cd ~/nexus-ai
 
 Los modulos se organizan en 9 categorias. Ejecuta `nxai guide` para ver la guia completa.
 
-### IA / Agentes (17)
+### IA / Agentes (18)
 
 | Modulo | Metodo | Descripcion |
 |--------|--------|-------------|
 | opencode | npm | CLI multi-modelo de codigo abierto (150K+ stars) |
+| mimo-code | npm | CLI de codigo asistido por MiMo AI (Xiaomi) — fork de OpenCode con memoria persistente |
 | agy | binary | Reemplazo de Gemini CLI (Antigravity) |
 | claude-code | binary | Claude Code CLI de Anthropic |
 | gemini-cli | npm | CLI oficial de Google Gemini (DEPRECATED → agy) |
@@ -270,7 +272,7 @@ Los modulos se organizan en 9 categorias. Ejecuta `nxai guide` para ver la guia 
 |--------|--------|-------------|
 | n8n | npm | Workflow automation — alternativa a Zapier/Make |
 
-Uso: `nxai install ai --opencode` para instalar un agente por categoria y flag.
+Uso: `nxai install ai --mimo-code` (o `--opencode`, `--claude-code`) para instalar un agente por categoria y flag.
 
 ## Uso
 

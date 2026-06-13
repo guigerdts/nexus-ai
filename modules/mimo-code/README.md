@@ -15,12 +15,6 @@ adicionales de memoria, goal-driven loops, y auto-mejora via dream/distill.
 nxai install mimo-code
 ```
 
-O manualmente:
-
-```bash
-npm install -g @mimo-ai/cli
-```
-
 O via el instalador oficial:
 
 ```bash
@@ -36,8 +30,8 @@ mimo
 
 ## Requisitos
 
-- Node.js 18+
-- npm
+- curl (para descarga del binario)
+- En Termux: glibc + clang (se instalan automaticamente)
 
 ## Caracteristicas principales
 

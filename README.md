@@ -168,7 +168,7 @@ Los modulos se organizan en 9 categorias. Ejecuta `nxai guide` para ver la guia 
 | Modulo | Metodo | Descripcion |
 |--------|--------|-------------|
 | opencode | npm | CLI multi-modelo de codigo abierto (150K+ stars) |
-| mimo-code | npm | CLI de codigo asistido por MiMo AI (Xiaomi) — fork de OpenCode con memoria persistente |
+| mimo-code | binary | CLI de codigo asistido por MiMo AI (Xiaomi) — fork de OpenCode con memoria persistente |
 | agy | binary | Reemplazo de Gemini CLI (Antigravity) |
 | claude-code | binary | Claude Code CLI de Anthropic |
 | gemini-cli | npm | CLI oficial de Google Gemini (DEPRECATED → agy) |

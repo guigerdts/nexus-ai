@@ -76,9 +76,9 @@ nexus_c_build() {
         _extra_env_c="${_extra_env_c}    putenv(\"${_e}\");\\n"
     done
 
-    # Generate C source
+    # Generate C source — usar TMPDIR (compatible Termux)
     local _tmp_c
-    _tmp_c="$(mktemp /tmp/nexus_c_helper_XXXXXX.c)"
+    _tmp_c="$(mktemp -p "${TMPDIR:-/tmp}" nexus_c_helper_XXXXXX.c)"
 
     cat > "$_tmp_c" << 'C_CODE'
 #include <unistd.h>
